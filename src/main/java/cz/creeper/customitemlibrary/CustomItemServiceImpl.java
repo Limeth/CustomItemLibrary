@@ -1,11 +1,11 @@
 package cz.creeper.customitemlibrary;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import cz.creeper.customitemlibrary.util.BiKeyHashMap;
 import cz.creeper.customitemlibrary.util.BiKeyMap;
 import org.spongepowered.api.Sponge;
+import org.spongepowered.api.data.key.Keys;
+import org.spongepowered.api.item.inventory.ItemStack;
 
 import java.util.Optional;
 
@@ -15,8 +15,8 @@ public class CustomItemServiceImpl implements CustomItemService {
     //private final BiMap<String, Integer> idToDurability = HashBiMap.create();
 
     @Override
-    public CustomItemRecord registerCustomItem(Object plugin, String typeId) {
-        String id = getId(plugin, typeId);
+    public void define(CustomItemDefinition definition) {
+        String id = definition.getId();
         Optional<CustomItemRecord> record = getCustomItemRecord(id);
 
         if(record.isPresent()) {

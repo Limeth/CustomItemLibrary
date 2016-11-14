@@ -1,16 +1,12 @@
 package cz.creeper.customitemlibrary;
 
-import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.plugin.PluginContainer;
 
 import java.util.Optional;
 
-@RequiredArgsConstructor
-@AllArgsConstructor
 @EqualsAndHashCode
 public class CustomItemRecord {
     @Getter
@@ -25,6 +21,12 @@ public class CustomItemRecord {
     private final Optional<PluginContainer> pluginContainer = initPluginContainer();
     @Getter(lazy = true)
     private final String typeId = initTypeId();
+
+    public CustomItemRecord(CustomItemService service, String id, int durability) {
+        this.service = service;
+        this.id = id;
+        this.durability = durability;
+    }
 
     private String initPluginId() {
         return id.substring(0, id.indexOf(CustomItemServiceImpl.ID_SEPARATOR));
