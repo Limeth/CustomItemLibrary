@@ -6,12 +6,11 @@ import java.util.Optional;
 
 public interface CustomItemRegistry<I extends CustomItem, T extends CustomItemDefinition<I>> {
     /**
-     * Register the definition.
+     * Registers the definition.
      *
-     * @param definition the definition.
-     * @return {@code true}, if the item has been registered the first time, {@code false} otherwise
+     * @param definition the definition to register
      */
-    boolean register(T definition);
+    void register(T definition);
 
     /**
      * Wraps the {@link ItemStack} in a helper class extending {@link CustomItem},

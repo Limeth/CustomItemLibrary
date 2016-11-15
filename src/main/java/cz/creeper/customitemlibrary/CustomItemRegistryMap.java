@@ -11,7 +11,7 @@ public class CustomItemRegistryMap {
 
     @SuppressWarnings("unchecked")
     public <I extends CustomItem, T extends CustomItemDefinition<I>> Optional<CustomItemRegistry<I, T>> get(T def) {
-        return get(def.getClass());
+        return get((Class<T>) def.getClass());
     }
 
     @SuppressWarnings("unchecked")

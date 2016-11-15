@@ -9,16 +9,16 @@ public class CustomItemServiceImpl implements CustomItemService {
     private final CustomItemRegistryMap registryMap = new CustomItemRegistryMap();
 
     public CustomItemServiceImpl() {
-        registryMap.put(CustomToolDefinition.class, new CustomToolRegistry());
+        registryMap.put(CustomToolDefinition.class, CustomToolRegistry.getInstance());
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <I extends CustomItem, T extends CustomItemDefinition<I>> boolean register(T definition) {
-        Optional<Boolean> result = registryMap.get(definition).map(registry -> registry.register(definition));
+    public <I extends CustomItem, T extends CustomItemDefinition<I>> void register(T definition) {
+        Optional<CustomItemRegistry<I, T>> registry = registryMap.get(definition);
 
-        if(result.isPresent())
-            return result.get();
+        if(registry.isPresent())
+            registry.get().register(definition);
         else
             throw new IllegalArgumentException("Invalid definition type.");
     }

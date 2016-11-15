@@ -10,7 +10,7 @@ public interface CustomItemService {
      *
      * @param definition The definition to register
      */
-    <I extends CustomItem, T extends CustomItemDefinition<I>> boolean register(T definition);
+    <I extends CustomItem, T extends CustomItemDefinition<I>> void register(T definition);
 
     /**
      * @param itemStack The ItemStack to wrap
