@@ -70,8 +70,15 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
 
     @Override
     public CustomTool createItem() {
+        CustomToolRegistry registry = CustomToolRegistry.getInstance();
         ItemStack itemStack = ItemStack.of(getItemType(), 1);
+        int defaultDurability = registry.getDurability(textures[0])
+                .orElseThrow(() -> new IllegalStateException("Could not get the durability for the default texture."));
 
+        itemStack.offer(Keys.ITEM_DURABILITY, defaultDurability);
+        itemStack.offer(Keys.UNBREAKABLE, true);
+        itemStack.offer(Keys.HIDE_UNBREAKABLE, true);
+        itemStack.offer(Keys.HIDE_ATTRIBUTES, true);
         itemStack.offer(Keys.DISPLAY_NAME, Text.of(displayName));
 
         CustomTool tool = new CustomTool(itemStack, this);
