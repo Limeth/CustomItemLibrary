@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import lombok.*;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.key.Keys;
+import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.PluginContainer;
@@ -23,7 +24,7 @@ import java.util.function.Consumer;
  */
 @EqualsAndHashCode
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class CustomToolDefinition implements CustomItemDefinition<CustomTool> {
+public final class CustomToolDefinition implements CustomItemDefinition<CustomTool> {
     @Getter
     @NonNull
     private final String pluginId;
@@ -69,7 +70,7 @@ public class CustomToolDefinition implements CustomItemDefinition<CustomTool> {
 
     @Override
     public CustomTool createItem() {
-        ItemStack itemStack = ItemStack.of(ItemTypes.SHEARS, 1);
+        ItemStack itemStack = ItemStack.of(getItemType(), 1);
 
         itemStack.offer(Keys.DISPLAY_NAME, Text.of(displayName));
 
@@ -79,5 +80,9 @@ public class CustomToolDefinition implements CustomItemDefinition<CustomTool> {
             onCreate.accept(tool);
 
         return tool;
+    }
+
+    public static ItemType getItemType() {
+        return ItemTypes.SHEARS;
     }
 }
