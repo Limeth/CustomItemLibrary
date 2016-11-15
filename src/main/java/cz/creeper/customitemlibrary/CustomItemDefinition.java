@@ -2,7 +2,7 @@ package cz.creeper.customitemlibrary;
 
 import lombok.NonNull;
 
-public interface CustomItemDefinition {
+public interface CustomItemDefinition<T extends CustomItem> {
     char ID_SEPARATOR = ':';
 
     /**
@@ -37,5 +37,5 @@ public interface CustomItemDefinition {
     /**
      * @return A {@link CustomItem} in with default properties.
      */
-    @NonNull CustomItem createItem();
+    @NonNull T createItem();
 }

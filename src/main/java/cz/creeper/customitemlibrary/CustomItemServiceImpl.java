@@ -1,48 +1,42 @@
 package cz.creeper.customitemlibrary;
 
-import com.google.common.base.Preconditions;
-import cz.creeper.customitemlibrary.util.BiKeyHashMap;
-import cz.creeper.customitemlibrary.util.BiKeyMap;
-import org.spongepowered.api.Sponge;
-import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.item.inventory.ItemStack;
 
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class CustomItemServiceImpl implements CustomItemService {
-    public static final char ID_SEPARATOR = ':';
-    private final BiKeyMap<String, Integer, CustomItemRecord> records = new BiKeyHashMap<>();
-    //private final BiMap<String, Integer> idToDurability = HashBiMap.create();
+    private final CustomItemRegistryMap registryMap = new CustomItemRegistryMap();
 
+    public CustomItemServiceImpl() {
+        registryMap.put(CustomToolDefinition.class, new CustomToolRegistry());
+    }
+
+    @SuppressWarnings("unchecked")
     @Override
-    public void define(CustomItemDefinition definition) {
-        String id = definition.getId();
-        Optional<CustomItemRecord> record = getCustomItemRecord(id);
+    public <I extends CustomItem, T extends CustomItemDefinition<I>> boolean register(T definition) {
+        Optional<Boolean> result = registryMap.get(definition).map(registry -> registry.register(definition));
 
-        if(record.isPresent()) {
-            return record.get();
-        } else {
-            int durability = records.size();
-            CustomItemRecord newRecord = new CustomItemRecord(this, id, durability);
-
-            records.put(id, durability, newRecord);
-
-            return newRecord;
-        }
+        if(result.isPresent())
+            return result.get();
+        else
+            throw new IllegalArgumentException("Invalid definition type.");
     }
 
     @Override
-    public Optional<CustomItemRecord> getCustomItemRecord(Object plugin, String typeId) {
-        return getCustomItemRecord(getId(plugin, typeId));
-    }
-
-    private Optional<CustomItemRecord> getCustomItemRecord(String id) {
-        return Optional.ofNullable(records.getFirst(id));
-    }
-
-    @Override
-    public Optional<CustomItemRecord> getCustomItemRecord(Object plugin, int durability) {
-        return Optional.ofNullable(records.getSecond(durability));
+    public Optional<CustomItem> getCustomItem(ItemStack itemStack) {
+        return registryMap.values().stream().map(registry -> registry.wrapIfPossible(itemStack)).filter(Optional::isPresent)
+                .map(Optional::get).collect(Collectors.collectingAndThen(
+                        Collectors.toList(),
+                        list -> {
+                            if(list.size() == 0)
+                                return Optional.empty();
+                            else if(list.size() == 1)
+                                return Optional.of(list.get(0));
+                            else
+                                throw new IllegalStateException("Found more than 1 applicable registries for the following ItemStack: " + itemStack);
+                        }
+                ));
     }
 
     @Override
@@ -53,14 +47,5 @@ public class CustomItemServiceImpl implements CustomItemService {
     @Override
     public void saveDictionary() {
 
-    }
-
-    private static String getId(Object plugin, String typeId) {
-        Preconditions.checkNotNull(plugin, "plugin");
-        Preconditions.checkNotNull(typeId, "typeId");
-
-        return Sponge.getPluginManager().fromInstance(plugin)
-                .orElseThrow(() -> new IllegalArgumentException("Could not get the plugin container."))
-                + Character.toString(ID_SEPARATOR) + typeId;
     }
 }

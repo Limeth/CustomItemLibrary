@@ -23,7 +23,7 @@ import java.util.function.Consumer;
  */
 @EqualsAndHashCode
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class CustomToolDefinition implements CustomItemDefinition {
+public class CustomToolDefinition implements CustomItemDefinition<CustomTool> {
     @Getter
     @NonNull
     private final String pluginId;
