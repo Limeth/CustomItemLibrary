@@ -1,6 +1,9 @@
-package cz.creeper.customitemlibrary;
+package cz.creeper.customitemlibrary.registry;
 
 import com.google.common.base.Preconditions;
+import cz.creeper.customitemlibrary.CustomItemCreationEvent;
+import cz.creeper.customitemlibrary.CustomTool;
+import cz.creeper.customitemlibrary.data.CustomItemData;
 import lombok.*;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
@@ -77,6 +80,7 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
         itemStack.offer(Keys.HIDE_UNBREAKABLE, true);
         itemStack.offer(Keys.HIDE_ATTRIBUTES, true);
         itemStack.offer(Keys.DISPLAY_NAME, Text.of(getId()));
+        itemStack.offer(new CustomItemData(getId()));
 
         CustomTool tool = new CustomTool(itemStack, this);
         CustomItemCreationEvent event = new CustomItemCreationEvent(cause, tool);

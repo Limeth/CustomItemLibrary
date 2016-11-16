@@ -1,10 +1,19 @@
-package cz.creeper.customitemlibrary;
+package cz.creeper.customitemlibrary.registry;
 
+import cz.creeper.customitemlibrary.CustomItem;
 import lombok.NonNull;
 import org.spongepowered.api.event.cause.Cause;
 
 public interface CustomItemDefinition<T extends CustomItem> {
     char ID_SEPARATOR = ':';
+
+    static String getPluginId(String id) {
+        return id.substring(0, id.indexOf(ID_SEPARATOR));
+    }
+
+    static String getTypeId(String id) {
+        return id.substring(id.indexOf(ID_SEPARATOR) + 1);
+    }
 
     /**
      * The ID of the plugin that created this item type.

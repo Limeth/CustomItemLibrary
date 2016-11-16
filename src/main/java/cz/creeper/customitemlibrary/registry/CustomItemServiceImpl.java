@@ -1,13 +1,13 @@
-package cz.creeper.customitemlibrary;
+package cz.creeper.customitemlibrary.registry;
 
-import ninja.leaping.configurate.commented.CommentedConfigurationNode;
-import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
+import cz.creeper.customitemlibrary.CustomItem;
 import org.spongepowered.api.item.inventory.ItemStack;
 
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class CustomItemServiceImpl implements CustomItemService {
+    public static final String DIRECTORY_NAME = "registries";
     private final CustomItemRegistryMap registryMap = new CustomItemRegistryMap();
 
     public CustomItemServiceImpl() {
@@ -47,6 +47,6 @@ public class CustomItemServiceImpl implements CustomItemService {
 
     @Override
     public void saveDictionary() {
-
+        
     }
 }

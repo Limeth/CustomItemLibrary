@@ -1,6 +1,7 @@
-package cz.creeper.customitemlibrary;
+package cz.creeper.customitemlibrary.registry;
 
 import com.google.common.collect.Maps;
+import cz.creeper.customitemlibrary.CustomItem;
 
 import java.util.Collection;
 import java.util.Map;
