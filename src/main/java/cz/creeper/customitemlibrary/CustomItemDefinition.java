@@ -1,6 +1,7 @@
 package cz.creeper.customitemlibrary;
 
 import lombok.NonNull;
+import org.spongepowered.api.event.cause.Cause;
 
 public interface CustomItemDefinition<T extends CustomItem> {
     char ID_SEPARATOR = ':';
@@ -29,13 +30,7 @@ public interface CustomItemDefinition<T extends CustomItem> {
     }
 
     /**
-     * The human-readable display name of the item.
-     * Starts with an uppercase letter.
-     */
-    @NonNull String getDisplayName();
-
-    /**
      * @return A {@link CustomItem} in with default properties.
      */
-    @NonNull T createItem();
+    @NonNull T createItem(Cause cause);
 }

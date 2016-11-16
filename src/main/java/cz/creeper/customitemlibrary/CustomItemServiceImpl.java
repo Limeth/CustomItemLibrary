@@ -1,5 +1,7 @@
 package cz.creeper.customitemlibrary;
 
+import ninja.leaping.configurate.commented.CommentedConfigurationNode;
+import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
 import org.spongepowered.api.item.inventory.ItemStack;
 
 import java.util.Optional;
@@ -41,7 +43,6 @@ public class CustomItemServiceImpl implements CustomItemService {
 
     @Override
     public void loadDictionary() {
-
     }
 
     @Override
