@@ -43,10 +43,11 @@ public class CustomItemServiceImpl implements CustomItemService {
 
     @Override
     public void loadDictionary() {
+        registryMap.values().forEach(CustomItemRegistry::load);
     }
 
     @Override
     public void saveDictionary() {
-        
+        registryMap.values().forEach(CustomItemRegistry::save);
     }
 }
