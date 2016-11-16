@@ -1,5 +1,6 @@
-package cz.creeper.customitemlibrary;
+package cz.creeper.customitemlibrary.registry;
 
+import cz.creeper.customitemlibrary.CustomItem;
 import org.spongepowered.api.item.inventory.ItemStack;
 
 import java.util.Optional;

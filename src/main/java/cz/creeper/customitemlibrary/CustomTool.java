@@ -1,5 +1,7 @@
 package cz.creeper.customitemlibrary;
 
+import cz.creeper.customitemlibrary.registry.CustomItemDefinition;
+import cz.creeper.customitemlibrary.registry.CustomToolRegistry;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.spongepowered.api.data.key.Keys;
