@@ -21,4 +21,14 @@ public interface CustomItemRegistry<I extends CustomItem, T extends CustomItemDe
      * @return A wrapped custom item
      */
     Optional<I> wrapIfPossible(ItemStack itemStack);
+
+    /**
+     * Loads the registry from persistent storage.
+     */
+    void load();
+
+    /**
+     * Saves the registry to persistent storage.
+     */
+    void save();
 }
