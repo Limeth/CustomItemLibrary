@@ -6,6 +6,7 @@ import com.google.common.collect.Maps;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
 import cz.creeper.customitemlibrary.CustomTool;
 import cz.creeper.customitemlibrary.data.CustomItemLibraryKeys;
+import lombok.ToString;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.ConfigurationOptions;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
@@ -19,6 +20,7 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 
+@ToString
 public class CustomToolRegistry implements CustomItemRegistry<CustomTool, CustomToolDefinition> {
     public static final String FILE_NAME = "toolRegistry.conf";
     public static final String NODE_DEFINITIONS = "definitions";

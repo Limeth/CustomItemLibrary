@@ -1,15 +1,13 @@
 package cz.creeper.customitemlibrary.data;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NonNull;
+import lombok.*;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.DataContainer;
 import org.spongepowered.api.data.manipulator.immutable.common.AbstractImmutableData;
 import org.spongepowered.api.data.value.immutable.ImmutableValue;
 
 @AllArgsConstructor
+@ToString
 public class ImmutableCustomItemData extends AbstractImmutableData<ImmutableCustomItemData, CustomItemData> {
     @NonNull
     @Getter(AccessLevel.PRIVATE)

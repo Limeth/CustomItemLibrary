@@ -12,6 +12,7 @@ import org.spongepowered.api.data.value.mutable.Value;
 import java.util.Optional;
 
 @AllArgsConstructor
+@ToString
 public class CustomItemData extends AbstractData<CustomItemData, ImmutableCustomItemData> {
     @Getter(AccessLevel.PRIVATE)
     @Setter(AccessLevel.PRIVATE)

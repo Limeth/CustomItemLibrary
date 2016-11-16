@@ -4,10 +4,12 @@ import cz.creeper.customitemlibrary.registry.CustomItemDefinition;
 import cz.creeper.customitemlibrary.registry.CustomToolRegistry;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.item.inventory.ItemStack;
 
 @AllArgsConstructor
+@ToString
 public class CustomTool implements CustomItem {
     @Getter
     private ItemStack itemStack;
@@ -28,10 +30,6 @@ public class CustomTool implements CustomItem {
         CustomToolRegistry registry = CustomToolRegistry.getInstance();
         int durability = registry.getDurability(texture)
                 .orElseThrow(() -> new IllegalArgumentException("No custom tool with such texture registered: " + texture));
-
-        //noinspection OptionalGetWithoutIsPresent
-        if(definition != registry.getDefinition(durability).get())
-            throw new IllegalArgumentException("The texture corresponds to a different custom item definition: " + texture);
 
         return itemStack.offer(Keys.ITEM_DURABILITY, durability).isSuccessful();
     }

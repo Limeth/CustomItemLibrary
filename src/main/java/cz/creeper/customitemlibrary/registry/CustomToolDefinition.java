@@ -30,6 +30,7 @@ import java.util.Arrays;
 @ConfigSerializable
 @EqualsAndHashCode
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
+@ToString
 public final class CustomToolDefinition implements CustomItemDefinition<CustomTool> {
     @Getter
     @NonNull
@@ -53,7 +54,7 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
     @Setting("textures")
     private final String[] textures;
 
-    public CustomToolDefinition create(PluginContainer pluginContainer, String typeId, String[] textures) {
+    public static CustomToolDefinition create(PluginContainer pluginContainer, String typeId, String[] textures) {
         Preconditions.checkArgument(textures.length > 0, "At least one texture must be specified.");
         Arrays.stream(textures).forEach(texture ->
                 Preconditions.checkNotNull(texture, "The texture array must not contain null values."));
@@ -61,7 +62,7 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
         return new CustomToolDefinition(pluginContainer.getId(), typeId, textures);
     }
 
-    public CustomToolDefinition create(Object pluginInstance, String typeId, String[] textures) {
+    public static CustomToolDefinition create(Object pluginInstance, String typeId, String[] textures) {
         PluginContainer pluginContainer = Sponge.getPluginManager().fromInstance(pluginInstance)
             .orElseThrow(() -> new IllegalArgumentException("Invalid plugin instance."));
 
