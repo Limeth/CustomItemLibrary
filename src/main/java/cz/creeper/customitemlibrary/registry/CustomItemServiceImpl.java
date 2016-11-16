@@ -1,11 +1,13 @@
 package cz.creeper.customitemlibrary.registry;
 
 import cz.creeper.customitemlibrary.CustomItem;
+import lombok.ToString;
 import org.spongepowered.api.item.inventory.ItemStack;
 
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@ToString
 public class CustomItemServiceImpl implements CustomItemService {
     public static final String DIRECTORY_NAME = "registries";
     private final CustomItemRegistryMap registryMap = new CustomItemRegistryMap();

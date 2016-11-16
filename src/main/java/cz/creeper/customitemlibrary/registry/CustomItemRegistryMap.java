@@ -2,11 +2,13 @@ package cz.creeper.customitemlibrary.registry;
 
 import com.google.common.collect.Maps;
 import cz.creeper.customitemlibrary.CustomItem;
+import lombok.ToString;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 
+@ToString
 public class CustomItemRegistryMap {
     private final Map<Class<?>, CustomItemRegistry<?, ?>> map = Maps.newHashMap();
 
