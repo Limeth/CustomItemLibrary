@@ -1,8 +1,10 @@
 package cz.creeper.customitemlibrary.registry;
 
 import cz.creeper.customitemlibrary.CustomItem;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.plugin.PluginContainer;
 
 import java.util.Optional;
 
@@ -42,6 +44,13 @@ public interface CustomItemDefinition<T extends CustomItem> {
      */
     default String getId() {
         return getId(getPluginId(), getTypeId());
+    }
+
+    /**
+     * @return The associated plugin container, if found
+     */
+    default Optional<PluginContainer> getPlugin() {
+        return Sponge.getPluginManager().getPlugin(getPluginId());
     }
 
     /**

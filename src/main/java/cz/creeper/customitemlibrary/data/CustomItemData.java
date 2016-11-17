@@ -14,6 +14,7 @@ import java.util.Optional;
 @ToString
 public class CustomItemData extends AbstractData<CustomItemData, ImmutableCustomItemData> {
     public static final String ID_UNINITIALIZED = "__UNINITIALIZED__";
+
     @Getter(AccessLevel.PRIVATE)
     @Setter(AccessLevel.PRIVATE)
     @NonNull

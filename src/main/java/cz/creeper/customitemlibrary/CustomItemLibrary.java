@@ -51,7 +51,7 @@ public class CustomItemLibrary {
     @Getter @Inject @DefaultConfig(sharedRoot = false)
     private Path configPath;
     @Getter
-    private CustomItemService service;
+    private CustomItemServiceImpl service;
 
     @Listener
     public void onGameConstruction(GameConstructionEvent event) {
@@ -92,9 +92,9 @@ public class CustomItemLibrary {
 
     private void setupCommands() {
         CommandManager manager = Sponge.getCommandManager();
-        CommandSpec customGive = CommandSpec.builder()
+        CommandSpec give = CommandSpec.builder()
                 .description(Text.of("Gives the player a custom item."))
-                .permission("customitemlibrary.command.customgive")
+                .permission("customitemlibrary.command.customitemlibrary.give")
                 .arguments(
                         GenericArguments.player(Text.of("Target")),
                         GenericArguments.choices(Text.of("Item"), () -> service.getDefinitionMap().keySet(),
@@ -149,7 +149,23 @@ public class CustomItemLibrary {
                 })
                 .build();
 
-        manager.register(this, customGive, "customgive", "cgive", "customg", "cg");
+        CommandSpec resourcepack = CommandSpec.builder()
+                .description(Text.of("Creates the resourcepack."))
+                .permission("customitemlibrary.command.customitemlibrary.resourcepack")
+                .executor((CommandSource src, CommandContext args) -> {
+                    service.generateResourcePack();
+                    return CommandResult.success();
+                })
+                .build();
+
+        CommandSpec customItemLibrary = CommandSpec.builder()
+                .description(Text.of("CustomItemLibrary commands."))
+                .permission("customitemlibrary.command.customitemlibrary")
+                .child(give, "give", "g")
+                .child(resourcepack, "resourcepack", "rp", "r")
+                .build();
+
+        manager.register(this, customItemLibrary, "customitemlibrary", "cil");
     }
 
     public ConfigurationOptions getDefaultConfigurationOptions() {

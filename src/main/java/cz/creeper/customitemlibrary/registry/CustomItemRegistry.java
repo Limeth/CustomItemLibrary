@@ -2,6 +2,8 @@ package cz.creeper.customitemlibrary.registry;
 
 import cz.creeper.customitemlibrary.CustomItem;
 
+import java.nio.file.Path;
+
 public interface CustomItemRegistry<I extends CustomItem, T extends CustomItemDefinition<I>> {
     /**
      * Registers the definition.
@@ -13,10 +15,17 @@ public interface CustomItemRegistry<I extends CustomItem, T extends CustomItemDe
     /**
      * Loads the registry from persistent storage.
      */
-    void load();
+    void load(Path directory);
 
     /**
      * Saves the registry to persistent storage.
      */
-    void save();
+    void save(Path directory);
+
+    /**
+     * Adds files to the resourcepack specified by the argument
+     *
+     * @param directory The resourcepack directory
+     */
+    void generateResourcePack(Path directory);
 }

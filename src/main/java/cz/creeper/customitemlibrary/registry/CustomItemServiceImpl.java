@@ -2,9 +2,11 @@ package cz.creeper.customitemlibrary.registry;
 
 import com.google.common.collect.Maps;
 import cz.creeper.customitemlibrary.CustomItem;
+import cz.creeper.customitemlibrary.CustomItemLibrary;
 import lombok.ToString;
 import org.spongepowered.api.item.inventory.ItemStack;
 
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,7 +14,8 @@ import java.util.Optional;
 
 @ToString
 public class CustomItemServiceImpl implements CustomItemService {
-    public static final String DIRECTORY_NAME = "registries";
+    public static final String DIRECTORY_NAME_REGISTRIES = "registries";
+    public static final String DIRECTORY_NAME_RESOURCEPACK = "resourcepack";
     private final CustomItemRegistryMap registryMap = new CustomItemRegistryMap();
     private final HashMap<String, CustomItemDefinition> definitionMap = Maps.newHashMap();
 
@@ -50,11 +53,31 @@ public class CustomItemServiceImpl implements CustomItemService {
 
     @Override
     public void loadDictionary() {
-        registryMap.values().forEach(CustomItemRegistry::load);
+        Path directory = getDirectoryRegistries();
+
+        registryMap.values().forEach(registry -> registry.load(directory));
     }
 
     @Override
     public void saveDictionary() {
-        registryMap.values().forEach(CustomItemRegistry::save);
+        Path directory = getDirectoryRegistries();
+
+        registryMap.values().forEach(registry -> registry.save(directory));
+    }
+
+    public void generateResourcePack() {
+        Path directory = getDirectoryResourcePack();
+
+        registryMap.values().forEach(registry -> registry.generateResourcePack(directory));
+    }
+
+    public static Path getDirectoryRegistries() {
+        return CustomItemLibrary.getInstance().getConfigPath()
+                .resolveSibling(DIRECTORY_NAME_REGISTRIES);
+    }
+
+    public static Path getDirectoryResourcePack() {
+        return CustomItemLibrary.getInstance().getConfigPath()
+                .resolveSibling(DIRECTORY_NAME_RESOURCEPACK);
     }
 }
