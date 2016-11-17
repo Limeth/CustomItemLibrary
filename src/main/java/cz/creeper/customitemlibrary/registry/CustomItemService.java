@@ -1,8 +1,10 @@
 package cz.creeper.customitemlibrary.registry;
 
 import cz.creeper.customitemlibrary.CustomItem;
+import cz.creeper.customitemlibrary.data.CustomItemLibraryKeys;
 import org.spongepowered.api.item.inventory.ItemStack;
 
+import java.util.Map;
 import java.util.Optional;
 
 public interface CustomItemService {
@@ -12,6 +14,19 @@ public interface CustomItemService {
      * @param definition The definition to register
      */
     <I extends CustomItem, T extends CustomItemDefinition<I>> void register(T definition);
+
+    /**
+     * @return An unmodifiable map; the keys are the ids, the values are the definitions
+     */
+    Map<String, CustomItemDefinition> getDefinitionMap();
+
+    /**
+     * @param itemStack The {@link ItemStack} to get the definition of
+     * @return The definition, if one is registered.
+     */
+    default Optional<CustomItemDefinition> getDefinition(ItemStack itemStack) {
+        return itemStack.get(CustomItemLibraryKeys.CUSTOM_ITEM_ID).flatMap(customItemId -> Optional.ofNullable(getDefinitionMap().get(customItemId)));
+    }
 
     /**
      * @param itemStack The ItemStack to wrap

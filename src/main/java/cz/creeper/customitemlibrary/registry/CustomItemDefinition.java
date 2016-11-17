@@ -1,11 +1,17 @@
 package cz.creeper.customitemlibrary.registry;
 
 import cz.creeper.customitemlibrary.CustomItem;
-import lombok.NonNull;
 import org.spongepowered.api.event.cause.Cause;
+import org.spongepowered.api.item.inventory.ItemStack;
+
+import java.util.Optional;
 
 public interface CustomItemDefinition<T extends CustomItem> {
     char ID_SEPARATOR = ':';
+
+    static String getId(String pluginId, String typeId) {
+        return pluginId + ID_SEPARATOR + typeId;
+    }
 
     static String getPluginId(String id) {
         return id.substring(0, id.indexOf(ID_SEPARATOR));
@@ -21,7 +27,7 @@ public interface CustomItemDefinition<T extends CustomItem> {
      *
      * Must be lower-case, separate words with an underscore.
      */
-    @NonNull String getPluginId();
+    String getPluginId();
 
     /**
      * The string uniquely identifying this item type.
@@ -29,17 +35,27 @@ public interface CustomItemDefinition<T extends CustomItem> {
      *
      * Must be lower-case, separate words with an underscore.
      */
-    @NonNull String getTypeId();
+    String getTypeId();
 
     /**
      * @return "<pluginId>:<typeId>"
      */
-    @NonNull default String getId() {
-        return getPluginId() + ID_SEPARATOR + getTypeId();
+    default String getId() {
+        return getId(getPluginId(), getTypeId());
     }
 
     /**
      * @return A {@link CustomItem} in with default properties.
      */
-    @NonNull T createItem(Cause cause);
+    T createItem(Cause cause);
+
+    /**
+     * Wraps the {@link ItemStack} in a helper class extending {@link CustomItem},
+     * if the {@link ItemStack} is representing an actual custom item
+     * created by the {@link CustomItemDefinition#createItem(Cause)} method.
+     *
+     * @param itemStack The {@link ItemStack} to wrap
+     * @return The wrapped {@link ItemStack}, if the item actually represents this definition
+     */
+    Optional<T> wrapIfPossible(ItemStack itemStack);
 }

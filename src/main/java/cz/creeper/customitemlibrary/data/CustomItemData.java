@@ -11,12 +11,18 @@ import org.spongepowered.api.data.value.mutable.Value;
 
 import java.util.Optional;
 
-@AllArgsConstructor
 @ToString
 public class CustomItemData extends AbstractData<CustomItemData, ImmutableCustomItemData> {
+    public static final String ID_UNINITIALIZED = "__UNINITIALIZED__";
     @Getter(AccessLevel.PRIVATE)
     @Setter(AccessLevel.PRIVATE)
+    @NonNull
     private String customItemId;
+
+    public CustomItemData(String customItemId) {
+        this.customItemId = customItemId;
+        registerGettersAndSetters();
+    }
 
     @Override
     protected void registerGettersAndSetters() {
@@ -26,7 +32,7 @@ public class CustomItemData extends AbstractData<CustomItemData, ImmutableCustom
     }
 
     public Value<String> customItemId() {
-        return Sponge.getRegistry().getValueFactory().createValue(CustomItemLibraryKeys.CUSTOM_ITEM_ID, this.customItemId, null);
+        return Sponge.getRegistry().getValueFactory().createValue(CustomItemLibraryKeys.CUSTOM_ITEM_ID, this.customItemId, ID_UNINITIALIZED);
     }
 
     @Override

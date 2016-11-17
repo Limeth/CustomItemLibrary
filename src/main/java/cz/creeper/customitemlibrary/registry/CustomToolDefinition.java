@@ -1,12 +1,11 @@
 package cz.creeper.customitemlibrary.registry;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import cz.creeper.customitemlibrary.CustomItemCreationEvent;
 import cz.creeper.customitemlibrary.CustomTool;
 import cz.creeper.customitemlibrary.data.CustomItemData;
 import lombok.*;
-import ninja.leaping.configurate.objectmapping.Setting;
-import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.event.cause.Cause;
@@ -16,7 +15,9 @@ import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.text.Text;
 
-import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Defines a custom item.
@@ -27,19 +28,16 @@ import java.util.Arrays;
  *
  * Note: Shears cannot be stacked together.
  */
-@ConfigSerializable
 @EqualsAndHashCode
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @ToString
 public final class CustomToolDefinition implements CustomItemDefinition<CustomTool> {
     @Getter
     @NonNull
-    @Setting("pluginId")
     private final String pluginId;
 
     @Getter
     @NonNull
-    @Setting("typeId")
     private final String typeId;
 
     /**
@@ -51,18 +49,17 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
      */
     @Getter
     @NonNull
-    @Setting("textures")
-    private final String[] textures;
+    private final List<String> textures;
 
-    public static CustomToolDefinition create(PluginContainer pluginContainer, String typeId, String[] textures) {
-        Preconditions.checkArgument(textures.length > 0, "At least one texture must be specified.");
-        Arrays.stream(textures).forEach(texture ->
+    public static CustomToolDefinition create(PluginContainer pluginContainer, String typeId, Collection<String> textures) {
+        Preconditions.checkArgument(!textures.isEmpty(), "At least one texture must be specified.");
+        textures.forEach(texture ->
                 Preconditions.checkNotNull(texture, "The texture array must not contain null values."));
 
-        return new CustomToolDefinition(pluginContainer.getId(), typeId, textures);
+        return new CustomToolDefinition(pluginContainer.getId(), typeId, Lists.newArrayList(textures));
     }
 
-    public static CustomToolDefinition create(Object pluginInstance, String typeId, String[] textures) {
+    public static CustomToolDefinition create(Object pluginInstance, String typeId, Collection<String> textures) {
         PluginContainer pluginContainer = Sponge.getPluginManager().fromInstance(pluginInstance)
             .orElseThrow(() -> new IllegalArgumentException("Invalid plugin instance."));
 
@@ -73,7 +70,7 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
     public CustomTool createItem(Cause cause) {
         CustomToolRegistry registry = CustomToolRegistry.getInstance();
         ItemStack itemStack = ItemStack.of(getItemType(), 1);
-        int defaultDurability = registry.getDurability(textures[0])
+        int defaultDurability = registry.getDurability(textures.get(0))
                 .orElseThrow(() -> new IllegalStateException("Could not get the durability for the default texture."));
 
         itemStack.offer(Keys.ITEM_DURABILITY, defaultDurability);
@@ -89,6 +86,14 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
         Sponge.getEventManager().post(event);
 
         return tool;
+    }
+
+    @Override
+    public Optional<CustomTool> wrapIfPossible(ItemStack itemStack) {
+        if(itemStack.getItem() != CustomToolDefinition.getItemType())
+            return Optional.empty();
+
+        return Optional.of(new CustomTool(itemStack, this));
     }
 
     public static ItemType getItemType() {
