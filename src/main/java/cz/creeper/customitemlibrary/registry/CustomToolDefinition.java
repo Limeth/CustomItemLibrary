@@ -8,6 +8,7 @@ import cz.creeper.customitemlibrary.data.CustomItemData;
 import lombok.*;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.key.Keys;
+import org.spongepowered.api.data.property.item.UseLimitProperty;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.item.ItemTypes;
@@ -18,6 +19,7 @@ import org.spongepowered.api.text.Text;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Defines a custom item.
@@ -68,13 +70,16 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
 
     @Override
     public CustomTool createItem(Cause cause) {
+        PluginContainer plugin = getPlugin()
+                .orElseThrow(() -> new IllegalStateException("Could not access the plugin owning this custom tool: "
+                                                             + getPluginId()));
         CustomToolRegistry registry = CustomToolRegistry.getInstance();
         ItemStack itemStack = ItemStack.of(getItemType(), 1);
-        int defaultDurability = registry.getDurability(textures.get(0))
+        int defaultDurability = registry.getDurability(plugin, textures.get(0))
                 .orElseThrow(() -> new IllegalStateException("Could not get the durability for the default texture."));
 
-        itemStack.offer(Keys.ITEM_DURABILITY, defaultDurability);
         itemStack.offer(Keys.UNBREAKABLE, true);
+        itemStack.offer(Keys.ITEM_DURABILITY, defaultDurability);
         itemStack.offer(Keys.HIDE_UNBREAKABLE, true);
         itemStack.offer(Keys.HIDE_ATTRIBUTES, true);
         itemStack.offer(Keys.DISPLAY_NAME, Text.of(getId()));
@@ -96,7 +101,35 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
         return Optional.of(new CustomTool(itemStack, this));
     }
 
+    /**
+     * @return A list of "<pluginId>:<texture>"
+     */
+    public List<String> getTextureIds() {
+        return textures.stream()
+                .map(texture -> pluginId + CustomItemDefinition.ID_SEPARATOR + texture)
+                .collect(Collectors.toList());
+    }
+
     public static ItemType getItemType() {
         return ItemTypes.SHEARS;
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    public static int getNumberOfUses() {
+        return getItemType().getDefaultProperty(UseLimitProperty.class)
+                .orElseThrow(() -> new IllegalStateException("Could not access the custom tool use limit property."))
+                .getValue();
+    }
+
+    public static String getTexturePath(String texture) {
+        return "textures/tools/" + texture + ".png";
+    }
+
+    public static String getAssetPrefix(PluginContainer plugin) {
+        return getAssetPrefix(plugin.getId());
+    }
+
+    public static String getAssetPrefix(String pluginId) {
+        return "assets/" + pluginId + "/";
     }
 }
