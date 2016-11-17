@@ -4,12 +4,18 @@ import lombok.ToString;
 import org.spongepowered.api.data.DataHolder;
 import org.spongepowered.api.data.DataView;
 import org.spongepowered.api.data.manipulator.DataManipulatorBuilder;
+import org.spongepowered.api.data.persistence.AbstractDataBuilder;
 import org.spongepowered.api.data.persistence.InvalidDataException;
 
 import java.util.Optional;
 
 @ToString
-public class CustomItemManipulatorBuilder implements DataManipulatorBuilder<CustomItemData, ImmutableCustomItemData> {
+public class CustomItemManipulatorBuilder extends AbstractDataBuilder<CustomItemData>
+        implements DataManipulatorBuilder<CustomItemData, ImmutableCustomItemData> {
+    public CustomItemManipulatorBuilder() {
+        super(CustomItemData.class, 1);
+    }
+
     @Override
     public CustomItemData create() {
         return new CustomItemData(null);
@@ -21,7 +27,7 @@ public class CustomItemManipulatorBuilder implements DataManipulatorBuilder<Cust
     }
 
     @Override
-    public Optional<CustomItemData> build(DataView container) throws InvalidDataException {
+    protected Optional<CustomItemData> buildContent(DataView container) throws InvalidDataException {
         return container.getString(CustomItemLibraryKeys.CUSTOM_ITEM_ID.getQuery()).map(CustomItemData::new);
     }
 }
