@@ -3,6 +3,11 @@ package cz.creeper.customitemlibrary.registry;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.stream.JsonWriter;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
 import cz.creeper.customitemlibrary.CustomTool;
 import lombok.ToString;
@@ -15,6 +20,8 @@ import org.spongepowered.api.Sponge;
 import org.spongepowered.api.asset.Asset;
 import org.spongepowered.api.plugin.PluginContainer;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -172,6 +179,8 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
 
     @Override
     public void generateResourcePack(Path directory) {
+        JsonArray modelOverrides = new JsonArray();
+
         CustomItemLibrary.getInstance().getService().getDefinitionMap().values().stream()
                 .filter(definition -> definition instanceof CustomToolDefinition)
                 .map(CustomToolDefinition.class::cast)
@@ -203,10 +212,57 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
                             } catch(IOException e) {
                                 CustomItemLibrary.getInstance().getLogger()
                                         .warn("Could not copy texture a texture from assets (" + filePath + "): " + e.getLocalizedMessage());
+                                return;
                             }
+
+                            int durability = getDurability(plugin, texture)
+                                    .orElseThrow(() -> new IllegalStateException("Could not access the durability of texture '" + texture + "'."));
+                            double damage = (double) durability / (double) CustomToolDefinition.getNumberOfUses();
+
+                            JsonObject modelPredicate = new JsonObject();
+                            modelPredicate.addProperty("damaged", 0);
+                            modelPredicate.addProperty("damage", damage);
+
+                            JsonObject model = new JsonObject();
+                            model.add("predicate", modelPredicate);
+                            model.addProperty("model", texture);
+                            modelOverrides.add(model);
                         })
                     )
                 );
+
+        String defaultTexture = "items/" + CustomToolDefinition.getItemType().getId();
+        JsonObject defaultModelPredicate = new JsonObject();
+        defaultModelPredicate.addProperty("damaged", 1);
+        defaultModelPredicate.addProperty("damage", 0.0);
+
+        JsonObject defaultModel = new JsonObject();
+        defaultModel.add("predicate", defaultModelPredicate);
+        defaultModel.addProperty("model", defaultTexture);
+        modelOverrides.add(defaultModel);
+
+        JsonObject modelTextures = new JsonObject();
+        modelTextures.addProperty("layer0", defaultTexture);
+
+        JsonObject descriptorRoot = new JsonObject();
+        descriptorRoot.addProperty("parent", "item/handheld");
+        descriptorRoot.add("textures", modelTextures);
+        descriptorRoot.add("overrides", modelOverrides);
+
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        File modelFile = CustomItemServiceImpl.getDirectoryResourcePack()
+                .resolve("assets").resolve("minecraft").resolve("models")
+                .resolve("item").toFile();
+
+        try {
+            JsonWriter writer = new JsonWriter(new FileWriter(modelFile));
+
+            gson.toJson(descriptorRoot, writer);
+        } catch (IOException e) {
+            CustomItemLibrary.getInstance().getLogger()
+                    .error("Could not write a model file for custom tools.");
+            e.printStackTrace();
+        }
     }
 
     public Optional<Integer> getDurability(PluginContainer plugin, String texture) {
