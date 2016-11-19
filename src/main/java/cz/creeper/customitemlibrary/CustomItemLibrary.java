@@ -1,5 +1,6 @@
 package cz.creeper.customitemlibrary;
 
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import cz.creeper.customitemlibrary.data.CustomItemData;
 import cz.creeper.customitemlibrary.data.CustomItemManipulatorBuilder;
@@ -7,6 +8,7 @@ import cz.creeper.customitemlibrary.data.ImmutableCustomItemData;
 import cz.creeper.customitemlibrary.registry.CustomItemDefinition;
 import cz.creeper.customitemlibrary.registry.CustomItemService;
 import cz.creeper.customitemlibrary.registry.CustomItemServiceImpl;
+import cz.creeper.customitemlibrary.registry.CustomToolDefinition;
 import lombok.Getter;
 import ninja.leaping.configurate.ConfigurationOptions;
 import ninja.leaping.configurate.objectmapping.GuiceObjectMapperFactory;
@@ -74,6 +76,7 @@ public class CustomItemLibrary {
     @Listener
     public void onGamePostInitialization(GamePostInitializationEvent event) {
         // During this phase, plugins using this library should register their custom item definitions.
+        service.register(CustomToolDefinition.create(this, "weird", Lists.newArrayList("weird_1", "weird_2")));
     }
 
     @Listener
