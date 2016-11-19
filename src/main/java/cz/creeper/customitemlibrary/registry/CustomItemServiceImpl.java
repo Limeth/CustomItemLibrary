@@ -4,8 +4,12 @@ import com.google.common.collect.Maps;
 import cz.creeper.customitemlibrary.CustomItem;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
 import lombok.ToString;
+import org.spongepowered.api.Sponge;
+import org.spongepowered.api.asset.Asset;
 import org.spongepowered.api.item.inventory.ItemStack;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,6 +20,7 @@ import java.util.Optional;
 public class CustomItemServiceImpl implements CustomItemService {
     public static final String DIRECTORY_NAME_REGISTRIES = "registries";
     public static final String DIRECTORY_NAME_RESOURCEPACK = "resourcepack";
+    public static final String FILE_NAME_PACK = "pack.mcmeta";
     private final CustomItemRegistryMap registryMap = new CustomItemRegistryMap();
     private final HashMap<String, CustomItemDefinition> definitionMap = Maps.newHashMap();
 
@@ -67,6 +72,22 @@ public class CustomItemServiceImpl implements CustomItemService {
 
     public void generateResourcePack() {
         Path directory = getDirectoryResourcePack();
+        Path packFile = directory.resolve(FILE_NAME_PACK);
+
+        try {
+            Files.createDirectories(directory);
+
+            if (Files.exists(packFile))
+                Files.delete(packFile);
+
+            Asset pack = Sponge.getAssetManager().getAsset(CustomItemLibrary.getInstance(), FILE_NAME_PACK)
+                    .orElseThrow(() -> new IllegalStateException("Could not access the 'pack.mcmeta' asset."));
+            pack.copyToFile(packFile);
+        } catch(IOException e) {
+            CustomItemLibrary.getInstance().getLogger()
+                    .warn("Could not create the 'pack.mcmeta' file.");
+            e.printStackTrace();
+        }
 
         registryMap.values().forEach(registry -> registry.generateResourcePack(directory));
     }

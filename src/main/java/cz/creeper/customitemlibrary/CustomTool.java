@@ -18,22 +18,22 @@ public class CustomTool implements CustomItem {
     @Getter
     private CustomToolDefinition definition;
 
-    public String getTexture() {
+    public String getModel() {
         int durability = itemStack.get(Keys.ITEM_DURABILITY)
                 .orElseThrow(() -> new IllegalStateException("Could not get the durability of a custom tool."));
         CustomToolRegistry registry = CustomToolRegistry.getInstance();
 
-        return registry.getTexture(durability)
-                .orElseThrow(() -> new IllegalStateException("Could not retrieve the texture of a custom tool."));
+        return registry.getModel(durability)
+                .orElseThrow(() -> new IllegalStateException("Could not retrieve the model of a custom tool."));
     }
 
-    public boolean setTexture(String texture) {
+    public boolean setModel(String model) {
         PluginContainer plugin = definition.getPlugin()
                 .orElseThrow(() -> new IllegalStateException("Could not access the plugin owning this custom tool: "
                                                              + definition.getPluginId()));
         CustomToolRegistry registry = CustomToolRegistry.getInstance();
-        int durability = registry.getDurability(plugin, texture)
-                .orElseThrow(() -> new IllegalArgumentException("No custom tool with such texture registered: " + texture));
+        int durability = registry.getDurability(plugin, model)
+                .orElseThrow(() -> new IllegalArgumentException("No custom tool with such model registered: " + model));
 
         return itemStack.offer(Keys.ITEM_DURABILITY, durability).isSuccessful();
     }

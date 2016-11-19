@@ -8,7 +8,6 @@ import cz.creeper.customitemlibrary.data.CustomItemData;
 import lombok.*;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.key.Keys;
-import org.spongepowered.api.data.property.item.UseLimitProperty;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.item.ItemTypes;
@@ -25,8 +24,8 @@ import java.util.stream.Collectors;
  * Defines a custom item.
  * This class is immutable and only a single instance should be created for each custom item type.
  *
- * The item is represented as retextured shears, where a specific durability value
- * signifies a specific texture of the {@link CustomToolDefinition}.
+ * The item is represented as remodelled shears, where a specific durability value
+ * signifies a specific model of the {@link CustomToolDefinition}.
  *
  * Note: Shears cannot be stacked together.
  */
@@ -43,29 +42,29 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
     private final String typeId;
 
     /**
-     * The Asset API is used to access the item textures.
-     * The path to the texture file in a JAR is the following:
-     * `assets/<pluginId>/textures/tools/<texture>.png`
+     * The Asset API is used to access the item models.
+     * The path to the model file in a JAR is the following:
+     * `assets/<pluginId>/models/tools/<model>.png`
      *
      * Must be lower-case, separate words with an underscore.
      */
     @Getter
     @NonNull
-    private final List<String> textures;
+    private final List<String> models;
 
-    public static CustomToolDefinition create(PluginContainer pluginContainer, String typeId, Collection<String> textures) {
-        Preconditions.checkArgument(!textures.isEmpty(), "At least one texture must be specified.");
-        textures.forEach(texture ->
-                Preconditions.checkNotNull(texture, "The texture array must not contain null values."));
+    public static CustomToolDefinition create(PluginContainer pluginContainer, String typeId, Collection<String> models) {
+        Preconditions.checkArgument(!models.isEmpty(), "At least one model must be specified.");
+        models.forEach(model ->
+                Preconditions.checkNotNull(model, "The model array must not contain null values."));
 
-        return new CustomToolDefinition(pluginContainer.getId(), typeId, Lists.newArrayList(textures));
+        return new CustomToolDefinition(pluginContainer.getId(), typeId, Lists.newArrayList(models));
     }
 
-    public static CustomToolDefinition create(Object pluginInstance, String typeId, Collection<String> textures) {
+    public static CustomToolDefinition create(Object pluginInstance, String typeId, Collection<String> models) {
         PluginContainer pluginContainer = Sponge.getPluginManager().fromInstance(pluginInstance)
             .orElseThrow(() -> new IllegalArgumentException("Invalid plugin instance."));
 
-        return create(pluginContainer, typeId, textures);
+        return create(pluginContainer, typeId, models);
     }
 
     @Override
@@ -75,8 +74,8 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
                                                              + getPluginId()));
         CustomToolRegistry registry = CustomToolRegistry.getInstance();
         ItemStack itemStack = ItemStack.of(getItemType(), 1);
-        int defaultDurability = registry.getDurability(plugin, textures.get(0))
-                .orElseThrow(() -> new IllegalStateException("Could not get the durability for the default texture."));
+        int defaultDurability = registry.getDurability(plugin, models.get(0))
+                .orElseThrow(() -> new IllegalStateException("Could not get the durability for the default models."));
 
         itemStack.offer(Keys.UNBREAKABLE, true);
         itemStack.offer(Keys.ITEM_DURABILITY, defaultDurability);
@@ -102,11 +101,11 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
     }
 
     /**
-     * @return A list of "<pluginId>:<texture>"
+     * @return A list of "<pluginId>:<model>"
      */
-    public List<String> getTextureIds() {
-        return textures.stream()
-                .map(texture -> pluginId + CustomItemDefinition.ID_SEPARATOR + texture)
+    public List<String> getModelIds() {
+        return models.stream()
+                .map(model -> pluginId + CustomItemDefinition.ID_SEPARATOR + model)
                 .collect(Collectors.toList());
     }
 
@@ -116,13 +115,16 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
 
     @SuppressWarnings("ConstantConditions")
     public static int getNumberOfUses() {
-        return getItemType().getDefaultProperty(UseLimitProperty.class)
+        return 238;
+        /*
+        return ItemStack.of(getItemType(), 1).getProperty(UseLimitProperty.class)
                 .orElseThrow(() -> new IllegalStateException("Could not access the custom tool use limit property."))
                 .getValue();
+                */
     }
 
-    public static String getTexturePath(String texture) {
-        return "textures/tools/" + texture + ".png";
+    public static String getModelPath(String model) {
+        return "models/tools/" + model + ".png";
     }
 
     public static String getAssetPrefix(PluginContainer plugin) {

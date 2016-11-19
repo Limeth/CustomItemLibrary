@@ -7,7 +7,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.google.gson.stream.JsonWriter;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
 import cz.creeper.customitemlibrary.CustomTool;
 import lombok.ToString;
@@ -20,9 +19,9 @@ import org.spongepowered.api.Sponge;
 import org.spongepowered.api.asset.Asset;
 import org.spongepowered.api.plugin.PluginContainer;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -34,17 +33,17 @@ import java.util.Optional;
 @ToString
 public class CustomToolRegistry implements CustomItemRegistry<CustomTool, CustomToolDefinition> {
     public static final String FILE_NAME = "toolRegistry.conf";
-    public static final String NODE_TEXTURE_IDS = "textureIds";
+    public static final String NODE_MODEL_IDS = "modelIds";
     private static final CustomToolRegistry INSTANCE = new CustomToolRegistry();
-    private final BiMap<Integer, String> durabilityToTextureId = HashBiMap.create();
+    private final BiMap<Integer, String> durabilityToModelId = HashBiMap.create();
 
     private CustomToolRegistry() {}
 
     @Override
     public void register(CustomToolDefinition definition) {
-        definition.getTextureIds().stream()
-                .filter(textureId -> !durabilityToTextureId.containsValue(textureId))
-                .forEach(textureId -> durabilityToTextureId.put(getAvailableDurability(), textureId));
+        definition.getModelIds().stream()
+                .filter(modelId -> !durabilityToModelId.containsValue(modelId))
+                .forEach(modelId -> durabilityToModelId.put(getAvailableDurability(), modelId));
     }
 
     /**
@@ -54,10 +53,10 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
      * @return The first available durability
      */
     private int getAvailableDurability() {
-        if(durabilityToTextureId.size() <= 0)
+        if(durabilityToModelId.size() <= 0)
             return 1;
 
-        List<Integer> durabilities = Lists.newArrayList(durabilityToTextureId.keySet());
+        List<Integer> durabilities = Lists.newArrayList(durabilityToModelId.keySet());
 
         Collections.sort(durabilities);
 
@@ -89,7 +88,7 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
 
     @Override
     public void load(Path directory) {
-        durabilityToTextureId.clear();
+        durabilityToModelId.clear();
 
         try {
             Path configPath = directory.resolve(FILE_NAME);
@@ -108,9 +107,9 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
                 rootNode = loader.createEmptyNode(options);
             }
 
-            ConfigurationNode textureIdsNode = rootNode.getNode(NODE_TEXTURE_IDS);
+            ConfigurationNode modelIdsNode = rootNode.getNode(NODE_MODEL_IDS);
 
-            for (Map.Entry<Object, ? extends ConfigurationNode> entry : textureIdsNode.getChildrenMap().entrySet()) {
+            for (Map.Entry<Object, ? extends ConfigurationNode> entry : modelIdsNode.getChildrenMap().entrySet()) {
                 String rawDurability = (String) entry.getKey();
                 int durability;
 
@@ -122,7 +121,7 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
                     continue;
                 }
 
-                String textureId = entry.getValue().getString();
+                String modelId = entry.getValue().getString();
 
                 if (durability <= 0) {
                     CustomItemLibrary.getInstance().getLogger()
@@ -130,17 +129,17 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
                     continue;
                 } else if(durability >= CustomToolDefinition.getNumberOfUses()) {
                      CustomItemLibrary.getInstance().getLogger()
-                            .warn("Found a texture with an overflowing durability of '" + durability + "', skipping.");
+                            .warn("Found a model with an overflowing durability of '" + durability + "', skipping.");
                     continue;
                 }
 
-                durabilityToTextureId.put(durability, textureId);
+                durabilityToModelId.put(durability, modelId);
             }
         } catch(Throwable t) {
             CustomItemLibrary.getInstance().getLogger()
                     .error("Could not load the custom tool registry, aborting and creating a new, empty one.");
             t.printStackTrace();
-            durabilityToTextureId.clear();
+            durabilityToModelId.clear();
         }
     }
 
@@ -151,15 +150,15 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
                 HoconConfigurationLoader.builder().setPath(configPath).build();
         ConfigurationOptions options = CustomItemLibrary.getInstance().getDefaultConfigurationOptions();
         CommentedConfigurationNode rootNode = loader.createEmptyNode(options);
-        CommentedConfigurationNode textureIdsNode = rootNode.getNode(NODE_TEXTURE_IDS);
+        CommentedConfigurationNode modelIdsNode = rootNode.getNode(NODE_MODEL_IDS);
 
-        textureIdsNode.setComment("DO NOT EDIT THIS FILE MANUALLY UNLESS YOU ARE ABSOLUTELY SURE ABOUT WHAT YOU ARE DOING!");
+        modelIdsNode.setComment("DO NOT EDIT THIS FILE MANUALLY UNLESS YOU ARE ABSOLUTELY SURE ABOUT WHAT YOU ARE DOING!");
 
-        for(Map.Entry<Integer, String> entry : durabilityToTextureId.entrySet()) {
+        for(Map.Entry<Integer, String> entry : durabilityToModelId.entrySet()) {
             int durability = entry.getKey();
-            String textureId = entry.getValue();
+            String modelId = entry.getValue();
 
-            textureIdsNode.getNode(Integer.toString(durability)).setValue(textureId);
+            modelIdsNode.getNode(Integer.toString(durability)).setValue(modelId);
         }
 
         try {
@@ -186,14 +185,14 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
                 .map(CustomToolDefinition.class::cast)
                 .forEach(definition ->
                     definition.getPlugin().ifPresent(plugin ->
-                        definition.getTextures().forEach(texture -> {
-                            String assetPath = CustomToolDefinition.getTexturePath(texture);
+                        definition.getModels().forEach(model -> {
+                            String assetPath = CustomToolDefinition.getModelPath(model);
                             String filePath = CustomToolDefinition.getAssetPrefix(plugin) + assetPath;
                             Optional<Asset> optionalAsset = Sponge.getAssetManager().getAsset(plugin, assetPath);
 
                             if(!optionalAsset.isPresent()) {
                                 CustomItemLibrary.getInstance().getLogger()
-                                        .warn("Could not locate a texture for plugin '"
+                                        .warn("Could not locate a model for plugin '"
                                               + plugin.getName() + "' with path '" + filePath + "'.");
                                 return;
                             }
@@ -211,38 +210,40 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
                                 asset.copyToFile(outputFile);
                             } catch(IOException e) {
                                 CustomItemLibrary.getInstance().getLogger()
-                                        .warn("Could not copy texture a texture from assets (" + filePath + "): " + e.getLocalizedMessage());
+                                        .warn("Could not copy a model from assets (" + filePath + "): " + e.getLocalizedMessage());
                                 return;
                             }
 
-                            int durability = getDurability(plugin, texture)
-                                    .orElseThrow(() -> new IllegalStateException("Could not access the durability of texture '" + texture + "'."));
+                            int durability = getDurability(plugin, model)
+                                    .orElseThrow(() -> new IllegalStateException("Could not access the durability of model '" + model + "'."));
                             double damage = (double) durability / (double) CustomToolDefinition.getNumberOfUses();
 
                             JsonObject modelPredicate = new JsonObject();
                             modelPredicate.addProperty("damaged", 0);
                             modelPredicate.addProperty("damage", damage);
 
-                            JsonObject model = new JsonObject();
-                            model.add("predicate", modelPredicate);
-                            model.addProperty("model", texture);
-                            modelOverrides.add(model);
+                            JsonObject modelJson = new JsonObject();
+                            modelJson.add("predicate", modelPredicate);
+                            modelJson.addProperty("model", model);
+                            modelOverrides.add(modelJson);
                         })
                     )
                 );
 
-        String defaultTexture = "items/" + CustomToolDefinition.getItemType().getId();
+        String fullDefaultId = CustomToolDefinition.getItemType().getId();
+        String defaultId = fullDefaultId.substring(fullDefaultId.indexOf(CustomItemDefinition.ID_SEPARATOR) + 1);
+        String defaultModelPath = "items/" + defaultId;
         JsonObject defaultModelPredicate = new JsonObject();
         defaultModelPredicate.addProperty("damaged", 1);
         defaultModelPredicate.addProperty("damage", 0.0);
 
         JsonObject defaultModel = new JsonObject();
         defaultModel.add("predicate", defaultModelPredicate);
-        defaultModel.addProperty("model", defaultTexture);
+        defaultModel.addProperty("model", defaultModelPath);
         modelOverrides.add(defaultModel);
 
         JsonObject modelTextures = new JsonObject();
-        modelTextures.addProperty("layer0", defaultTexture);
+        modelTextures.addProperty("layer0", defaultModelPath);
 
         JsonObject descriptorRoot = new JsonObject();
         descriptorRoot.addProperty("parent", "item/handheld");
@@ -250,14 +251,16 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
         descriptorRoot.add("overrides", modelOverrides);
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        File modelFile = CustomItemServiceImpl.getDirectoryResourcePack()
+        Path modelPath = CustomItemServiceImpl.getDirectoryResourcePack()
                 .resolve("assets").resolve("minecraft").resolve("models")
-                .resolve("item").toFile();
+                .resolve("item").resolve("shears.json");
 
         try {
-            JsonWriter writer = new JsonWriter(new FileWriter(modelFile));
+            Files.createDirectories(modelPath.getParent());
 
-            gson.toJson(descriptorRoot, writer);
+            try(Writer writer = new FileWriter(modelPath.toFile())) {
+                gson.toJson(descriptorRoot, writer);
+            }
         } catch (IOException e) {
             CustomItemLibrary.getInstance().getLogger()
                     .error("Could not write a model file for custom tools.");
@@ -265,21 +268,21 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
         }
     }
 
-    public Optional<Integer> getDurability(PluginContainer plugin, String texture) {
-        return getDurabilityById(plugin.getId() + CustomItemDefinition.ID_SEPARATOR + texture);
+    public Optional<Integer> getDurability(PluginContainer plugin, String model) {
+        return getDurabilityById(plugin.getId() + CustomItemDefinition.ID_SEPARATOR + model);
     }
 
-    public Optional<Integer> getDurabilityById(String textureId) {
-        return Optional.ofNullable(durabilityToTextureId.inverse().get(textureId));
+    public Optional<Integer> getDurabilityById(String modelId) {
+        return Optional.ofNullable(durabilityToModelId.inverse().get(modelId));
     }
 
-    public Optional<String> getTextureId(int durability) {
-        return Optional.ofNullable(durabilityToTextureId.get(durability));
+    public Optional<String> getModelId(int durability) {
+        return Optional.ofNullable(durabilityToModelId.get(durability));
     }
 
-    public Optional<String> getTexture(int durability) {
-        return getTextureId(durability).map(textureId ->
-                textureId.substring(textureId.indexOf(CustomItemDefinition.ID_SEPARATOR) + 1));
+    public Optional<String> getModel(int durability) {
+        return getModelId(durability).map(modelId ->
+                modelId.substring(modelId.indexOf(CustomItemDefinition.ID_SEPARATOR) + 1));
     }
 
     public static CustomToolRegistry getInstance() {
