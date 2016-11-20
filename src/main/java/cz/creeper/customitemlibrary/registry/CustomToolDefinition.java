@@ -52,19 +52,27 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
     @NonNull
     private final List<String> models;
 
-    public static CustomToolDefinition create(PluginContainer pluginContainer, String typeId, Collection<String> models) {
+    /**
+     * A list of additional assets to be copied to the resourcepack.
+     * Should be located at `assets/<pluginId>/<asset>` in the JAR.
+     */
+    @Getter
+    @NonNull
+    private final List<String> assets;
+
+    public static CustomToolDefinition create(PluginContainer pluginContainer, String typeId, Collection<String> models, Collection<String> assets) {
         Preconditions.checkArgument(!models.isEmpty(), "At least one model must be specified.");
         models.forEach(model ->
                 Preconditions.checkNotNull(model, "The model array must not contain null values."));
 
-        return new CustomToolDefinition(pluginContainer.getId(), typeId, Lists.newArrayList(models));
+        return new CustomToolDefinition(pluginContainer.getId(), typeId, Lists.newArrayList(models), assets == null ? Lists.newArrayList() : Lists.newArrayList(assets));
     }
 
-    public static CustomToolDefinition create(Object pluginInstance, String typeId, Collection<String> models) {
+    public static CustomToolDefinition create(Object pluginInstance, String typeId, Collection<String> models, Collection<String> assets) {
         PluginContainer pluginContainer = Sponge.getPluginManager().fromInstance(pluginInstance)
             .orElseThrow(() -> new IllegalArgumentException("Invalid plugin instance."));
 
-        return create(pluginContainer, typeId, models);
+        return create(pluginContainer, typeId, models, assets);
     }
 
     @Override
@@ -97,6 +105,12 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
         if(itemStack.getItem() != CustomToolDefinition.getItemType())
             return Optional.empty();
 
+        int durability = itemStack.get(Keys.ITEM_DURABILITY)
+                .orElseThrow(() -> new IllegalStateException("Could not access the durability of a tool."));
+
+        if(!CustomToolRegistry.getInstance().getModelId(durability).isPresent())
+            return Optional.empty();
+
         return Optional.of(new CustomTool(itemStack, this));
     }
 
@@ -124,7 +138,7 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
     }
 
     public static String getModelPath(String model) {
-        return "models/tools/" + model + ".png";
+        return "models/tools/" + model + ".json";
     }
 
     public static String getAssetPrefix(PluginContainer plugin) {

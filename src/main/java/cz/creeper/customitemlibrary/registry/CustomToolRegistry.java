@@ -9,6 +9,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
 import cz.creeper.customitemlibrary.CustomTool;
+import cz.creeper.customitemlibrary.util.SortedList;
+import lombok.AllArgsConstructor;
 import lombok.ToString;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.ConfigurationOptions;
@@ -25,10 +27,7 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @ToString
 public class CustomToolRegistry implements CustomItemRegistry<CustomTool, CustomToolDefinition> {
@@ -176,77 +175,74 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
         }
     }
 
+    @AllArgsConstructor
+    private static class ModelPredicate implements Comparable<ModelPredicate> {
+        private final PluginContainer plugin;
+        private final int durability;
+        private final String model;
+
+        @Override
+        public int compareTo(ModelPredicate o) {
+            return Integer.compare(durability, o.durability);
+        }
+    }
+
     @Override
     public void generateResourcePack(Path directory) {
         JsonArray modelOverrides = new JsonArray();
+        SortedList<ModelPredicate> predicates = SortedList.create(Comparator.reverseOrder());
 
         CustomItemLibrary.getInstance().getService().getDefinitionMap().values().stream()
                 .filter(definition -> definition instanceof CustomToolDefinition)
                 .map(CustomToolDefinition.class::cast)
                 .forEach(definition ->
-                    definition.getPlugin().ifPresent(plugin ->
+                    definition.getPlugin().ifPresent(plugin -> {
                         definition.getModels().forEach(model -> {
-                            String assetPath = CustomToolDefinition.getModelPath(model);
-                            String filePath = CustomToolDefinition.getAssetPrefix(plugin) + assetPath;
-                            Optional<Asset> optionalAsset = Sponge.getAssetManager().getAsset(plugin, assetPath);
-
-                            if(!optionalAsset.isPresent()) {
-                                CustomItemLibrary.getInstance().getLogger()
-                                        .warn("Could not locate a model for plugin '"
-                                              + plugin.getName() + "' with path '" + filePath + "'.");
-                                return;
-                            }
-
-                            Asset asset = optionalAsset.get();
-                            Path outputFile = CustomItemServiceImpl.getDirectoryResourcePack()
-                                    .resolve(Paths.get(filePath));
-
-                            try {
-                                Files.createDirectories(outputFile.getParent());
-
-                                if(Files.exists(outputFile))
-                                    Files.delete(outputFile);
-
-                                asset.copyToFile(outputFile);
-                            } catch(IOException e) {
-                                CustomItemLibrary.getInstance().getLogger()
-                                        .warn("Could not copy a model from assets (" + filePath + "): " + e.getLocalizedMessage());
-                                return;
-                            }
-
                             int durability = getDurability(plugin, model)
                                     .orElseThrow(() -> new IllegalStateException("Could not access the durability of model '" + model + "'."));
-                            double damage = (double) durability / (double) CustomToolDefinition.getNumberOfUses();
+                            ModelPredicate predicate = new ModelPredicate(plugin, durability, model);
 
-                            JsonObject modelPredicate = new JsonObject();
-                            modelPredicate.addProperty("damaged", 0);
-                            modelPredicate.addProperty("damage", damage);
+                            if(!predicates.containsElement(predicate))
+                                predicates.add(predicate);
+                        });
 
-                            JsonObject modelJson = new JsonObject();
-                            modelJson.add("predicate", modelPredicate);
-                            modelJson.addProperty("model", model);
-                            modelOverrides.add(modelJson);
-                        })
-                    )
+                        definition.getAssets().forEach(asset -> copyAsset(plugin, asset));
+                    })
                 );
+
+        predicates.forEach(predicate -> {
+            String assetPath = CustomToolDefinition.getModelPath(predicate.model);
+
+            copyAsset(predicate.plugin, assetPath);
+
+            double damage = 1.0 - (double) predicate.durability / (double) CustomToolDefinition.getNumberOfUses();
+
+            JsonObject modelPredicate = new JsonObject();
+            modelPredicate.addProperty("damaged", 0);
+            modelPredicate.addProperty("damage", damage);
+
+            JsonObject modelJson = new JsonObject();
+            modelJson.add("predicate", modelPredicate);
+            modelJson.addProperty("model", getToolModelIdentifier(predicate.plugin, predicate.model));
+            modelOverrides.add(modelJson);
+        });
 
         String fullDefaultId = CustomToolDefinition.getItemType().getId();
         String defaultId = fullDefaultId.substring(fullDefaultId.indexOf(CustomItemDefinition.ID_SEPARATOR) + 1);
-        String defaultModelPath = "items/" + defaultId;
         JsonObject defaultModelPredicate = new JsonObject();
         defaultModelPredicate.addProperty("damaged", 1);
         defaultModelPredicate.addProperty("damage", 0.0);
 
         JsonObject defaultModel = new JsonObject();
         defaultModel.add("predicate", defaultModelPredicate);
-        defaultModel.addProperty("model", defaultModelPath);
+        defaultModel.addProperty("model", getItemModelIdentifier(null, defaultId));
         modelOverrides.add(defaultModel);
 
         JsonObject modelTextures = new JsonObject();
-        modelTextures.addProperty("layer0", defaultModelPath);
+        modelTextures.addProperty("layer0", getItemTextureIdentifier(null, defaultId));
 
         JsonObject descriptorRoot = new JsonObject();
-        descriptorRoot.addProperty("parent", "item/handheld");
+        descriptorRoot.addProperty("parent", getItemModelIdentifier(null, "handheld"));
         descriptorRoot.add("textures", modelTextures);
         descriptorRoot.add("overrides", modelOverrides);
 
@@ -265,6 +261,51 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
             CustomItemLibrary.getInstance().getLogger()
                     .error("Could not write a model file for custom tools.");
             e.printStackTrace();
+        }
+    }
+
+    private static String getToolModelIdentifier(PluginContainer plugin, String tool) {
+        return getFileIdentifier(plugin, "tools", tool);
+    }
+
+    private static String getItemTextureIdentifier(PluginContainer plugin, String texture) {
+        return getFileIdentifier(plugin, "items", texture);
+    }
+
+    private static String getItemModelIdentifier(PluginContainer plugin, String model) {
+        return getFileIdentifier(plugin, "item", model);
+    }
+
+    private static String getFileIdentifier(PluginContainer plugin, String directory, String file) {
+        return (plugin != null ? plugin.getId() : "minecraft") + ":" + directory + "/" + file;
+    }
+
+    private static void copyAsset(PluginContainer plugin, String assetPath) {
+        String filePath = CustomToolDefinition.getAssetPrefix(plugin) + assetPath;
+        Optional<Asset> optionalAsset = Sponge.getAssetManager().getAsset(plugin, assetPath);
+
+        if (!optionalAsset.isPresent()) {
+            CustomItemLibrary.getInstance().getLogger()
+                    .warn("Could not locate an asset for plugin '"
+                            + plugin.getName() + "' with path '" + filePath + "'.");
+            return;
+        }
+
+        Asset asset = optionalAsset.get();
+        Path outputFile = CustomItemServiceImpl.getDirectoryResourcePack()
+                .resolve(Paths.get(filePath));
+
+        try {
+            Files.createDirectories(outputFile.getParent());
+
+            if (Files.exists(outputFile))
+                Files.delete(outputFile);
+
+            asset.copyToFile(outputFile);
+        } catch (IOException e) {
+            CustomItemLibrary.getInstance().getLogger()
+                    .warn("Could not copy a file from assets (" + filePath + "): " + e.getLocalizedMessage());
+            return;
         }
     }
 
