@@ -14,6 +14,7 @@ import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.format.TextColors;
 
 import java.util.Collection;
 import java.util.List;
@@ -41,6 +42,10 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
     @NonNull
     private final String typeId;
 
+    @Getter
+    @NonNull
+    private final String displayName;
+
     /**
      * The Asset API is used to access the item models.
      * The path to the model file in a JAR is the following:
@@ -60,19 +65,19 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
     @NonNull
     private final List<String> assets;
 
-    public static CustomToolDefinition create(PluginContainer pluginContainer, String typeId, Collection<String> models, Collection<String> assets) {
+    public static CustomToolDefinition create(PluginContainer pluginContainer, String typeId, String displayName, Collection<String> models, Collection<String> assets) {
         Preconditions.checkArgument(!models.isEmpty(), "At least one model must be specified.");
         models.forEach(model ->
                 Preconditions.checkNotNull(model, "The model array must not contain null values."));
 
-        return new CustomToolDefinition(pluginContainer.getId(), typeId, Lists.newArrayList(models), assets == null ? Lists.newArrayList() : Lists.newArrayList(assets));
+        return new CustomToolDefinition(pluginContainer.getId(), typeId, displayName, Lists.newArrayList(models), assets == null ? Lists.newArrayList() : Lists.newArrayList(assets));
     }
 
-    public static CustomToolDefinition create(Object pluginInstance, String typeId, Collection<String> models, Collection<String> assets) {
+    public static CustomToolDefinition create(Object pluginInstance, String typeId, String displayName, Collection<String> models, Collection<String> assets) {
         PluginContainer pluginContainer = Sponge.getPluginManager().fromInstance(pluginInstance)
             .orElseThrow(() -> new IllegalArgumentException("Invalid plugin instance."));
 
-        return create(pluginContainer, typeId, models, assets);
+        return create(pluginContainer, typeId, displayName, models, assets);
     }
 
     @Override
@@ -89,8 +94,9 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
         itemStack.offer(Keys.ITEM_DURABILITY, defaultDurability);
         itemStack.offer(Keys.HIDE_UNBREAKABLE, true);
         itemStack.offer(Keys.HIDE_ATTRIBUTES, true);
-        itemStack.offer(Keys.DISPLAY_NAME, Text.of(getId()));
         itemStack.offer(new CustomItemData(getId()));
+
+        updateItemStack(itemStack);
 
         CustomTool tool = new CustomTool(itemStack, this);
         CustomItemCreationEvent event = new CustomItemCreationEvent(cause, tool);
@@ -111,7 +117,34 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
         if(!CustomToolRegistry.getInstance().getModelId(durability).isPresent())
             return Optional.empty();
 
+        updateItemStack(itemStack);
+
         return Optional.of(new CustomTool(itemStack, this));
+    }
+
+    public void updateItemStack(ItemStack itemStack) {
+        /* TODO: This currently does not work, due to Text returning invalid colors
+        Optional<Text> displayName = itemStack.get(Keys.DISPLAY_NAME);
+        Text originalNameText = getDisplayNameText();
+        boolean isOriginalName = displayName
+                .map(name -> name.equals(originalNameText))
+                .orElse(false);
+
+        if(!isOriginalName) {
+            boolean isPlayerRenamed = displayName
+                    .map(name -> !TextColors.RESET.equals(name.getColor()))
+                    .orElse(false);
+
+            if(!isPlayerRenamed) {
+                itemStack.offer(Keys.DISPLAY_NAME, originalNameText);
+            }
+        }
+        */
+        itemStack.offer(Keys.DISPLAY_NAME, getDisplayNameText());
+    }
+
+    public Text getDisplayNameText() {
+        return Text.builder().color(TextColors.RESET).append(Text.of(displayName)).build();
     }
 
     /**
