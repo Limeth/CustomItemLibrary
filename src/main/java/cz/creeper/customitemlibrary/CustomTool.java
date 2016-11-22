@@ -2,6 +2,7 @@ package cz.creeper.customitemlibrary;
 
 import cz.creeper.customitemlibrary.registry.CustomToolDefinition;
 import cz.creeper.customitemlibrary.registry.CustomToolRegistry;
+import cz.creeper.customitemlibrary.registry.DurabilityIdentifier;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
@@ -23,7 +24,7 @@ public class CustomTool implements CustomItem {
                 .orElseThrow(() -> new IllegalStateException("Could not get the durability of a custom tool."));
         CustomToolRegistry registry = CustomToolRegistry.getInstance();
 
-        return registry.getModel(durability)
+        return registry.getModel(itemStack.getItem(), durability)
                 .orElseThrow(() -> new IllegalStateException("Could not retrieve the model of a custom tool."));
     }
 
@@ -32,9 +33,9 @@ public class CustomTool implements CustomItem {
                 .orElseThrow(() -> new IllegalStateException("Could not access the plugin owning this custom tool: "
                                                              + definition.getPluginId()));
         CustomToolRegistry registry = CustomToolRegistry.getInstance();
-        int durability = registry.getDurability(plugin, model)
+        DurabilityIdentifier durabilityId = registry.getDurabilityId(plugin, model)
                 .orElseThrow(() -> new IllegalArgumentException("No custom tool with such model registered: " + model));
 
-        return itemStack.offer(Keys.ITEM_DURABILITY, durability).isSuccessful();
+        return itemStack.offer(Keys.ITEM_DURABILITY, durabilityId.getDurability()).isSuccessful();
     }
 }

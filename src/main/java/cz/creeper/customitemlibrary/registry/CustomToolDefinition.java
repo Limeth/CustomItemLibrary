@@ -7,11 +7,14 @@ import cz.creeper.customitemlibrary.CustomTool;
 import cz.creeper.customitemlibrary.data.CustomItemData;
 import lombok.*;
 import org.spongepowered.api.Sponge;
+import org.spongepowered.api.data.Property;
 import org.spongepowered.api.data.key.Keys;
+import org.spongepowered.api.data.property.item.UseLimitProperty;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
@@ -44,7 +47,7 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
 
     @Getter
     @NonNull
-    private final String displayName;
+    private final ItemStackSnapshot itemStackSnapshot;
 
     /**
      * The Asset API is used to access the item models.
@@ -65,19 +68,16 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
     @NonNull
     private final List<String> assets;
 
-    public static CustomToolDefinition create(PluginContainer pluginContainer, String typeId, String displayName, Collection<String> models, Collection<String> assets) {
+    public static CustomToolDefinition create(Object plugin, String typeId, ItemStackSnapshot itemStackSnapshot, Collection<String> models, Collection<String> assets) {
+        PluginContainer pluginContainer = Sponge.getPluginManager().fromInstance(plugin)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid plugin instance."));
         Preconditions.checkArgument(!models.isEmpty(), "At least one model must be specified.");
         models.forEach(model ->
                 Preconditions.checkNotNull(model, "The model array must not contain null values."));
+        Preconditions.checkArgument(itemStackSnapshot.getCount() == 1, "The ItemStack count must be equal to 1.");
+        Preconditions.checkArgument(getNumberOfUses(itemStackSnapshot.createStack()).isPresent(), "Invalid item type, the item must have a durability.");
 
-        return new CustomToolDefinition(pluginContainer.getId(), typeId, displayName, Lists.newArrayList(models), assets == null ? Lists.newArrayList() : Lists.newArrayList(assets));
-    }
-
-    public static CustomToolDefinition create(Object pluginInstance, String typeId, String displayName, Collection<String> models, Collection<String> assets) {
-        PluginContainer pluginContainer = Sponge.getPluginManager().fromInstance(pluginInstance)
-            .orElseThrow(() -> new IllegalArgumentException("Invalid plugin instance."));
-
-        return create(pluginContainer, typeId, displayName, models, assets);
+        return new CustomToolDefinition(pluginContainer.getId(), typeId, itemStackSnapshot, Lists.newArrayList(models), assets == null ? Lists.newArrayList() : Lists.newArrayList(assets));
     }
 
     @Override
@@ -86,17 +86,15 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
                 .orElseThrow(() -> new IllegalStateException("Could not access the plugin owning this custom tool: "
                                                              + getPluginId()));
         CustomToolRegistry registry = CustomToolRegistry.getInstance();
-        ItemStack itemStack = ItemStack.of(getItemType(), 1);
-        int defaultDurability = registry.getDurability(plugin, models.get(0))
-                .orElseThrow(() -> new IllegalStateException("Could not get the durability for the default models."));
+        ItemStack itemStack = itemStackSnapshot.createStack();
+        DurabilityIdentifier durabilityId = registry.getDurabilityId(plugin, models.get(0))
+                .orElseThrow(() -> new IllegalStateException("Could not get the durability identifier for the default models."));
 
         itemStack.offer(Keys.UNBREAKABLE, true);
-        itemStack.offer(Keys.ITEM_DURABILITY, defaultDurability);
+        itemStack.offer(Keys.ITEM_DURABILITY, durabilityId.getDurability());
         itemStack.offer(Keys.HIDE_UNBREAKABLE, true);
         itemStack.offer(Keys.HIDE_ATTRIBUTES, true);
         itemStack.offer(new CustomItemData(getId()));
-
-        updateItemStack(itemStack);
 
         CustomTool tool = new CustomTool(itemStack, this);
         CustomItemCreationEvent event = new CustomItemCreationEvent(cause, tool);
@@ -114,37 +112,10 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
         int durability = itemStack.get(Keys.ITEM_DURABILITY)
                 .orElseThrow(() -> new IllegalStateException("Could not access the durability of a tool."));
 
-        if(!CustomToolRegistry.getInstance().getModelId(durability).isPresent())
+        if(!CustomToolRegistry.getInstance().getModelId(itemStack.getItem(), durability).isPresent())
             return Optional.empty();
 
-        updateItemStack(itemStack);
-
         return Optional.of(new CustomTool(itemStack, this));
-    }
-
-    public void updateItemStack(ItemStack itemStack) {
-        /* TODO: This currently does not work, due to Text returning invalid colors
-        Optional<Text> displayName = itemStack.get(Keys.DISPLAY_NAME);
-        Text originalNameText = getDisplayNameText();
-        boolean isOriginalName = displayName
-                .map(name -> name.equals(originalNameText))
-                .orElse(false);
-
-        if(!isOriginalName) {
-            boolean isPlayerRenamed = displayName
-                    .map(name -> !TextColors.RESET.equals(name.getColor()))
-                    .orElse(false);
-
-            if(!isPlayerRenamed) {
-                itemStack.offer(Keys.DISPLAY_NAME, originalNameText);
-            }
-        }
-        */
-        itemStack.offer(Keys.DISPLAY_NAME, getDisplayNameText());
-    }
-
-    public Text getDisplayNameText() {
-        return Text.builder().color(TextColors.RESET).append(Text.of(displayName)).build();
     }
 
     /**
@@ -160,14 +131,33 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
         return ItemTypes.SHEARS;
     }
 
-    @SuppressWarnings("ConstantConditions")
-    public static int getNumberOfUses() {
+    public static int getNumberOfUsesTemp() {
         return 238;
-        /*
-        return ItemStack.of(getItemType(), 1).getProperty(UseLimitProperty.class)
-                .orElseThrow(() -> new IllegalStateException("Could not access the custom tool use limit property."))
-                .getValue();
-                */
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    public static Optional<Integer> getNumberOfUses(ItemStackSnapshot itemStack) {
+        return itemStack.getProperty(UseLimitProperty.class)
+                .map(Property::getValue);
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    public static Optional<Integer> getNumberOfUses(ItemStack itemStack) {
+        return itemStack.getProperty(UseLimitProperty.class)
+                .map(Property::getValue);
+    }
+
+    public int getNumberOfUses() {
+        return getNumberOfUses(itemStackSnapshot)
+                .orElseThrow(() -> new IllegalStateException("Could not access the custom tool use limit property."));
+    }
+
+    public static String getNamespaceFromTypeId(String typeId) {
+        return typeId.substring(0, typeId.indexOf(ID_SEPARATOR));
+    }
+
+    public static String getTypeNameFromTypeId(String typeId) {
+        return typeId.substring(typeId.indexOf(ID_SEPARATOR) + 1);
     }
 
     public static String getModelPath(String model) {
