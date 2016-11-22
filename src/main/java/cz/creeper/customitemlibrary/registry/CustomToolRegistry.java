@@ -3,6 +3,7 @@ package cz.creeper.customitemlibrary.registry;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -19,6 +20,7 @@ import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.asset.Asset;
+import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.plugin.PluginContainer;
 
 import java.io.FileWriter;
@@ -34,15 +36,29 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
     public static final String FILE_NAME = "toolRegistry.conf";
     public static final String NODE_MODEL_IDS = "modelIds";
     private static final CustomToolRegistry INSTANCE = new CustomToolRegistry();
-    private final BiMap<Integer, String> durabilityToModelId = HashBiMap.create();
+    private final BiMap<DurabilityIdentifier, String> durabilityIdToModelId = HashBiMap.create();
+    private final Map<ItemType, BiMap<Integer, String>> typeToDurabilityToModelId = Maps.newHashMap();
 
     private CustomToolRegistry() {}
 
     @Override
     public void register(CustomToolDefinition definition) {
         definition.getModelIds().stream()
-                .filter(modelId -> !durabilityToModelId.containsValue(modelId))
-                .forEach(modelId -> durabilityToModelId.put(getAvailableDurability(), modelId));
+                .filter(modelId -> !typeToDurabilityToModelId.containsValue(modelId))
+                .forEach(modelId -> {
+                    ItemType itemType = definition.getItemStackSnapshot().getType();
+                    BiMap<Integer, String> durabilityToModelId = typeToDurabilityToModelId.get(itemType);
+
+                    if(durabilityToModelId == null) {
+                        durabilityToModelId = HashBiMap.create();
+                        typeToDurabilityToModelId.put(itemType, durabilityToModelId);
+                    }
+
+                    int availableDurability = getAvailableDurability(itemType);
+
+                    durabilityToModelId.put(availableDurability, modelId);
+                    durabilityIdToModelId.put(new DurabilityIdentifier(itemType, availableDurability), modelId);
+                });
     }
 
     /**
@@ -51,8 +67,13 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
      *
      * @return The first available durability
      */
-    private int getAvailableDurability() {
-        if(durabilityToModelId.size() <= 0)
+    private int getAvailableDurability(ItemType itemType) {
+        if(durabilityIdToModelId.size() <= 0)
+            return 1;
+
+        BiMap<Integer, String> durabilityToModelId = typeToDurabilityToModelId.get(itemType);
+
+        if(durabilityToModelId == null || durabilityToModelId.size() == 0)
             return 1;
 
         List<Integer> durabilities = Lists.newArrayList(durabilityToModelId.keySet());
@@ -79,15 +100,16 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
         if(durability <= 0)
             throw new IllegalStateException("This should be unreachable!");
 
-        if(durability >= CustomToolDefinition.getNumberOfUses())
-            throw new IllegalStateException("The number of custom tools exceeded the limit of " + (CustomToolDefinition.getNumberOfUses() - 1) + ".");
+        if(durability >= CustomToolDefinition.getNumberOfUsesTemp())
+            throw new IllegalStateException("The number of custom tools exceeded the limit of " + (CustomToolDefinition.getNumberOfUsesTemp() - 1) + ".");
 
         return durability;
     }
 
     @Override
     public void load(Path directory) {
-        durabilityToModelId.clear();
+        durabilityIdToModelId.clear();
+        typeToDurabilityToModelId.clear();
 
         try {
             Path configPath = directory.resolve(FILE_NAME);
@@ -109,36 +131,37 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
             ConfigurationNode modelIdsNode = rootNode.getNode(NODE_MODEL_IDS);
 
             for (Map.Entry<Object, ? extends ConfigurationNode> entry : modelIdsNode.getChildrenMap().entrySet()) {
-                String rawDurability = (String) entry.getKey();
-                int durability;
+                String rawDurabilityId = (String) entry.getKey();
+                DurabilityIdentifier durabilityId;
 
                 try {
-                    durability = Integer.valueOf(rawDurability);
-                } catch (NumberFormatException e) {
+                    durabilityId = DurabilityIdentifier.parse(rawDurabilityId);
+                } catch (Throwable e) {  // God, forgive me for this sin
                     CustomItemLibrary.getInstance().getLogger()
-                            .warn("Could not parse the durability '" + rawDurability + "', skipping.");
+                            .warn("Could not parse the durability '" + rawDurabilityId + "', skipping.");
                     continue;
                 }
 
+                // Add to registry
                 String modelId = entry.getValue().getString();
 
-                if (durability <= 0) {
-                    CustomItemLibrary.getInstance().getLogger()
-                            .warn("Found a non-positive durability '" + durability + "', skipping.");
-                    continue;
-                } else if(durability >= CustomToolDefinition.getNumberOfUses()) {
-                     CustomItemLibrary.getInstance().getLogger()
-                            .warn("Found a model with an overflowing durability of '" + durability + "', skipping.");
-                    continue;
+                durabilityIdToModelId.put(durabilityId, modelId);
+
+                BiMap<Integer, String> durabilityToModelId = typeToDurabilityToModelId.get(durabilityId.getItemType());
+
+                if(durabilityToModelId == null) {
+                    durabilityToModelId = HashBiMap.create();
+                    typeToDurabilityToModelId.put(durabilityId.getItemType(), durabilityToModelId);
                 }
 
-                durabilityToModelId.put(durability, modelId);
+                durabilityToModelId.put(durabilityId.getDurability(), modelId);
             }
         } catch(Throwable t) {
             CustomItemLibrary.getInstance().getLogger()
                     .error("Could not load the custom tool registry, aborting and creating a new, empty one.");
             t.printStackTrace();
-            durabilityToModelId.clear();
+            durabilityIdToModelId.clear();
+            typeToDurabilityToModelId.clear();
         }
     }
 
@@ -153,11 +176,11 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
 
         modelIdsNode.setComment("DO NOT EDIT THIS FILE MANUALLY UNLESS YOU ARE ABSOLUTELY SURE ABOUT WHAT YOU ARE DOING!");
 
-        for(Map.Entry<Integer, String> entry : durabilityToModelId.entrySet()) {
-            int durability = entry.getKey();
+        for(Map.Entry<DurabilityIdentifier, String> entry : durabilityIdToModelId.entrySet()) {
+            DurabilityIdentifier durability = entry.getKey();
             String modelId = entry.getValue();
 
-            modelIdsNode.getNode(Integer.toString(durability)).setValue(modelId);
+            modelIdsNode.getNode(durability.toString()).setValue(modelId);
         }
 
         try {
@@ -190,7 +213,7 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
     @Override
     public void generateResourcePack(Path directory) {
         JsonArray modelOverrides = new JsonArray();
-        SortedList<ModelPredicate> predicates = SortedList.create(Comparator.reverseOrder());
+        Map<ItemType, SortedList<ModelPredicate>> predicateMap = Maps.newHashMap();
 
         CustomItemLibrary.getInstance().getService().getDefinitionMap().values().stream()
                 .filter(definition -> definition instanceof CustomToolDefinition)
@@ -198,9 +221,15 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
                 .forEach(definition ->
                     definition.getPlugin().ifPresent(plugin -> {
                         definition.getModels().forEach(model -> {
-                            int durability = getDurability(plugin, model)
+                            DurabilityIdentifier durabilityId = getDurabilityId(plugin, model)
                                     .orElseThrow(() -> new IllegalStateException("Could not access the durability of model '" + model + "'."));
-                            ModelPredicate predicate = new ModelPredicate(plugin, durability, model);
+                            ModelPredicate predicate = new ModelPredicate(plugin, durabilityId.getDurability(), model);
+                            SortedList<ModelPredicate> predicates = predicateMap.get(durabilityId.getItemType());
+
+                            if(predicates == null) {
+                                predicates = SortedList.create(Comparator.reverseOrder());
+                                predicateMap.put(durabilityId.getItemType(), predicates);
+                            }
 
                             if(!predicates.containsElement(predicate))
                                 predicates.add(predicate);
@@ -210,57 +239,62 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
                     })
                 );
 
-        predicates.forEach(predicate -> {
-            String assetPath = CustomToolDefinition.getModelPath(predicate.model);
+        for(Map.Entry<ItemType, SortedList<ModelPredicate>> entry : predicateMap.entrySet()) {
+            SortedList<ModelPredicate> predicates = entry.getValue();
 
-            copyAsset(predicate.plugin, assetPath);
+            predicates.forEach(predicate -> {
+                String assetPath = CustomToolDefinition.getModelPath(predicate.model);
 
-            double damage = 1.0 - (double) predicate.durability / (double) CustomToolDefinition.getNumberOfUses();
+                copyAsset(predicate.plugin, assetPath);
 
-            JsonObject modelPredicate = new JsonObject();
-            modelPredicate.addProperty("damaged", 0);
-            modelPredicate.addProperty("damage", damage);
+                double damage = 1.0 - (double) predicate.durability / (double) CustomToolDefinition.getNumberOfUsesTemp();
 
-            JsonObject modelJson = new JsonObject();
-            modelJson.add("predicate", modelPredicate);
-            modelJson.addProperty("model", getToolModelIdentifier(predicate.plugin, predicate.model));
-            modelOverrides.add(modelJson);
-        });
+                JsonObject modelPredicate = new JsonObject();
+                modelPredicate.addProperty("damaged", 0);
+                modelPredicate.addProperty("damage", damage);
 
-        String fullDefaultId = CustomToolDefinition.getItemType().getId();
-        String defaultId = fullDefaultId.substring(fullDefaultId.indexOf(CustomItemDefinition.ID_SEPARATOR) + 1);
-        JsonObject defaultModelPredicate = new JsonObject();
-        defaultModelPredicate.addProperty("damaged", 1);
-        defaultModelPredicate.addProperty("damage", 0.0);
+                JsonObject modelJson = new JsonObject();
+                modelJson.add("predicate", modelPredicate);
+                modelJson.addProperty("model", getToolModelIdentifier(predicate.plugin, predicate.model));
+                modelOverrides.add(modelJson);
+            });
 
-        JsonObject defaultModel = new JsonObject();
-        defaultModel.add("predicate", defaultModelPredicate);
-        defaultModel.addProperty("model", getItemModelIdentifier(null, defaultId));
-        modelOverrides.add(defaultModel);
+            String typeId = CustomToolDefinition.getItemType().getId();
+            String typeName = CustomToolDefinition.getTypeNameFromTypeId(typeId);
+            String namespace = CustomToolDefinition.getNamespaceFromTypeId(typeId);
+            JsonObject defaultModelPredicate = new JsonObject();
+            defaultModelPredicate.addProperty("damaged", 1);
+            defaultModelPredicate.addProperty("damage", 0.0);
 
-        JsonObject modelTextures = new JsonObject();
-        modelTextures.addProperty("layer0", getItemTextureIdentifier(null, defaultId));
+            JsonObject defaultModel = new JsonObject();
+            defaultModel.add("predicate", defaultModelPredicate);
+            defaultModel.addProperty("model", getItemModelIdentifier(null, typeName));
+            modelOverrides.add(defaultModel);
 
-        JsonObject descriptorRoot = new JsonObject();
-        descriptorRoot.addProperty("parent", getItemModelIdentifier(null, "handheld"));
-        descriptorRoot.add("textures", modelTextures);
-        descriptorRoot.add("overrides", modelOverrides);
+            JsonObject modelTextures = new JsonObject();
+            modelTextures.addProperty("layer0", getItemTextureIdentifier(null, typeName));
 
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        Path modelPath = CustomItemServiceImpl.getDirectoryResourcePack()
-                .resolve("assets").resolve("minecraft").resolve("models")
-                .resolve("item").resolve("shears.json");
+            JsonObject descriptorRoot = new JsonObject();
+            descriptorRoot.addProperty("parent", getItemModelIdentifier(null, "handheld"));
+            descriptorRoot.add("textures", modelTextures);
+            descriptorRoot.add("overrides", modelOverrides);
 
-        try {
-            Files.createDirectories(modelPath.getParent());
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            Path modelPath = CustomItemServiceImpl.getDirectoryResourcePack()
+                    .resolve("assets").resolve(namespace).resolve("models")
+                    .resolve("item").resolve(typeName + ".json");
 
-            try(Writer writer = new FileWriter(modelPath.toFile())) {
-                gson.toJson(descriptorRoot, writer);
+            try {
+                Files.createDirectories(modelPath.getParent());
+
+                try (Writer writer = new FileWriter(modelPath.toFile())) {
+                    gson.toJson(descriptorRoot, writer);
+                }
+            } catch (IOException e) {
+                CustomItemLibrary.getInstance().getLogger()
+                        .error("Could not write a model file for custom tools.");
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            CustomItemLibrary.getInstance().getLogger()
-                    .error("Could not write a model file for custom tools.");
-            e.printStackTrace();
         }
     }
 
@@ -309,20 +343,25 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
         }
     }
 
-    public Optional<Integer> getDurability(PluginContainer plugin, String model) {
-        return getDurabilityById(plugin.getId() + CustomItemDefinition.ID_SEPARATOR + model);
+    public Optional<DurabilityIdentifier> getDurabilityId(PluginContainer plugin, String model) {
+        return getDurabilityIdByModelId(plugin.getId() + CustomItemDefinition.ID_SEPARATOR + model);
     }
 
-    public Optional<Integer> getDurabilityById(String modelId) {
-        return Optional.ofNullable(durabilityToModelId.inverse().get(modelId));
+    public Optional<DurabilityIdentifier> getDurabilityIdByModelId(String modelId) {
+        return Optional.ofNullable(durabilityIdToModelId.inverse().get(modelId));
     }
 
-    public Optional<String> getModelId(int durability) {
+    public Optional<String> getModelId(ItemType itemType, int durability) {
+        BiMap<Integer, String> durabilityToModelId = typeToDurabilityToModelId.get(itemType);
+
+        if(durabilityToModelId == null)
+            return Optional.empty();
+
         return Optional.ofNullable(durabilityToModelId.get(durability));
     }
 
-    public Optional<String> getModel(int durability) {
-        return getModelId(durability).map(modelId ->
+    public Optional<String> getModel(ItemType itemType, int durability) {
+        return getModelId(itemType, durability).map(modelId ->
                 modelId.substring(modelId.indexOf(CustomItemDefinition.ID_SEPARATOR) + 1));
     }
 
