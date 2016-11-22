@@ -11,6 +11,7 @@ import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import java.util.Optional;
 
 public class DurabilityIdentifier {
+    public static final char DURABILITY_SEPARATOR = '@';
     @Getter
     private final ItemType itemType;
     @Getter
@@ -28,6 +29,7 @@ public class DurabilityIdentifier {
             .orElseThrow(() -> new IllegalArgumentException("This item does not have a durability."));
     }
 
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
     public DurabilityIdentifier(ItemType itemType, int durability) {
         Optional<Integer> numberOfUses = CustomToolDefinition.getNumberOfUses(ItemStack.of(itemType, 1));
         Preconditions.checkArgument(numberOfUses.isPresent(), "This item type does not have a durability.");
@@ -39,7 +41,7 @@ public class DurabilityIdentifier {
     }
 
     public static DurabilityIdentifier parse(String string) {
-        int separatorIndex = string.lastIndexOf(CustomToolDefinition.ID_SEPARATOR);
+        int separatorIndex = string.lastIndexOf(DURABILITY_SEPARATOR);
         String id = string.substring(0, separatorIndex);
         String rawDurability = id.substring(separatorIndex + 1);
         ItemType itemType = Sponge.getRegistry().getType(ItemType.class, id)
@@ -51,7 +53,7 @@ public class DurabilityIdentifier {
 
     @Override
     public String toString() {
-        return itemType.getName() + CustomToolDefinition.ID_SEPARATOR + durability;
+        return itemType.getName() + DURABILITY_SEPARATOR + durability;
     }
 
     @Override
@@ -61,6 +63,6 @@ public class DurabilityIdentifier {
 
     @Override
     public boolean equals(Object obj) {
-        return toString().equals(obj.toString());
+        return getClass().equals(obj.getClass()) && toString().equals(obj.toString());
     }
 }
