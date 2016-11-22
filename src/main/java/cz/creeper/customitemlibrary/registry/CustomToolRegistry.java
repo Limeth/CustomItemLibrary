@@ -105,8 +105,11 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
         if(durability <= 0)
             throw new IllegalStateException("This should be unreachable!");
 
-        if(durability >= CustomToolDefinition.getNumberOfUsesTemp())
-            throw new IllegalStateException("The number of custom tools exceeded the limit of " + (CustomToolDefinition.getNumberOfUsesTemp() - 1) + ".");
+        int numberOfUses = CustomToolDefinition.getNumberOfUses(itemType)
+                        .orElseThrow(() -> new IllegalStateException("Could not access the max number of uses."));
+
+        if(durability >= numberOfUses)
+            throw new IllegalStateException("The number of custom tools exceeded the limit of " + (numberOfUses - 1) + ".");
 
         return durability;
     }
@@ -218,7 +221,6 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
 
     @Override
     public void generateResourcePack(Path directory) {
-        JsonArray modelOverrides = new JsonArray();
         Map<ItemType, SortedList<ModelPredicate>> predicateMap = Maps.newHashMap();
 
         CustomItemLibrary.getInstance().getService().getDefinitionMap().values().stream()
@@ -247,7 +249,9 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
                 );
 
         for(Map.Entry<ItemType, BiMap<Integer, String>> entry : typeToDurabilityToModelId.entrySet()) {
+            ItemType itemType = entry.getKey();
             BiMap<Integer, String> durabilityToModelId = entry.getValue();
+            JsonArray modelOverrides = new JsonArray();
 
             for(Map.Entry<Integer, String> pair : durabilityToModelId.entrySet()) {
                 int durability = pair.getKey();
@@ -258,7 +262,8 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
 
                 Sponge.getPluginManager().getPlugin(pluginId).ifPresent(plugin -> copyAsset(plugin, assetPath));
 
-                double damage = 1.0 - (double) durability / (double) CustomToolDefinition.getNumberOfUsesTemp();
+                double damage = 1.0 - (double) durability / (double) CustomToolDefinition.getNumberOfUses(itemType)
+                        .orElseThrow(() -> new IllegalStateException("Could not access the max number of uses."));
 
                 JsonObject modelPredicate = new JsonObject();
                 modelPredicate.addProperty("damaged", 0);
@@ -270,7 +275,6 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
                 modelOverrides.add(modelJson);
             }
 
-            ItemType itemType = entry.getKey();
             String typeId = itemType.getId();
             String typeName = CustomToolDefinition.getTypeNameFromId(typeId);
             String namespace = getNamespaceFromId(typeId);

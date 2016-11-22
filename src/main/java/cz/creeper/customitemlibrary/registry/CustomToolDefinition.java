@@ -125,8 +125,8 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
                 .collect(Collectors.toList());
     }
 
-    public static int getNumberOfUsesTemp() {
-        return 238;
+    public static Optional<Integer> getNumberOfUses(ItemType itemType) {
+        return getNumberOfUses(itemType.getTemplate());
     }
 
     @SuppressWarnings("ConstantConditions")
