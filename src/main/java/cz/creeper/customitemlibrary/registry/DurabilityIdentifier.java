@@ -30,11 +30,14 @@ public class DurabilityIdentifier {
     }
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")
-    public DurabilityIdentifier(ItemType itemType, int durability) {
-        Optional<Integer> numberOfUses = CustomToolDefinition.getNumberOfUses(ItemStack.of(itemType, 1));
-        Preconditions.checkArgument(numberOfUses.isPresent(), "This item type does not have a durability.");
-        Preconditions.checkArgument(durability >= 0 && durability < numberOfUses.get(),
-            "Durability out of bounds. Min: 0; Max: " + (numberOfUses.get() - 1) + "; Provided: " + durability);
+    public DurabilityIdentifier(ItemType itemType, int durability, boolean checkArguments) {
+        // FIXME remove checkArguments
+        if(checkArguments) {
+            Optional<Integer> numberOfUses = CustomToolDefinition.getNumberOfUses(ItemStack.of(itemType, 1));
+            Preconditions.checkArgument(numberOfUses.isPresent(), "This item type does not have a durability.");
+            Preconditions.checkArgument(durability >= 0 && durability < numberOfUses.get(),
+                    "Durability out of bounds. Min: 0; Max: " + (numberOfUses.get() - 1) + "; Provided: " + durability);
+        }
 
         this.itemType = itemType;
         this.durability = durability;
@@ -43,12 +46,12 @@ public class DurabilityIdentifier {
     public static DurabilityIdentifier parse(String string) {
         int separatorIndex = string.lastIndexOf(DURABILITY_SEPARATOR);
         String id = string.substring(0, separatorIndex);
-        String rawDurability = id.substring(separatorIndex + 1);
+        String rawDurability = string.substring(separatorIndex + 1);
         ItemType itemType = Sponge.getRegistry().getType(ItemType.class, id)
                 .orElseThrow(() -> new IllegalArgumentException("Could not find an ItemType for id '" + id + "'."));
         int durability = Integer.valueOf(rawDurability);
 
-        return new DurabilityIdentifier(itemType, durability);
+        return new DurabilityIdentifier(itemType, durability, false);
     }
 
     @Override
