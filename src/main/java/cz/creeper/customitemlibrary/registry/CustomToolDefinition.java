@@ -12,12 +12,9 @@ import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.data.property.item.UseLimitProperty;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.item.ItemType;
-import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.plugin.PluginContainer;
-import org.spongepowered.api.text.Text;
-import org.spongepowered.api.text.format.TextColors;
 
 import java.util.Collection;
 import java.util.List;
@@ -87,11 +84,12 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
                                                              + getPluginId()));
         CustomToolRegistry registry = CustomToolRegistry.getInstance();
         ItemStack itemStack = itemStackSnapshot.createStack();
-        DurabilityIdentifier durabilityId = registry.getDurabilityId(plugin, models.get(0))
-                .orElseThrow(() -> new IllegalStateException("Could not get the durability identifier for the default models."));
+        ItemType itemType = itemStack.getItem();
+        int durability = registry.getDurability(itemType, plugin, models.get(0))
+                .orElseThrow(() -> new IllegalStateException("Could not get the durability for the default models."));
 
         itemStack.offer(Keys.UNBREAKABLE, true);
-        itemStack.offer(Keys.ITEM_DURABILITY, durabilityId.getDurability());
+        itemStack.offer(Keys.ITEM_DURABILITY, durability);
         itemStack.offer(Keys.HIDE_UNBREAKABLE, true);
         itemStack.offer(Keys.HIDE_ATTRIBUTES, true);
         itemStack.offer(new CustomItemData(getId()));
@@ -106,7 +104,7 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
 
     @Override
     public Optional<CustomTool> wrapIfPossible(ItemStack itemStack) {
-        if(itemStack.getItem() != CustomToolDefinition.getItemType())
+        if(itemStack.getItem() != itemStackSnapshot.getType())
             return Optional.empty();
 
         int durability = itemStack.get(Keys.ITEM_DURABILITY)
@@ -125,10 +123,6 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
         return models.stream()
                 .map(model -> pluginId + CustomItemDefinition.ID_SEPARATOR + model)
                 .collect(Collectors.toList());
-    }
-
-    public static ItemType getItemType() {
-        return ItemTypes.SHEARS;
     }
 
     public static int getNumberOfUsesTemp() {
@@ -152,11 +146,11 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
                 .orElseThrow(() -> new IllegalStateException("Could not access the custom tool use limit property."));
     }
 
-    public static String getNamespaceFromTypeId(String typeId) {
+    public static String getNamespaceFromId(String typeId) {
         return typeId.substring(0, typeId.indexOf(ID_SEPARATOR));
     }
 
-    public static String getTypeNameFromTypeId(String typeId) {
+    public static String getTypeNameFromId(String typeId) {
         return typeId.substring(typeId.indexOf(ID_SEPARATOR) + 1);
     }
 

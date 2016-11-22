@@ -2,11 +2,11 @@ package cz.creeper.customitemlibrary;
 
 import cz.creeper.customitemlibrary.registry.CustomToolDefinition;
 import cz.creeper.customitemlibrary.registry.CustomToolRegistry;
-import cz.creeper.customitemlibrary.registry.DurabilityIdentifier;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
 import org.spongepowered.api.data.key.Keys;
+import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.PluginContainer;
 
@@ -33,9 +33,10 @@ public class CustomTool implements CustomItem {
                 .orElseThrow(() -> new IllegalStateException("Could not access the plugin owning this custom tool: "
                                                              + definition.getPluginId()));
         CustomToolRegistry registry = CustomToolRegistry.getInstance();
-        DurabilityIdentifier durabilityId = registry.getDurabilityId(plugin, model)
+        ItemType itemType = definition.getItemStackSnapshot().getType();
+        int durability = registry.getDurability(itemType, plugin, model)
                 .orElseThrow(() -> new IllegalArgumentException("No custom tool with such model registered: " + model));
 
-        return itemStack.offer(Keys.ITEM_DURABILITY, durabilityId.getDurability()).isSuccessful();
+        return itemStack.offer(Keys.ITEM_DURABILITY, durability).isSuccessful();
     }
 }
