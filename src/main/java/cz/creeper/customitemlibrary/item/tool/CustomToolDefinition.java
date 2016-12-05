@@ -1,9 +1,9 @@
-package cz.creeper.customitemlibrary.registry;
+package cz.creeper.customitemlibrary.item.tool;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import cz.creeper.customitemlibrary.CustomItemCreationEvent;
-import cz.creeper.customitemlibrary.CustomTool;
+import cz.creeper.customitemlibrary.events.CustomItemCreationEvent;
+import cz.creeper.customitemlibrary.item.CustomItemDefinition;
 import cz.creeper.customitemlibrary.data.CustomItemData;
 import lombok.*;
 import org.spongepowered.api.Sponge;

@@ -1,6 +1,4 @@
-package cz.creeper.customitemlibrary.registry;
-
-import cz.creeper.customitemlibrary.CustomItem;
+package cz.creeper.customitemlibrary.item;
 
 import java.nio.file.Path;
 

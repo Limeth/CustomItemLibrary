@@ -1,6 +1,5 @@
-package cz.creeper.customitemlibrary.registry;
+package cz.creeper.customitemlibrary.item;
 
-import cz.creeper.customitemlibrary.CustomItem;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.item.inventory.ItemStack;

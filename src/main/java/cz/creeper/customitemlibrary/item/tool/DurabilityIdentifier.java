@@ -1,4 +1,4 @@
-package cz.creeper.customitemlibrary.registry;
+package cz.creeper.customitemlibrary.item.tool;
 
 import com.google.common.base.Preconditions;
 import lombok.Getter;

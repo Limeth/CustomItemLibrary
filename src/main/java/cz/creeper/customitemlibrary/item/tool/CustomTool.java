@@ -1,7 +1,6 @@
-package cz.creeper.customitemlibrary;
+package cz.creeper.customitemlibrary.item.tool;
 
-import cz.creeper.customitemlibrary.registry.CustomToolDefinition;
-import cz.creeper.customitemlibrary.registry.CustomToolRegistry;
+import cz.creeper.customitemlibrary.item.CustomItem;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;

@@ -1,4 +1,4 @@
-package cz.creeper.customitemlibrary.registry;
+package cz.creeper.customitemlibrary.item.tool;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -9,7 +9,9 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
-import cz.creeper.customitemlibrary.CustomTool;
+import cz.creeper.customitemlibrary.CustomItemServiceImpl;
+import cz.creeper.customitemlibrary.item.CustomItemDefinition;
+import cz.creeper.customitemlibrary.item.CustomItemRegistry;
 import cz.creeper.customitemlibrary.util.SortedList;
 import lombok.AllArgsConstructor;
 import lombok.ToString;
@@ -30,8 +32,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-
-import static cz.creeper.customitemlibrary.registry.CustomToolDefinition.getNamespaceFromId;
 
 @ToString
 public class CustomToolRegistry implements CustomItemRegistry<CustomTool, CustomToolDefinition> {
@@ -277,7 +277,7 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
 
             String typeId = itemType.getId();
             String typeName = CustomToolDefinition.getTypeNameFromId(typeId);
-            String namespace = getNamespaceFromId(typeId);
+            String namespace = CustomToolDefinition.getNamespaceFromId(typeId);
             JsonObject defaultModelPredicate = new JsonObject();
             defaultModelPredicate.addProperty("damaged", 1);
             defaultModelPredicate.addProperty("damage", 0.0);
