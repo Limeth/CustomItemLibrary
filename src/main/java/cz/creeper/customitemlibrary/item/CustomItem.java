@@ -1,6 +1,5 @@
-package cz.creeper.customitemlibrary;
+package cz.creeper.customitemlibrary.item;
 
-import cz.creeper.customitemlibrary.registry.CustomItemDefinition;
 import org.spongepowered.api.item.inventory.ItemStack;
 
 public interface CustomItem {

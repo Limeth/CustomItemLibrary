@@ -1,7 +1,6 @@
-package cz.creeper.customitemlibrary.registry;
+package cz.creeper.customitemlibrary.item;
 
 import com.google.common.collect.Maps;
-import cz.creeper.customitemlibrary.CustomItem;
 import lombok.ToString;
 
 import java.util.Collection;

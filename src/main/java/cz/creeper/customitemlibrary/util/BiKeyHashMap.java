@@ -1,6 +1,7 @@
 package cz.creeper.customitemlibrary.util;
 
 import com.google.common.base.Preconditions;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -51,8 +52,8 @@ public class BiKeyHashMap<K1, K2, V> implements BiKeyMap<K1, K2, V> {
         V firstValue = firstMap.get(firstKey).getValue();
 
         Preconditions.checkArgument(firstValue == secondMap.get(secondKey).getValue(), "Key collision.");
-        firstMap.put(firstKey, new Pair<>(secondKey, value));
-        secondMap.put(secondKey, new Pair<>(firstKey, value));
+        firstMap.put(firstKey, Pair.of(secondKey, value));
+        secondMap.put(secondKey, Pair.of(firstKey, value));
 
         return firstValue;
     }
@@ -79,16 +80,16 @@ public class BiKeyHashMap<K1, K2, V> implements BiKeyMap<K1, K2, V> {
     }
 
     public Pair<Set<K1>, Set<K2>> keySet() {
-        return new Pair<>(firstMap.keySet(), secondMap.keySet());
+        return Pair.of(firstMap.keySet(), secondMap.keySet());
     }
 
     public Collection<V> values() {
-        return firstMap.values().stream().map(Pair::getValue).collect(Collectors.toSet());
+        return firstMap.values().stream().map(Pair::getRight).collect(Collectors.toSet());
     }
 
     public Set<Pair<Pair<K1, K2>, V>> entrySet() {
         return firstMap.entrySet().stream().map((entry) ->
-                new Pair<>(new Pair<>(entry.getKey(), entry.getValue().getKey()), entry.getValue().getValue())
+                Pair.of(Pair.of(entry.getKey(), entry.getValue().getKey()), entry.getValue().getValue())
         ).collect(Collectors.toSet());
     }
 }

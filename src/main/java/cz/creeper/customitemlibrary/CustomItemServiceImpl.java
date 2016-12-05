@@ -1,8 +1,12 @@
-package cz.creeper.customitemlibrary.registry;
+package cz.creeper.customitemlibrary;
 
 import com.google.common.collect.Maps;
-import cz.creeper.customitemlibrary.CustomItem;
-import cz.creeper.customitemlibrary.CustomItemLibrary;
+import cz.creeper.customitemlibrary.item.CustomItem;
+import cz.creeper.customitemlibrary.item.CustomItemDefinition;
+import cz.creeper.customitemlibrary.item.CustomItemRegistry;
+import cz.creeper.customitemlibrary.item.CustomItemRegistryMap;
+import cz.creeper.customitemlibrary.item.tool.CustomToolDefinition;
+import cz.creeper.customitemlibrary.item.tool.CustomToolRegistry;
 import lombok.ToString;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.asset.Asset;

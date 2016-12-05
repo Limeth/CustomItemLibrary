@@ -1,5 +1,6 @@
-package cz.creeper.customitemlibrary;
+package cz.creeper.customitemlibrary.events;
 
+import cz.creeper.customitemlibrary.item.CustomItem;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
