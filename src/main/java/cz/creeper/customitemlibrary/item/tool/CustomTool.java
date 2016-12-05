@@ -1,24 +1,20 @@
 package cz.creeper.customitemlibrary.item.tool;
 
-import cz.creeper.customitemlibrary.item.CustomItem;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import cz.creeper.customitemlibrary.item.AbstractCustomItem;
 import lombok.ToString;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.PluginContainer;
 
-@AllArgsConstructor
 @ToString
-public class CustomTool implements CustomItem {
-    @Getter
-    private ItemStack itemStack;
-
-    @Getter
-    private CustomToolDefinition definition;
+public class CustomTool extends AbstractCustomItem<CustomTool, CustomToolDefinition> {
+    public CustomTool(ItemStack itemStack, CustomToolDefinition definition) {
+        super(itemStack, definition);
+    }
 
     public String getModel() {
+        ItemStack itemStack = getItemStack();
         int durability = itemStack.get(Keys.ITEM_DURABILITY)
                 .orElseThrow(() -> new IllegalStateException("Could not get the durability of a custom tool."));
         CustomToolRegistry registry = CustomToolRegistry.getInstance();
@@ -28,6 +24,8 @@ public class CustomTool implements CustomItem {
     }
 
     public boolean setModel(String model) {
+        ItemStack itemStack = getItemStack();
+        CustomToolDefinition definition = getDefinition();
         PluginContainer plugin = definition.getPlugin()
                 .orElseThrow(() -> new IllegalStateException("Could not access the plugin owning this custom tool: "
                                                              + definition.getPluginId()));
