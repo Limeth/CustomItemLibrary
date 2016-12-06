@@ -2,29 +2,24 @@ package cz.creeper.customitemlibrary.item.material;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import cz.creeper.customitemlibrary.events.CustomItemCreationEvent;
-import cz.creeper.customitemlibrary.item.CustomItem;
 import cz.creeper.customitemlibrary.item.CustomItemDefinition;
-import cz.creeper.customitemlibrary.item.tool.CustomTool;
 import cz.creeper.customitemlibrary.item.tool.CustomToolDefinition;
-import cz.creeper.mineskinsponge.MineskinService;
+import cz.creeper.mineskinsponge.SkinRecord;
 import lombok.*;
 import org.spongepowered.api.Sponge;
-import org.spongepowered.api.data.key.Keys;
-import org.spongepowered.api.data.type.SkullTypes;
-import org.spongepowered.api.event.action.LightningEvent;
 import org.spongepowered.api.event.cause.Cause;
-import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.plugin.PluginContainer;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Defines a custom material.
@@ -42,6 +37,7 @@ import java.util.Set;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @ToString
 public class CustomMaterialDefinition implements CustomItemDefinition<CustomMaterial> {
+    // TODO Consider changing to PluginContainer
     @Getter
     @NonNull
     private final String pluginId;
@@ -63,7 +59,7 @@ public class CustomMaterialDefinition implements CustomItemDefinition<CustomMate
      */
     @Getter
     @NonNull
-    private final Set<String> textures;
+    private final List<String> textures;
 
     public static CustomMaterialDefinition create(Object plugin, String typeId, ItemStackSnapshot itemStackSnapshot, Collection<String> textures) {
         PluginContainer pluginContainer = Sponge.getPluginManager().fromInstance(plugin)
@@ -74,7 +70,7 @@ public class CustomMaterialDefinition implements CustomItemDefinition<CustomMate
         Preconditions.checkArgument(itemStackSnapshot.getCount() == 1, "The ItemStack count must be equal to 1.");
         Preconditions.checkArgument(itemStackSnapshot.getType() == ItemTypes.SKULL, "The ItemStack must be a skull.");
 
-        return new CustomMaterialDefinition(pluginContainer.getId(), typeId, itemStackSnapshot, Sets.newHashSet(textures));
+        return new CustomMaterialDefinition(pluginContainer.getId(), typeId, itemStackSnapshot, Lists.newArrayList(textures));
     }
 
     @Override
@@ -84,8 +80,10 @@ public class CustomMaterialDefinition implements CustomItemDefinition<CustomMate
                         + getPluginId()));
         CustomMaterialRegistry registry = CustomMaterialRegistry.getInstance();
         ItemStack itemStack = itemStackSnapshot.createStack();
+        String defaultTexture = textures.get(0);
+        SkinRecord skin = registry.getSkin(defaultTexture);
 
-        service.getSk
+        skin.apply(itemStack);
 
         CustomMaterial material = new CustomMaterial(itemStack, this);
         CustomItemCreationEvent event = new CustomItemCreationEvent(cause, material);
@@ -97,6 +95,42 @@ public class CustomMaterialDefinition implements CustomItemDefinition<CustomMate
 
     @Override
     public Optional<CustomMaterial> wrapIfPossible(ItemStack itemStack) {
-        return null;
+        if(itemStack.getItem() != ItemTypes.SKULL)
+            return Optional.empty();
+
+        return Optional.of(new CustomMaterial(itemStack, this));
+    }
+
+    public List<String> getTextureIds() {
+        PluginContainer pluginContainer = Sponge.getPluginManager().getPlugin(pluginId).get();
+
+        return textures.stream()
+                .map(texture -> getTextureId(pluginId, texture))
+                .collect(Collectors.toList());
+    }
+
+    public static String getTextureId(String pluginId, String texture) {
+        return pluginId + CustomItemDefinition.ID_SEPARATOR + texture;
+    }
+
+    public static String getPluginId(String textureId) {
+        return textureId.substring(0, textureId.indexOf(CustomItemDefinition.ID_SEPARATOR));
+    }
+
+    public static PluginContainer getPlugin(String textureId) {
+        return Sponge.getPluginManager().getPlugin(getPluginId(textureId))
+                .orElseThrow(() -> new IllegalStateException("Could not access the owning plugin of texture: " + textureId));
+    }
+
+    public static String getTexture(String textureId) {
+        return textureId.substring(textureId.indexOf(CustomItemDefinition.ID_SEPARATOR) + 1);
+    }
+
+    public static Path getTexturePath(PluginContainer pluginContainer, String texture) {
+        return Paths.get(pluginContainer.getId(), pluginContainer.getVersion().orElse("unknown"), "textures", texture + ".png");
+    }
+
+    public static String getTextureAsset(String texture) {
+        return "textures/materials/" + texture + ".png";
     }
 }

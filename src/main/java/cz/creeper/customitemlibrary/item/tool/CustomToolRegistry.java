@@ -13,8 +13,7 @@ import cz.creeper.customitemlibrary.CustomItemServiceImpl;
 import cz.creeper.customitemlibrary.item.CustomItemDefinition;
 import cz.creeper.customitemlibrary.item.CustomItemRegistry;
 import cz.creeper.customitemlibrary.util.SortedList;
-import lombok.AllArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.ConfigurationOptions;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
@@ -33,6 +32,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 @ToString
 public class CustomToolRegistry implements CustomItemRegistry<CustomTool, CustomToolDefinition> {
     public static final String FILE_NAME = "toolRegistry.conf";
@@ -40,8 +40,6 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
     private static final CustomToolRegistry INSTANCE = new CustomToolRegistry();
     private final Map<DurabilityIdentifier, String> durabilityIdToModelId = Maps.newHashMap();
     private final Map<ItemType, BiMap<Integer, String>> typeToDurabilityToModelId = Maps.newHashMap();
-
-    private CustomToolRegistry() {}
 
     @Override
     public void register(CustomToolDefinition definition) {

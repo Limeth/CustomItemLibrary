@@ -23,7 +23,7 @@ public class CustomTool extends AbstractCustomItem<CustomTool, CustomToolDefinit
                 .orElseThrow(() -> new IllegalStateException("Could not retrieve the model of a custom tool."));
     }
 
-    public boolean setModel(String model) {
+    public void setModel(String model) {
         ItemStack itemStack = getItemStack();
         CustomToolDefinition definition = getDefinition();
         PluginContainer plugin = definition.getPlugin()
@@ -34,6 +34,6 @@ public class CustomTool extends AbstractCustomItem<CustomTool, CustomToolDefinit
         int durability = registry.getDurability(itemType, plugin, model)
                 .orElseThrow(() -> new IllegalArgumentException("No custom tool with such model registered: " + model));
 
-        return itemStack.offer(Keys.ITEM_DURABILITY, durability).isSuccessful();
+        itemStack.offer(Keys.ITEM_DURABILITY, durability).isSuccessful();
     }
 }
