@@ -23,6 +23,7 @@ import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.NamedCause;
 import org.spongepowered.api.event.game.state.*;
+import org.spongepowered.api.plugin.Dependency;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
@@ -39,6 +40,12 @@ import java.util.function.Function;
         description = "Create custom items with client-side resource packs and server-side behavior!",
         authors = {
                 "Limeth"
+        },
+        dependencies = {
+                @Dependency(
+                        id = "mineskinsponge",
+                        version = "[1.1.1,)"
+                )
         }
 )
 public class CustomItemLibrary {
