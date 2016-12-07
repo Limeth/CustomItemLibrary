@@ -14,6 +14,9 @@ import org.spongepowered.api.asset.Asset;
 import org.spongepowered.api.asset.AssetManager;
 import org.spongepowered.api.plugin.PluginContainer;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -55,8 +58,29 @@ public class CustomMaterialRegistry implements CustomItemRegistry<CustomMaterial
                 Files.createDirectories(texturePath.getParent());
                 Files.deleteIfExists(texturePath);
 
-                // TODO handle texture conversion to skin format
-                asset.copyToFile(texturePath);
+                BufferedImage inputImage = ImageIO.read(asset.getUrl());
+                int width = inputImage.getWidth();
+                int height = inputImage.getHeight();
+                BufferedImage outputImage;
+
+                if(width == 64 && height == 16) {
+                    outputImage = new BufferedImage(64, 64, inputImage.getType());
+                    Graphics2D outputGraphics = outputImage.createGraphics();
+
+                    outputGraphics.setComposite(AlphaComposite.Src);
+                    outputGraphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+                    outputGraphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                    outputGraphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+                    outputGraphics.drawImage(inputImage, 0, 0, 64, 16, Color.BLACK, null);
+                    outputGraphics.dispose();
+                } else if(width == 64 && height == 64) {
+                    outputImage = inputImage;
+                } else {
+                    throw new IllegalArgumentException("The texture must either be a skin (64x64),"
+                            + " png file) or just the upper part of the skin, head only (64x16, png file).");
+                }
+
+                ImageIO.write(outputImage, "png", texturePath.toFile());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
