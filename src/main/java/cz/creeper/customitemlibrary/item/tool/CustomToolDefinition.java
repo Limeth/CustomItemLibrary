@@ -65,7 +65,7 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
     @NonNull
     private final List<String> assets;
 
-    public static CustomToolDefinition create(Object plugin, String typeId, ItemStackSnapshot itemStackSnapshot, Collection<String> models, Collection<String> assets) {
+    public static CustomToolDefinition create(Object plugin, String typeId, ItemStackSnapshot itemStackSnapshot, Collection<String> models, Collection<String> textures) {
         PluginContainer pluginContainer = Sponge.getPluginManager().fromInstance(plugin)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid plugin instance."));
         Preconditions.checkArgument(!models.isEmpty(), "At least one model must be specified.");
@@ -74,7 +74,7 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
         Preconditions.checkArgument(itemStackSnapshot.getCount() == 1, "The ItemStack count must be equal to 1.");
         Preconditions.checkArgument(getNumberOfUses(itemStackSnapshot.createStack()).isPresent(), "Invalid item type, the item must have a durability.");
 
-        return new CustomToolDefinition(pluginContainer.getId(), typeId, itemStackSnapshot, Lists.newArrayList(models), assets == null ? Lists.newArrayList() : Lists.newArrayList(assets));
+        return new CustomToolDefinition(pluginContainer.getId(), typeId, itemStackSnapshot, Lists.newArrayList(models), textures == null ? Lists.newArrayList() : Lists.newArrayList(textures));
     }
 
     @Override

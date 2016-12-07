@@ -20,7 +20,7 @@ repositories {
 dependencies {
     compile 'org.spongepowered:spongeapi:5.0.0-SNAPSHOT'
     compile 'com.github.Limeth:MineskinSponge:v1.2.0'
-    compileOnly 'org.projectlombok:lombok:1.16.10'
+    compileOnly 'org.projectlombok:lombok:1.16.12'
 }
 
 sponge.plugin.id = pluginId
