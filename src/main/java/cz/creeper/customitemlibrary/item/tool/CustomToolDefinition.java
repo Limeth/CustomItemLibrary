@@ -2,10 +2,15 @@ package cz.creeper.customitemlibrary.item.tool;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import cz.creeper.customitemlibrary.data.CustomItemData;
 import cz.creeper.customitemlibrary.events.CustomItemCreationEvent;
 import cz.creeper.customitemlibrary.item.CustomItemDefinition;
-import cz.creeper.customitemlibrary.data.CustomItemData;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.ToString;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.Property;
 import org.spongepowered.api.data.key.Keys;
@@ -65,7 +70,7 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
     @NonNull
     private final List<String> assets;
 
-    public static CustomToolDefinition create(Object plugin, String typeId, ItemStackSnapshot itemStackSnapshot, Collection<String> models, Collection<String> textures) {
+    public static CustomToolDefinition create(Object plugin, String typeId, ItemStackSnapshot itemStackSnapshot, Collection<String> models, Collection<String> assets) {
         PluginContainer pluginContainer = Sponge.getPluginManager().fromInstance(plugin)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid plugin instance."));
         Preconditions.checkArgument(!models.isEmpty(), "At least one model must be specified.");
@@ -74,7 +79,7 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
         Preconditions.checkArgument(itemStackSnapshot.getCount() == 1, "The ItemStack count must be equal to 1.");
         Preconditions.checkArgument(getNumberOfUses(itemStackSnapshot.createStack()).isPresent(), "Invalid item type, the item must have a durability.");
 
-        return new CustomToolDefinition(pluginContainer, typeId, itemStackSnapshot, Lists.newArrayList(models), textures == null ? Lists.newArrayList() : Lists.newArrayList(textures));
+        return new CustomToolDefinition(pluginContainer, typeId, itemStackSnapshot, Lists.newArrayList(models), assets == null ? Lists.newArrayList() : Lists.newArrayList(assets));
     }
 
     @Override

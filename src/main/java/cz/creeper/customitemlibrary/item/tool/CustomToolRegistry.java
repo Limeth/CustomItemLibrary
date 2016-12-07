@@ -13,7 +13,10 @@ import cz.creeper.customitemlibrary.CustomItemServiceImpl;
 import cz.creeper.customitemlibrary.item.CustomItemDefinition;
 import cz.creeper.customitemlibrary.item.CustomItemRegistry;
 import cz.creeper.customitemlibrary.util.SortedList;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.ConfigurationOptions;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
@@ -30,7 +33,11 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @ToString
@@ -46,12 +53,7 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
         definition.getModelIds().stream()
                 .forEach(modelId -> {
                     ItemType itemType = definition.getItemStackSnapshot().getType();
-                    BiMap<Integer, String> durabilityToModelId = typeToDurabilityToModelId.get(itemType);
-
-                    if(durabilityToModelId == null) {
-                        durabilityToModelId = HashBiMap.create();
-                        typeToDurabilityToModelId.put(itemType, durabilityToModelId);
-                    }
+                    BiMap<Integer, String> durabilityToModelId = typeToDurabilityToModelId.computeIfAbsent(itemType, k -> HashBiMap.create());
 
                     // Is the model already registered? If so, skip.
                     if(durabilityToModelId.containsValue(modelId))
@@ -154,12 +156,7 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
 
                 durabilityIdToModelId.put(durabilityId, modelId);
 
-                BiMap<Integer, String> durabilityToModelId = typeToDurabilityToModelId.get(durabilityId.getItemType());
-
-                if(durabilityToModelId == null) {
-                    durabilityToModelId = HashBiMap.create();
-                    typeToDurabilityToModelId.put(durabilityId.getItemType(), durabilityToModelId);
-                }
+                BiMap<Integer, String> durabilityToModelId = typeToDurabilityToModelId.computeIfAbsent(durabilityId.getItemType(), k -> HashBiMap.create());
 
                 durabilityToModelId.put(durabilityId.getDurability(), modelId);
             }

@@ -44,7 +44,7 @@ import java.util.function.Function;
         dependencies = {
                 @Dependency(
                         id = "mineskinsponge",
-                        version = "[1.1.1,)"
+                        version = "[1.2.1,)"
                 )
         }
 )

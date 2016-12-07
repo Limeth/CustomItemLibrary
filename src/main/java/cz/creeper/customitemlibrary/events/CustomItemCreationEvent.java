@@ -8,10 +8,11 @@ import org.spongepowered.api.event.Event;
 import org.spongepowered.api.event.cause.Cause;
 
 @AllArgsConstructor
+@Getter
 public class CustomItemCreationEvent implements Event {
-    @Getter @NonNull
+    @NonNull
     private final Cause cause;
 
-    @Getter @NonNull
+    @NonNull
     private final CustomItem item;
 }
