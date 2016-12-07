@@ -37,10 +37,9 @@ import java.util.stream.Collectors;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @ToString
 public class CustomMaterialDefinition implements CustomItemDefinition<CustomMaterial> {
-    // TODO Consider changing to PluginContainer
     @Getter
     @NonNull
-    private final String pluginId;
+    private final PluginContainer pluginContainer;
 
     @Getter
     @NonNull
@@ -70,7 +69,7 @@ public class CustomMaterialDefinition implements CustomItemDefinition<CustomMate
         Preconditions.checkArgument(itemStackSnapshot.getCount() == 1, "The ItemStack count must be equal to 1.");
         Preconditions.checkArgument(itemStackSnapshot.getType() == ItemTypes.SKULL, "The ItemStack must be a skull.");
 
-        return new CustomMaterialDefinition(pluginContainer.getId(), typeId, itemStackSnapshot, Lists.newArrayList(textures));
+        return new CustomMaterialDefinition(pluginContainer, typeId, itemStackSnapshot, Lists.newArrayList(textures));
     }
 
     @Override
@@ -101,11 +100,14 @@ public class CustomMaterialDefinition implements CustomItemDefinition<CustomMate
         return Optional.of(new CustomMaterial(itemStack, this));
     }
 
-    public List<String> getTextureIds() {
-        PluginContainer pluginContainer = Sponge.getPluginManager().getPlugin(pluginId).get();
+    @Override
+    public String getPluginId() {
+        return pluginContainer.getId();
+    }
 
+    public List<String> getTextureIds() {
         return textures.stream()
-                .map(texture -> getTextureId(pluginId, texture))
+                .map(texture -> getTextureId(getPluginId(), texture))
                 .collect(Collectors.toList());
     }
 

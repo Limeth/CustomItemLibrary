@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 public final class CustomToolDefinition implements CustomItemDefinition<CustomTool> {
     @Getter
     @NonNull
-    private final String pluginId;
+    private final PluginContainer pluginContainer;
 
     @Getter
     @NonNull
@@ -74,7 +74,7 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
         Preconditions.checkArgument(itemStackSnapshot.getCount() == 1, "The ItemStack count must be equal to 1.");
         Preconditions.checkArgument(getNumberOfUses(itemStackSnapshot.createStack()).isPresent(), "Invalid item type, the item must have a durability.");
 
-        return new CustomToolDefinition(pluginContainer.getId(), typeId, itemStackSnapshot, Lists.newArrayList(models), textures == null ? Lists.newArrayList() : Lists.newArrayList(textures));
+        return new CustomToolDefinition(pluginContainer, typeId, itemStackSnapshot, Lists.newArrayList(models), textures == null ? Lists.newArrayList() : Lists.newArrayList(textures));
     }
 
     @Override
@@ -116,12 +116,17 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
         return Optional.of(new CustomTool(itemStack, this));
     }
 
+    @Override
+    public String getPluginId() {
+        return pluginContainer.getId();
+    }
+
     /**
      * @return A list of "<pluginId>:<model>"
      */
     public List<String> getModelIds() {
         return models.stream()
-                .map(model -> pluginId + CustomItemDefinition.ID_SEPARATOR + model)
+                .map(model -> getPluginId() + CustomItemDefinition.ID_SEPARATOR + model)
                 .collect(Collectors.toList());
     }
 
