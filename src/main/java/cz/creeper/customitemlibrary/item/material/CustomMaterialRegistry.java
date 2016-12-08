@@ -3,8 +3,10 @@ package cz.creeper.customitemlibrary.item.material;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
 import cz.creeper.customitemlibrary.item.CustomItemRegistry;
+import cz.creeper.customitemlibrary.util.DeleteDirectoryVisitor;
 import cz.creeper.mineskinsponge.MineskinService;
 import cz.creeper.mineskinsponge.SkinRecord;
 import lombok.AccessLevel;
@@ -21,12 +23,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class CustomMaterialRegistry implements CustomItemRegistry<CustomMaterial, CustomMaterialDefinition> {
     private static final CustomMaterialRegistry INSTANCE = new CustomMaterialRegistry();
+    private final Set<CustomMaterialDefinition> definitions = Sets.newHashSet();
     private final Map<String, CompletableFuture<SkinRecord>> textureIdsToSkins = Maps.newHashMap();
     private final BiMap<String, SkinRecord> textureIdsToReadySkins = HashBiMap.create();
     private final Executor asyncExecutor = Sponge.getScheduler().createAsyncExecutor(CustomItemLibrary.getInstance());
@@ -41,6 +46,8 @@ public class CustomMaterialRegistry implements CustomItemRegistry<CustomMaterial
                     CompletableFuture<SkinRecord> future = copyTexture(textureId).thenCompose(service::getSkinAsync);
                     textureIdsToSkins.put(textureId, future);
                 });
+
+        definitions.add(definition);
     }
 
     private CompletableFuture<Path> copyTexture(String textureId) {
@@ -56,7 +63,12 @@ public class CustomMaterialRegistry implements CustomItemRegistry<CustomMaterial
 
             try {
                 Files.createDirectories(texturePath.getParent());
-                Files.deleteIfExists(texturePath);
+
+                if(Files.isRegularFile(texturePath))
+                    return texturePath;
+                else
+                    CustomItemLibrary.getInstance().getLogger()
+                            .info("Caching skin: " + texturePath);
 
                 BufferedImage inputImage = ImageIO.read(asset.getUrl());
                 int width = inputImage.getWidth();
@@ -64,14 +76,15 @@ public class CustomMaterialRegistry implements CustomItemRegistry<CustomMaterial
                 BufferedImage outputImage;
 
                 if(width == 64 && height == 16) {
-                    outputImage = new BufferedImage(64, 64, inputImage.getType());
+                    outputImage = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
                     Graphics2D outputGraphics = outputImage.createGraphics();
+                    Color transparent = new Color(0, 0, 0, 0);
 
-                    outputGraphics.setComposite(AlphaComposite.Src);
+                    outputGraphics.setComposite(AlphaComposite.SrcOver);
                     outputGraphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
                     outputGraphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
                     outputGraphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-                    outputGraphics.drawImage(inputImage, 0, 0, 64, 16, new Color(0, 0, 0, 0), null); // TODO not really transparent
+                    outputGraphics.drawImage(inputImage, 0, 0, 64, 16, transparent, null);
                     outputGraphics.dispose();
                 } else if(width == 64 && height == 64) {
                     outputImage = inputImage;
@@ -103,14 +116,48 @@ public class CustomMaterialRegistry implements CustomItemRegistry<CustomMaterial
 
     @Override
     public void load(Path directory) {
-        // Not needed
+        // Clear previously loaded
+        definitions.clear();
+        textureIdsToSkins.clear();
+        textureIdsToReadySkins.clear();
     }
 
     @Override
     public void save(Path directory) {
+        // Delete old textures
+        definitions.stream()
+                .map(CustomMaterialDefinition::getPluginId)
+                .collect(Collectors.toSet())
+                .forEach(pluginId -> {
+            PluginContainer pluginContainer = Sponge.getPluginManager().getPlugin(pluginId)
+                    .orElseThrow(() -> new IllegalStateException("The plugin should have been accessible."));
+            String pluginVersion = pluginContainer.getVersion().orElse("unknown");
+            Path pluginCache = getCacheDirectory().resolve(pluginId);
+                    try {
+                        Files.list(pluginCache)
+                                .filter(path -> !path.getFileName().toString().equals(pluginVersion))
+                                .forEach(versionDirectory -> {
+                                    CustomItemLibrary.getInstance().getLogger()
+                                            .info("Deleting an old cache directory: " + versionDirectory);
+
+                                    try {
+                                        Files.walkFileTree(versionDirectory, new DeleteDirectoryVisitor());
+                                    } catch (IOException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                });
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+
         // Wait for all the textures to download
+        CustomItemLibrary.getInstance().getLogger()
+                .info("Waiting for skins to finish being downloaded.");
         textureIdsToSkins.entrySet().forEach(entry ->
                 textureIdsToReadySkins.put(entry.getKey(), entry.getValue().join()));
+        CustomItemLibrary.getInstance().getLogger()
+                .info("Skins ready.");
     }
 
     @Override
