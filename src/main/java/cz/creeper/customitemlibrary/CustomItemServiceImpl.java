@@ -5,6 +5,8 @@ import cz.creeper.customitemlibrary.item.CustomItem;
 import cz.creeper.customitemlibrary.item.CustomItemDefinition;
 import cz.creeper.customitemlibrary.item.CustomItemRegistry;
 import cz.creeper.customitemlibrary.item.CustomItemRegistryMap;
+import cz.creeper.customitemlibrary.item.material.CustomMaterialDefinition;
+import cz.creeper.customitemlibrary.item.material.CustomMaterialRegistry;
 import cz.creeper.customitemlibrary.item.tool.CustomToolDefinition;
 import cz.creeper.customitemlibrary.item.tool.CustomToolRegistry;
 import lombok.ToString;
@@ -30,6 +32,7 @@ public class CustomItemServiceImpl implements CustomItemService {
 
     public CustomItemServiceImpl() {
         registryMap.put(CustomToolDefinition.class, CustomToolRegistry.getInstance());
+        registryMap.put(CustomMaterialDefinition.class, CustomMaterialRegistry.getInstance());
     }
 
     @SuppressWarnings("unchecked")

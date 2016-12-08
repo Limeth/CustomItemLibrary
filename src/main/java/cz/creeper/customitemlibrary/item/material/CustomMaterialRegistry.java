@@ -71,7 +71,7 @@ public class CustomMaterialRegistry implements CustomItemRegistry<CustomMaterial
                     outputGraphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
                     outputGraphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
                     outputGraphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-                    outputGraphics.drawImage(inputImage, 0, 0, 64, 16, Color.BLACK, null);
+                    outputGraphics.drawImage(inputImage, 0, 0, 64, 16, new Color(0, 0, 0, 0), null); // TODO not really transparent
                     outputGraphics.dispose();
                 } else if(width == 64 && height == 64) {
                     outputImage = inputImage;
