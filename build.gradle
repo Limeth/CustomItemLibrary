@@ -18,7 +18,7 @@ repositories {
 }
 
 dependencies {
-    compile 'org.spongepowered:spongeapi:5.0.0-SNAPSHOT'
+    compile 'org.spongepowered:spongeapi:6.0.0-20161023.181219-16'
     compile 'com.github.Limeth:MineskinSponge:v1.2.1'
     compileOnly 'org.projectlombok:lombok:1.16.12'
 }

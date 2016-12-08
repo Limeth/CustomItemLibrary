@@ -2,6 +2,7 @@ package cz.creeper.customitemlibrary.item.material;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import cz.creeper.customitemlibrary.data.CustomItemData;
 import cz.creeper.customitemlibrary.events.CustomItemCreationEvent;
 import cz.creeper.customitemlibrary.item.CustomItemDefinition;
 import cz.creeper.customitemlibrary.item.tool.CustomToolDefinition;
@@ -85,9 +86,11 @@ public class CustomMaterialDefinition implements CustomItemDefinition<CustomMate
         CustomMaterialRegistry registry = CustomMaterialRegistry.getInstance();
         ItemStack itemStack = itemStackSnapshot.createStack();
         String defaultTexture = textures.get(0);
-        SkinRecord skin = registry.getSkin(defaultTexture);
+        String defaultTextureId = getTextureId(getPluginId(), defaultTexture);
+        SkinRecord skin = registry.getSkin(defaultTextureId);
 
         skin.apply(itemStack);
+        itemStack.offer(new CustomItemData(getId()));
 
         CustomMaterial material = new CustomMaterial(itemStack, this);
         CustomItemCreationEvent event = new CustomItemCreationEvent(cause, material);
