@@ -4,6 +4,8 @@ import org.spongepowered.api.Sponge;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.PluginContainer;
+import org.spongepowered.api.world.Location;
+import org.spongepowered.api.world.extent.Extent;
 
 import java.util.Optional;
 
@@ -53,9 +55,18 @@ public interface CustomItemDefinition<T extends CustomItem> {
     }
 
     /**
-     * @return A {@link CustomItem} in with default properties.
+     * @return A {@link CustomItem} with default properties.
      */
     T createItem(Cause cause);
+
+    /**
+     * If the definition supports it, places a block and returns the definition.
+     *
+     * @return A {@link CustomItem} representing the placed block.
+     */
+    default Optional<T> placeBlock(Location location, Cause cause) {
+        return Optional.empty();
+    }
 
     /**
      * Wraps the {@link ItemStack} in a helper class extending {@link CustomItem},
@@ -66,4 +77,16 @@ public interface CustomItemDefinition<T extends CustomItem> {
      * @return The wrapped {@link ItemStack}, if the item actually represents this definition
      */
     Optional<T> wrapIfPossible(ItemStack itemStack);
+
+    /**
+     * Wraps the {@link Location} in a helper class extending {@link CustomItem},
+     * if the {@link Location} is representing an actual custom item
+     * created by the {@link CustomItemDefinition#placeBlock(Location, Cause)} method.
+     *
+     * @param block The block to wrap
+     * @return The wrapped {@link ItemStack}, if the item actually represents this definition
+     */
+    default <E extends Extent> Optional<T> wrapIfPossible(Location<E> block) {
+        return Optional.empty();
+    }
 }
