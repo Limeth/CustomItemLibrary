@@ -1,7 +1,7 @@
 package cz.creeper.customitemlibrary.item.tool;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableList;
 import cz.creeper.customitemlibrary.data.CustomItemData;
 import cz.creeper.customitemlibrary.events.CustomItemCreationEvent;
 import cz.creeper.customitemlibrary.item.CustomItemDefinition;
@@ -79,7 +79,7 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
         Preconditions.checkArgument(itemStackSnapshot.getCount() == 1, "The ItemStack count must be equal to 1.");
         Preconditions.checkArgument(getNumberOfUses(itemStackSnapshot.createStack()).isPresent(), "Invalid item type, the item must have a durability.");
 
-        return new CustomToolDefinition(pluginContainer, typeId, itemStackSnapshot, Lists.newArrayList(models), assets == null ? Lists.newArrayList() : Lists.newArrayList(assets));
+        return new CustomToolDefinition(pluginContainer, typeId, itemStackSnapshot, ImmutableList.copyOf(models), assets == null ? ImmutableList.of() : ImmutableList.copyOf(assets));
     }
 
     @Override
