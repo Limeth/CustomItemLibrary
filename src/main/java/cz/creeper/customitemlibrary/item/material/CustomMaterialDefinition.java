@@ -1,7 +1,7 @@
 package cz.creeper.customitemlibrary.item.material;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableList;
 import cz.creeper.customitemlibrary.events.CustomItemCreationEvent;
 import cz.creeper.customitemlibrary.item.CustomItemDefinition;
 import cz.creeper.customitemlibrary.item.tool.CustomToolDefinition;
@@ -74,7 +74,7 @@ public class CustomMaterialDefinition implements CustomItemDefinition<CustomMate
         Preconditions.checkArgument(itemStackSnapshot.getCount() == 1, "The ItemStack count must be equal to 1.");
         Preconditions.checkArgument(itemStackSnapshot.getType() == ItemTypes.SKULL, "The ItemStack must be a skull.");
 
-        return new CustomMaterialDefinition(pluginContainer, typeId, itemStackSnapshot, Lists.newArrayList(textures));
+        return new CustomMaterialDefinition(pluginContainer, typeId, itemStackSnapshot, ImmutableList.copyOf(textures));
     }
 
     @Override
