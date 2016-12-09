@@ -10,9 +10,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
 import cz.creeper.customitemlibrary.CustomItemServiceImpl;
-import cz.creeper.customitemlibrary.item.CustomItemDefinition;
 import cz.creeper.customitemlibrary.item.CustomItemRegistry;
 import cz.creeper.customitemlibrary.util.SortedList;
+import cz.creeper.customitemlibrary.util.Util;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -216,6 +216,7 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
 
     @Override
     public void generateResourcePack(Path directory) {
+        // TODO broken, fix.
         Map<ItemType, SortedList<ModelPredicate>> predicateMap = Maps.newHashMap();
 
         CustomItemLibrary.getInstance().getService().getDefinitionMap().values().stream()
@@ -251,8 +252,8 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
             for(Map.Entry<Integer, String> pair : durabilityToModelId.entrySet()) {
                 int durability = pair.getKey();
                 String modelId = pair.getValue();
-                String pluginId = CustomToolDefinition.getNamespaceFromId(modelId);
-                String model = CustomToolDefinition.getTypeNameFromId(modelId);
+                String pluginId = Util.getNamespaceFromId(modelId);
+                String model = Util.getValueFromId(modelId);
                 String assetPath = CustomToolDefinition.getModelPath(model);
 
                 Sponge.getPluginManager().getPlugin(pluginId).ifPresent(plugin -> copyAsset(plugin, assetPath));
@@ -271,8 +272,8 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
             }
 
             String typeId = itemType.getId();
-            String typeName = CustomToolDefinition.getTypeNameFromId(typeId);
-            String namespace = CustomToolDefinition.getNamespaceFromId(typeId);
+            String typeName = Util.getValueFromId(typeId);
+            String namespace = Util.getNamespaceFromId(typeId);
             JsonObject defaultModelPredicate = new JsonObject();
             defaultModelPredicate.addProperty("damaged", 1);
             defaultModelPredicate.addProperty("damage", 0.0);
@@ -350,12 +351,11 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
         } catch (IOException e) {
             CustomItemLibrary.getInstance().getLogger()
                     .warn("Could not copy a file from assets (" + filePath + "): " + e.getLocalizedMessage());
-            return;
         }
     }
 
     public Optional<Integer> getDurability(ItemType itemType, PluginContainer plugin, String model) {
-        return getDurabilityByModelId(itemType, plugin.getId() + CustomItemDefinition.ID_SEPARATOR + model);
+        return getDurabilityByModelId(itemType, Util.getId(plugin.getId(), model));
     }
 
     public Optional<Integer> getDurabilityByModelId(ItemType itemType, String modelId) {
@@ -370,11 +370,6 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
             return Optional.empty();
 
         return Optional.ofNullable(durabilityToModelId.get(durability));
-    }
-
-    public Optional<String> getModel(ItemType itemType, int durability) {
-        return getModelId(itemType, durability).map(modelId ->
-                modelId.substring(modelId.indexOf(CustomItemDefinition.ID_SEPARATOR) + 1));
     }
 
     public static CustomToolRegistry getInstance() {
