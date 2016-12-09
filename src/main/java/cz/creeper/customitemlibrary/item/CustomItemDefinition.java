@@ -1,5 +1,6 @@
 package cz.creeper.customitemlibrary.item;
 
+import cz.creeper.customitemlibrary.util.Util;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.item.inventory.ItemStack;
@@ -10,20 +11,6 @@ import org.spongepowered.api.world.extent.Extent;
 import java.util.Optional;
 
 public interface CustomItemDefinition<T extends CustomItem> {
-    char ID_SEPARATOR = ':';
-
-    static String getId(String pluginId, String typeId) {
-        return pluginId + ID_SEPARATOR + typeId;
-    }
-
-    static String getPluginId(String id) {
-        return id.substring(0, id.indexOf(ID_SEPARATOR));
-    }
-
-    static String getTypeId(String id) {
-        return id.substring(id.indexOf(ID_SEPARATOR) + 1);
-    }
-
     /**
      * The ID of the plugin that created this item type.
      * The former part of `<pluginId>:<typeId>`.
@@ -44,7 +31,7 @@ public interface CustomItemDefinition<T extends CustomItem> {
      * @return "<pluginId>:<typeId>"
      */
     default String getId() {
-        return getId(getPluginId(), getTypeId());
+        return Util.getId(getPluginId(), getTypeId());
     }
 
     /**

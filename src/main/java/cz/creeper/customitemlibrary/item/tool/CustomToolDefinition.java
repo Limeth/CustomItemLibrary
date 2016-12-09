@@ -2,9 +2,11 @@ package cz.creeper.customitemlibrary.item.tool;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import cz.creeper.customitemlibrary.data.CustomItemData;
 import cz.creeper.customitemlibrary.events.CustomItemCreationEvent;
 import cz.creeper.customitemlibrary.item.CustomItemDefinition;
+import cz.creeper.customitemlibrary.util.Util;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -24,6 +26,7 @@ import org.spongepowered.api.plugin.PluginContainer;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -52,6 +55,13 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
     private final ItemStackSnapshot itemStackSnapshot;
 
     /**
+     * The default model of this custom item.
+     */
+    @Getter
+    @NonNull
+    private final String defaultModel;
+
+    /**
      * The Asset API is used to access the item models.
      * The path to the model file in a JAR is the following:
      * `assets/<pluginId>/models/tools/<model>.png`
@@ -60,7 +70,7 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
      */
     @Getter
     @NonNull
-    private final List<String> models;
+    private final Set<String> models;
 
     /**
      * A list of additional assets to be copied to the resourcepack.
@@ -70,16 +80,20 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
     @NonNull
     private final List<String> assets;
 
-    public static CustomToolDefinition create(Object plugin, String typeId, ItemStackSnapshot itemStackSnapshot, Collection<String> models, Collection<String> assets) {
+    public static CustomToolDefinition create(Object plugin, String typeId, ItemStackSnapshot itemStackSnapshot, String defaultModel, Collection<String> additionalModels, Collection<String> assets) {
         PluginContainer pluginContainer = Sponge.getPluginManager().fromInstance(plugin)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid plugin instance."));
-        Preconditions.checkArgument(!models.isEmpty(), "At least one model must be specified.");
-        models.forEach(model ->
-                Preconditions.checkNotNull(model, "The model array must not contain null values."));
         Preconditions.checkArgument(itemStackSnapshot.getCount() == 1, "The ItemStack count must be equal to 1.");
         Preconditions.checkArgument(getNumberOfUses(itemStackSnapshot.createStack()).isPresent(), "Invalid item type, the item must have a durability.");
+        Preconditions.checkNotNull(defaultModel, "The default model must not be null.");
+        additionalModels.forEach(model ->
+                Preconditions.checkNotNull(model, "The model array must not contain null values."));
+        Set<String> modelSet = ImmutableSet.<String>builder()
+                .add(defaultModel)
+                .addAll(additionalModels)
+                .build();
 
-        return new CustomToolDefinition(pluginContainer, typeId, itemStackSnapshot, ImmutableList.copyOf(models), assets == null ? ImmutableList.of() : ImmutableList.copyOf(assets));
+        return new CustomToolDefinition(pluginContainer, typeId, itemStackSnapshot, defaultModel, modelSet, assets == null ? ImmutableList.of() : ImmutableList.copyOf(assets));
     }
 
     @Override
@@ -90,7 +104,7 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
         CustomToolRegistry registry = CustomToolRegistry.getInstance();
         ItemStack itemStack = itemStackSnapshot.createStack();
         ItemType itemType = itemStack.getItem();
-        int durability = registry.getDurability(itemType, plugin, models.get(0))
+        int durability = registry.getDurability(itemType, plugin, defaultModel)
                 .orElseThrow(() -> new IllegalStateException("Could not get the durability for the default models."));
 
         itemStack.offer(Keys.UNBREAKABLE, true);
@@ -131,7 +145,7 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
      */
     public List<String> getModelIds() {
         return models.stream()
-                .map(model -> getPluginId() + CustomItemDefinition.ID_SEPARATOR + model)
+                .map(model -> Util.getId(getPluginId(), model))
                 .collect(Collectors.toList());
     }
 
@@ -154,14 +168,6 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
     public int getNumberOfUses() {
         return getNumberOfUses(itemStackSnapshot)
                 .orElseThrow(() -> new IllegalStateException("Could not access the custom tool use limit property."));
-    }
-
-    public static String getNamespaceFromId(String typeId) {
-        return typeId.substring(0, typeId.indexOf(ID_SEPARATOR));
-    }
-
-    public static String getTypeNameFromId(String typeId) {
-        return typeId.substring(typeId.indexOf(ID_SEPARATOR) + 1);
     }
 
     public static String getModelPath(String model) {
