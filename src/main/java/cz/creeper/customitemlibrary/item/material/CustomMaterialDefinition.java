@@ -24,10 +24,8 @@ import org.spongepowered.api.plugin.PluginContainer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Defines a custom material.
@@ -39,7 +37,7 @@ import java.util.stream.Collectors;
  * The advantage of using this class is,
  * that these items can be stacked together (in contrast with {@link CustomToolDefinition}).
  * The disadvantage, on the other hand, is, that this item cannot have custom models assigned to it
- * and has to make use of the {@link #textures} instead.
+ * and has to make use of the {@link #models} instead.
  */
 @EqualsAndHashCode
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -57,47 +55,37 @@ public class CustomMaterialDefinition implements CustomItemDefinition<CustomMate
     @NonNull
     private final ItemStackSnapshot itemStackSnapshot;
 
-    /**
-     * The default texture of this custom item.
-     */
     @Getter
     @NonNull
-    private final String defaultTexture;
+    private final String defaultModel;
 
-    /**
-     * The Asset API is used to access the material textures.
-     * The path to the texture file in a JAR is the following:
-     * `assets/<pluginId>/textures/materials/<model>.png`
-     *
-     * Should be lower-case, separate words with an underscore.
-     */
     @Getter
     @NonNull
-    private final Set<String> textures;
+    private final Set<String> models;
 
-    public static CustomMaterialDefinition create(Object plugin, String typeId, ItemStackSnapshot itemStackSnapshot, String defaultTexture, Collection<String> additionalTextures) {
+    public static CustomMaterialDefinition create(Object plugin, String typeId, ItemStackSnapshot itemStackSnapshot, String defaultModel, Collection<String> additionalModels) {
         PluginContainer pluginContainer = Sponge.getPluginManager().fromInstance(plugin)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid plugin instance."));
         Preconditions.checkArgument(itemStackSnapshot.getCount() == 1, "The ItemStack count must be equal to 1.");
         Preconditions.checkArgument(itemStackSnapshot.getType() == ItemTypes.SKULL, "The ItemStack must be a skull.");
-        Preconditions.checkNotNull(defaultTexture, "The default texture must not be null.");
-        additionalTextures.forEach(model ->
-                Preconditions.checkNotNull(model, "The texture array must not contain null values."));
-        Set<String> textureSet = ImmutableSet.<String>builder()
-                .add(defaultTexture)
-                .addAll(additionalTextures)
+        Preconditions.checkNotNull(defaultModel, "The default model must not be null.");
+        additionalModels.forEach(model ->
+                Preconditions.checkNotNull(model, "The model array must not contain null values."));
+        Set<String> modelSet = ImmutableSet.<String>builder()
+                .add(defaultModel)
+                .addAll(additionalModels)
                 .build();
 
-        return new CustomMaterialDefinition(pluginContainer, typeId, itemStackSnapshot, defaultTexture, textureSet);
+        return new CustomMaterialDefinition(pluginContainer, typeId, itemStackSnapshot, defaultModel, modelSet);
     }
 
     @Override
     public CustomMaterial createItem(Cause cause) {
         CustomMaterialRegistry registry = CustomMaterialRegistry.getInstance();
         ItemStack itemStack = itemStackSnapshot.createStack();
-        String defaultTextureId = Util.getId(getPluginId(), defaultTexture);
-        SkinRecord skin = registry.getSkin(defaultTextureId)
-                .orElseThrow(() -> new IllegalStateException("Textures are not prepared."));
+        String defaultModelId = Util.getId(getPluginId(), defaultModel);
+        SkinRecord skin = registry.getSkin(defaultModelId)
+                .orElseThrow(() -> new IllegalStateException("Models are not prepared."));
 
         skin.apply(itemStack);
         itemStack.offer(new CustomItemData(getId()));
@@ -118,26 +106,11 @@ public class CustomMaterialDefinition implements CustomItemDefinition<CustomMate
         return Optional.of(new CustomMaterial(itemStack, this));
     }
 
-    @Override
-    public String getPluginId() {
-        return pluginContainer.getId();
+    public static Path getTexturePath(PluginContainer pluginContainer, String model) {
+        return Paths.get(pluginContainer.getId(), pluginContainer.getVersion().orElse("unknown"), "models", model + ".png");
     }
 
-    public List<String> getTextureIds() {
-        return textures.stream()
-                .map(texture -> Util.getId(getPluginId(), texture))
-                .collect(Collectors.toList());
-    }
-
-    public String getDefaultTextureId() {
-        return Util.getId(pluginContainer.getId(), defaultTexture);
-    }
-
-    public static Path getTexturePath(PluginContainer pluginContainer, String texture) {
-        return Paths.get(pluginContainer.getId(), pluginContainer.getVersion().orElse("unknown"), "textures", texture + ".png");
-    }
-
-    public static String getTextureAsset(String texture) {
-        return "textures/materials/" + texture + ".png";
+    public static String getTextureAsset(String model) {
+        return "textures/materials/" + model + ".png";
     }
 }
