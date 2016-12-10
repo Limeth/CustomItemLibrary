@@ -7,6 +7,7 @@ import org.spongepowered.api.data.manipulator.DataManipulatorBuilder;
 import org.spongepowered.api.data.persistence.AbstractDataBuilder;
 import org.spongepowered.api.data.persistence.InvalidDataException;
 
+import javax.annotation.Nonnull;
 import java.util.Optional;
 
 @ToString
@@ -17,12 +18,14 @@ public class CustomItemManipulatorBuilder extends AbstractDataBuilder<CustomItem
     }
 
     @Override
+    @Nonnull
     public CustomItemData create() {
         return new CustomItemData();
     }
 
     @Override
-    public Optional<CustomItemData> createFrom(DataHolder dataHolder) {
+    @Nonnull
+    public Optional<CustomItemData> createFrom(@Nonnull DataHolder dataHolder) {
         Optional<String> pluginId = dataHolder.get(CustomItemLibraryKeys.CUSTOM_ITEM_PLUGIN_ID);
         Optional<String> typeId = dataHolder.get(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID);
 
@@ -34,7 +37,8 @@ public class CustomItemManipulatorBuilder extends AbstractDataBuilder<CustomItem
     }
 
     @Override
-    protected Optional<CustomItemData> buildContent(DataView container) throws InvalidDataException {
+    @Nonnull
+    protected Optional<CustomItemData> buildContent(@Nonnull DataView container) throws InvalidDataException {
         Optional<String> pluginId = container.getString(CustomItemLibraryKeys.CUSTOM_ITEM_PLUGIN_ID.getQuery());
         Optional<String> typeId = container.getString(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID.getQuery());
 
