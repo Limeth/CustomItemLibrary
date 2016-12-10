@@ -14,7 +14,7 @@ public interface CustomItem {
     /**
      * @return The {@link CustomItemDefinition} that was applied to the wrapped {@link ItemStack}
      */
-    CustomItemDefinition getDefinition();
+    CustomItemDefinition<? extends CustomItem> getDefinition();
 
     /**
      * One of the models defined by the {@link CustomItemDefinition} returned by {@link #getDefinition()}

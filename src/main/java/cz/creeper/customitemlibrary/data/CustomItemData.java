@@ -13,6 +13,7 @@ import org.spongepowered.api.data.manipulator.mutable.common.AbstractData;
 import org.spongepowered.api.data.merge.MergeFunction;
 import org.spongepowered.api.data.value.mutable.Value;
 
+import javax.annotation.Nonnull;
 import java.util.Optional;
 
 @ToString
@@ -59,12 +60,14 @@ public class CustomItemData extends AbstractData<CustomItemData, ImmutableCustom
     }
 
     @Override
-    public Optional<CustomItemData> fill(DataHolder dataHolder, MergeFunction mergeFunction) {
+    @Nonnull
+    public Optional<CustomItemData> fill(@Nonnull DataHolder dataHolder, @Nonnull MergeFunction mergeFunction) {
         throw new NotImplementedException("NYI");  // TODO
     }
 
     @Override
-    public Optional<CustomItemData> from(DataContainer dataContainer) {
+    @Nonnull
+    public Optional<CustomItemData> from(@Nonnull DataContainer dataContainer) {
         Optional<String> pluginId = dataContainer.getString(CustomItemLibraryKeys.CUSTOM_ITEM_PLUGIN_ID.getQuery());
         Optional<String> typeId = dataContainer.getString(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID.getQuery());
 
@@ -76,11 +79,13 @@ public class CustomItemData extends AbstractData<CustomItemData, ImmutableCustom
     }
 
     @Override
+    @Nonnull
     public CustomItemData copy() {
         return new CustomItemData(customItemPluginId, customItemTypeId);
     }
 
     @Override
+    @Nonnull
     public ImmutableCustomItemData asImmutable() {
         return new ImmutableCustomItemData(customItemPluginId, customItemTypeId);
     }
@@ -91,6 +96,7 @@ public class CustomItemData extends AbstractData<CustomItemData, ImmutableCustom
     }
 
     @Override
+    @Nonnull
     public DataContainer toContainer() {
         return super.toContainer()
                 .set(CustomItemLibraryKeys.CUSTOM_ITEM_PLUGIN_ID.getQuery(), customItemPluginId)

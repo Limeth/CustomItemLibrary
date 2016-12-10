@@ -6,6 +6,8 @@ import org.spongepowered.api.data.DataContainer;
 import org.spongepowered.api.data.manipulator.immutable.common.AbstractImmutableData;
 import org.spongepowered.api.data.value.immutable.ImmutableValue;
 
+import javax.annotation.Nonnull;
+
 @ToString
 public class ImmutableCustomItemData extends AbstractImmutableData<ImmutableCustomItemData, CustomItemData> {
     @NonNull
@@ -40,6 +42,7 @@ public class ImmutableCustomItemData extends AbstractImmutableData<ImmutableCust
     }
 
     @Override
+    @Nonnull
     public CustomItemData asMutable() {
         return new CustomItemData(customItemPluginId, customItemTypeId);
     }
@@ -50,6 +53,7 @@ public class ImmutableCustomItemData extends AbstractImmutableData<ImmutableCust
     }
 
     @Override
+    @Nonnull
     public DataContainer toContainer() {
         return super.toContainer()
                 .set(CustomItemLibraryKeys.CUSTOM_ITEM_PLUGIN_ID.getQuery(), customItemPluginId)
