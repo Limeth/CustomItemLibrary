@@ -107,7 +107,7 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
         itemStack.offer(Keys.ITEM_DURABILITY, durability);
         itemStack.offer(Keys.HIDE_UNBREAKABLE, true);
         itemStack.offer(Keys.HIDE_ATTRIBUTES, true);
-        itemStack.offer(new CustomItemData(getId()));
+        itemStack.offer(new CustomItemData(getPluginContainer().getId(), typeId));
 
         CustomTool tool = new CustomTool(itemStack, this);
         CustomItemCreationEvent event = new CustomItemCreationEvent(cause, tool);

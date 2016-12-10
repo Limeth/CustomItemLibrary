@@ -1,6 +1,10 @@
 package cz.creeper.customitemlibrary.data;
 
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.Setter;
+import lombok.ToString;
 import org.apache.commons.lang3.NotImplementedException;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.DataContainer;
@@ -18,22 +22,40 @@ public class CustomItemData extends AbstractData<CustomItemData, ImmutableCustom
     @Getter(AccessLevel.PRIVATE)
     @Setter(AccessLevel.PRIVATE)
     @NonNull
-    private String customItemId;
+    private String customItemPluginId;
 
-    public CustomItemData(String customItemId) {
-        this.customItemId = customItemId;
+    @Getter(AccessLevel.PRIVATE)
+    @Setter(AccessLevel.PRIVATE)
+    @NonNull
+    private String customItemTypeId;
+
+    public CustomItemData(String customItemPluginId, String customItemTypeId) {
+        this.customItemPluginId = customItemPluginId;
+        this.customItemTypeId = customItemTypeId;
         registerGettersAndSetters();
+    }
+
+    public CustomItemData() {
+        this(ID_UNINITIALIZED, ID_UNINITIALIZED);
     }
 
     @Override
     protected void registerGettersAndSetters() {
-        registerFieldGetter(CustomItemLibraryKeys.CUSTOM_ITEM_ID, this::getCustomItemId);
-        registerFieldSetter(CustomItemLibraryKeys.CUSTOM_ITEM_ID, this::setCustomItemId);
-        registerKeyValue(CustomItemLibraryKeys.CUSTOM_ITEM_ID, this::customItemId);
+        registerFieldGetter(CustomItemLibraryKeys.CUSTOM_ITEM_PLUGIN_ID, this::getCustomItemPluginId);
+        registerFieldSetter(CustomItemLibraryKeys.CUSTOM_ITEM_PLUGIN_ID, this::setCustomItemPluginId);
+        registerKeyValue(CustomItemLibraryKeys.CUSTOM_ITEM_PLUGIN_ID, this::customItemPluginId);
+
+        registerFieldGetter(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID, this::getCustomItemTypeId);
+        registerFieldSetter(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID, this::setCustomItemTypeId);
+        registerKeyValue(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID, this::customItemTypeId);
     }
 
-    public Value<String> customItemId() {
-        return Sponge.getRegistry().getValueFactory().createValue(CustomItemLibraryKeys.CUSTOM_ITEM_ID, this.customItemId, ID_UNINITIALIZED);
+    public Value<String> customItemPluginId() {
+        return Sponge.getRegistry().getValueFactory().createValue(CustomItemLibraryKeys.CUSTOM_ITEM_PLUGIN_ID, this.customItemPluginId, ID_UNINITIALIZED);
+    }
+
+    public Value<String> customItemTypeId() {
+        return Sponge.getRegistry().getValueFactory().createValue(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID, this.customItemTypeId, ID_UNINITIALIZED);
     }
 
     @Override
@@ -43,18 +65,24 @@ public class CustomItemData extends AbstractData<CustomItemData, ImmutableCustom
 
     @Override
     public Optional<CustomItemData> from(DataContainer dataContainer) {
-        return dataContainer.getString(CustomItemLibraryKeys.CUSTOM_ITEM_ID.getQuery())
-                .map(CustomItemData::new);
+        Optional<String> pluginId = dataContainer.getString(CustomItemLibraryKeys.CUSTOM_ITEM_PLUGIN_ID.getQuery());
+        Optional<String> typeId = dataContainer.getString(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID.getQuery());
+
+        if(pluginId.isPresent() && typeId.isPresent()) {
+            return Optional.of(new CustomItemData(pluginId.get(), typeId.get()));
+        } else {
+            return Optional.empty();
+        }
     }
 
     @Override
     public CustomItemData copy() {
-        return new CustomItemData(customItemId);
+        return new CustomItemData(customItemPluginId, customItemTypeId);
     }
 
     @Override
     public ImmutableCustomItemData asImmutable() {
-        return new ImmutableCustomItemData(customItemId);
+        return new ImmutableCustomItemData(customItemPluginId, customItemTypeId);
     }
 
     @Override
@@ -65,6 +93,7 @@ public class CustomItemData extends AbstractData<CustomItemData, ImmutableCustom
     @Override
     public DataContainer toContainer() {
         return super.toContainer()
-                .set(CustomItemLibraryKeys.CUSTOM_ITEM_ID.getQuery(), customItemId);
+                .set(CustomItemLibraryKeys.CUSTOM_ITEM_PLUGIN_ID.getQuery(), customItemPluginId)
+                .set(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID.getQuery(), customItemTypeId);
     }
 }

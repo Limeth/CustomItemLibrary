@@ -3,14 +3,13 @@ package cz.creeper.customitemlibrary.item.material;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
 import cz.creeper.customitemlibrary.item.CustomItemRegistry;
-import cz.creeper.customitemlibrary.util.Util;
 import cz.creeper.mineskinsponge.MineskinService;
 import cz.creeper.mineskinsponge.SkinRecord;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import lombok.val;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.asset.Asset;
 import org.spongepowered.api.asset.AssetManager;
@@ -19,49 +18,39 @@ import org.spongepowered.api.plugin.PluginContainer;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class CustomMaterialRegistry implements CustomItemRegistry<CustomMaterial, CustomMaterialDefinition> {
-    private static final String URI_SCHEME = "cil-asset";
     private static final CustomMaterialRegistry INSTANCE = new CustomMaterialRegistry();
-    private final Set<CustomMaterialDefinition> definitions = Sets.newHashSet();
-    private final Map<String, CompletableFuture<SkinRecord>> textureIdsToSkins = Maps.newHashMap();
-    private final BiMap<String, SkinRecord> textureIdsToReadySkins = HashBiMap.create();
+    private final Map<String, Map<String, CompletableFuture<SkinRecord>>> pluginIdsToTexturesToSkins = Maps.newHashMap();
+    private final Map<String, BiMap<String, SkinRecord>> pluginIdsToTexturesToReadySkins = Maps.newHashMap();
 
     @Override
     public void register(CustomMaterialDefinition definition) {
-        MineskinService service = getMineskinService();
         PluginContainer pluginContainer = definition.getPluginContainer();
+        val texturesToSkins = getTexturesToSkins(pluginContainer);
 
         definition.getModels().stream()
-                .filter(texture -> {
-                    String textureId = Util.getId(pluginContainer.getId(), texture);
-
-                    return !textureIdsToSkins.containsKey(textureId);
-                })
+                .filter(texture -> !texturesToSkins.containsKey(texture))
                 .forEach(texture -> {
                     MineskinService mineskinService = getMineskinService();
-                    String textureId = Util.getId(pluginContainer.getId(), texture);
                     Asset asset = getAsset(pluginContainer, texture);
                     CompletableFuture<SkinRecord> future = mineskinService.getSkinAsync(asset);
-                    textureIdsToSkins.put(textureId, future);
+                    texturesToSkins.put(texture, future);
                 });
-
-        definitions.add(definition);
     }
 
     public static Path getCacheDirectory() {
         return CustomItemLibrary.getInstance().getConfigPath().getParent().resolve("cache");
     }
 
-    public Optional<SkinRecord> getSkin(String textureId) {
-        return Optional.ofNullable(textureIdsToReadySkins.get(textureId));
+    public Optional<SkinRecord> getSkin(PluginContainer pluginContainer, String texture) {
+        return Optional.ofNullable(getTexturesToReadySkins(pluginContainer).get(texture));
     }
 
-    public Optional<String> getTextureId(SkinRecord skin) {
-        return Optional.ofNullable(textureIdsToReadySkins.inverse().get(skin));
+    public Optional<String> getTexture(PluginContainer pluginContainer, SkinRecord skin) {
+        return Optional.ofNullable(getTexturesToReadySkins(pluginContainer).inverse().get(skin));
     }
 
     private Asset getAsset(PluginContainer pluginContainer, String texture) {
@@ -77,9 +66,8 @@ public class CustomMaterialRegistry implements CustomItemRegistry<CustomMaterial
     @Override
     public void load(Path directory) {
         // Clear previously loaded
-        definitions.clear();
-        textureIdsToSkins.clear();
-        textureIdsToReadySkins.clear();
+        pluginIdsToTexturesToSkins.clear();
+        pluginIdsToTexturesToReadySkins.clear();
     }
 
     @Override
@@ -87,8 +75,13 @@ public class CustomMaterialRegistry implements CustomItemRegistry<CustomMaterial
         // Wait for all the textures to download
         CustomItemLibrary.getInstance().getLogger()
                 .info("Waiting for skins to finish being downloaded.");
-        textureIdsToSkins.entrySet().forEach(entry ->
-                textureIdsToReadySkins.put(entry.getKey(), entry.getValue().join()));
+        pluginIdsToTexturesToReadySkins.clear();
+        pluginIdsToTexturesToSkins.entrySet().forEach(texturesToSkins ->
+            texturesToSkins.getValue().entrySet().forEach(entry ->
+                getTexturesToReadySkins(texturesToSkins.getKey())
+                        .put(entry.getKey(), entry.getValue().join())
+            )
+        );
         CustomItemLibrary.getInstance().getLogger()
                 .info("Skins ready.");
     }
@@ -96,6 +89,18 @@ public class CustomMaterialRegistry implements CustomItemRegistry<CustomMaterial
     @Override
     public void generateResourcePack(Path directory) {
         // Not needed
+    }
+
+    private Map<String, CompletableFuture<SkinRecord>> getTexturesToSkins(PluginContainer pluginContainer) {
+        return pluginIdsToTexturesToSkins.computeIfAbsent(pluginContainer.getId(), k -> Maps.newHashMap());
+    }
+
+    private BiMap<String, SkinRecord> getTexturesToReadySkins(PluginContainer pluginContainer) {
+        return getTexturesToReadySkins(pluginContainer.getId());
+    }
+
+    private BiMap<String, SkinRecord> getTexturesToReadySkins(String pluginId) {
+        return pluginIdsToTexturesToReadySkins.computeIfAbsent(pluginId, k -> HashBiMap.create());
     }
 
     private MineskinService getMineskinService() {
