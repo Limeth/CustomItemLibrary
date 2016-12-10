@@ -11,10 +11,8 @@ import com.google.gson.JsonObject;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
 import cz.creeper.customitemlibrary.CustomItemServiceImpl;
 import cz.creeper.customitemlibrary.item.CustomItemRegistry;
-import cz.creeper.customitemlibrary.util.SortedList;
 import cz.creeper.customitemlibrary.util.Util;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import ninja.leaping.configurate.ConfigurationNode;
@@ -34,7 +32,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -202,46 +199,13 @@ public class CustomToolRegistry implements CustomItemRegistry<CustomTool, Custom
         }
     }
 
-    @AllArgsConstructor
-    private static class ModelPredicate implements Comparable<ModelPredicate> {
-        private final PluginContainer plugin;
-        private final int durability;
-        private final String model;
-
-        @Override
-        public int compareTo(ModelPredicate o) {
-            return Integer.compare(durability, o.durability);
-        }
-    }
-
     @Override
     public void generateResourcePack(Path directory) {
-        // TODO broken, fix.
-        Map<ItemType, SortedList<ModelPredicate>> predicateMap = Maps.newHashMap();
-
         CustomItemLibrary.getInstance().getService().getDefinitionMap().values().stream()
                 .filter(definition -> definition instanceof CustomToolDefinition)
                 .map(CustomToolDefinition.class::cast)
                 .forEach(definition ->
-                    definition.getPlugin().ifPresent(plugin -> {
-                        definition.getModels().forEach(model -> {
-                            ItemType itemType = definition.getItemStackSnapshot().getType();
-                            int durability = getDurability(itemType, plugin, model)
-                                    .orElseThrow(() -> new IllegalStateException("Could not access the durability of model '" + model + "'."));
-                            ModelPredicate predicate = new ModelPredicate(plugin, durability, model);
-                            SortedList<ModelPredicate> predicates = predicateMap.get(durability);
-
-                            if(predicates == null) {
-                                predicates = SortedList.create(Comparator.reverseOrder());
-                                predicateMap.put(itemType, predicates);
-                            }
-
-                            if(!predicates.containsElement(predicate))
-                                predicates.add(predicate);
-                        });
-
-                        definition.getAssets().forEach(asset -> copyAsset(plugin, asset));
-                    })
+                    definition.getAssets().forEach(asset -> copyAsset(definition.getPluginContainer(), asset))
                 );
 
         for(Map.Entry<ItemType, BiMap<Integer, String>> entry : typeToDurabilityToModelId.entrySet()) {

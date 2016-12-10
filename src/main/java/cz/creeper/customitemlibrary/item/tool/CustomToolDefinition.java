@@ -6,7 +6,6 @@ import com.google.common.collect.ImmutableSet;
 import cz.creeper.customitemlibrary.data.CustomItemData;
 import cz.creeper.customitemlibrary.events.CustomItemCreationEvent;
 import cz.creeper.customitemlibrary.item.CustomItemDefinition;
-import cz.creeper.customitemlibrary.util.Util;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -27,7 +26,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Defines a custom item.
@@ -98,9 +96,7 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
 
     @Override
     public CustomTool createItem(Cause cause) {
-        PluginContainer plugin = getPlugin()
-                .orElseThrow(() -> new IllegalStateException("Could not access the plugin owning this custom tool: "
-                                                             + getPluginId()));
+        PluginContainer plugin = getPluginContainer();
         CustomToolRegistry registry = CustomToolRegistry.getInstance();
         ItemStack itemStack = itemStackSnapshot.createStack();
         ItemType itemType = itemStack.getItem();
@@ -133,20 +129,6 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
             return Optional.empty();
 
         return Optional.of(new CustomTool(itemStack, this));
-    }
-
-    @Override
-    public String getPluginId() {
-        return pluginContainer.getId();
-    }
-
-    /**
-     * @return A list of "<pluginId>:<model>"
-     */
-    public List<String> getModelIds() {
-        return models.stream()
-                .map(model -> Util.getId(getPluginId(), model))
-                .collect(Collectors.toList());
     }
 
     public static Optional<Integer> getNumberOfUses(ItemType itemType) {

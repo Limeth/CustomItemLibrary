@@ -1,7 +1,6 @@
 package cz.creeper.customitemlibrary.item;
 
 import cz.creeper.customitemlibrary.util.Util;
-import org.spongepowered.api.Sponge;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.PluginContainer;
@@ -9,15 +8,30 @@ import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.extent.Extent;
 
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public interface CustomItemDefinition<T extends CustomItem> {
     /**
+     * @return The owner plugin
+     */
+    PluginContainer getPluginContainer();
+
+    /**
+     * @return The associated plugin instance, if available
+     */
+    default Object getPlugin() {
+        return getPluginContainer().getInstance()
+                .orElseThrow(() -> new IllegalStateException("Could not access the plugin instance."));
+    }
+
+    /**
      * The ID of the plugin that created this item type.
      * The former part of `<pluginId>:<typeId>`.
-     *
-     * Must be lower-case, separate words with an underscore.
      */
-    String getPluginId();
+    default String getPluginId() {
+        return getPluginContainer().getId();
+    }
 
     /**
      * The string uniquely identifying this item type.
@@ -35,10 +49,29 @@ public interface CustomItemDefinition<T extends CustomItem> {
     }
 
     /**
-     * @return The associated plugin container, if found
+     * @return The default model assigned to newly created {@link ItemStack}s in the {@link #createItem(Cause)} method.
      */
-    default Optional<PluginContainer> getPlugin() {
-        return Sponge.getPluginManager().getPlugin(getPluginId());
+    String getDefaultModel();
+
+    /**
+     * @return A list of "<pluginId>:<model>"
+     */
+    default String getDefaultModelId() {
+        return Util.getId(getPluginId(), getDefaultModel());
+    }
+
+    /**
+     * @return All available models
+     */
+    Set<String> getModels();
+
+    /**
+     * @return A list of "<pluginId>:<model>"
+     */
+    default Set<String> getModelIds() {
+        return getModels().stream()
+                .map(model -> Util.getId(getPluginId(), model))
+                .collect(Collectors.toSet());
     }
 
     /**

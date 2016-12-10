@@ -35,7 +35,7 @@ public class CustomMaterialRegistry implements CustomItemRegistry<CustomMaterial
         MineskinService service = getMineskinService();
         PluginContainer pluginContainer = definition.getPluginContainer();
 
-        definition.getTextures().stream()
+        definition.getModels().stream()
                 .filter(texture -> {
                     String textureId = Util.getId(pluginContainer.getId(), texture);
 

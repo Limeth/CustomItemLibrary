@@ -1,7 +1,6 @@
 package cz.creeper.customitemlibrary.item.tool;
 
 import cz.creeper.customitemlibrary.item.AbstractCustomItem;
-import cz.creeper.customitemlibrary.util.Util;
 import lombok.ToString;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.item.ItemType;
@@ -9,7 +8,6 @@ import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.PluginContainer;
 
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @ToString
 public class CustomTool extends AbstractCustomItem<CustomTool, CustomToolDefinition> {
@@ -17,48 +15,21 @@ public class CustomTool extends AbstractCustomItem<CustomTool, CustomToolDefinit
         super(itemStack, definition);
     }
 
-    public String getModel() {
+    @Override
+    protected Optional<String> resolveCurrentModel() {
         ItemStack itemStack = getItemStack();
         int durability = itemStack.get(Keys.ITEM_DURABILITY)
                 .orElseThrow(() -> new IllegalStateException("Could not get the durability of a custom tool."));
         CustomToolRegistry registry = CustomToolRegistry.getInstance();
 
-        Optional<String> modelId = registry.getModelId(itemStack.getItem(), durability);
-
-        textureResolution:
-        if(modelId.isPresent()) {
-            String pluginId = Util.getNamespaceFromId(modelId.get());
-
-            if (!getDefinition().getPluginId().equals(pluginId))
-                break textureResolution;
-
-            String model = Util.getValueFromId(modelId.get());
-
-            if (!getDefinition().getModels().contains(model))
-                break textureResolution;
-
-            return model;
-        }
-
-        // If the texture is invalid, change the texture to the default one.
-        String defaultModel = getDefinition().getDefaultModel();
-
-        setModel(defaultModel);
-
-        return defaultModel;
+        return registry.getModelId(itemStack.getItem(), durability);
     }
 
-    public void setModel(String model) {
-        if(!getDefinition().getModels().contains(model))
-            throw new IllegalArgumentException("This custom tool has no model called '" + model
-                    + "'. Available, defined models: "
-                    + getDefinition().getModels().stream().collect(Collectors.joining(", ")));
-
+    @Override
+    protected void applyModel(String model) {
         ItemStack itemStack = getItemStack();
         CustomToolDefinition definition = getDefinition();
-        PluginContainer plugin = definition.getPlugin()
-                .orElseThrow(() -> new IllegalStateException("Could not access the plugin owning this custom tool: "
-                                                             + definition.getPluginId()));
+        PluginContainer plugin = definition.getPluginContainer();
         CustomToolRegistry registry = CustomToolRegistry.getInstance();
         ItemType itemType = definition.getItemStackSnapshot().getType();
         int durability = registry.getDurability(itemType, plugin, model)
