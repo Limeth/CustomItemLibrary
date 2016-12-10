@@ -1,9 +1,9 @@
 package cz.creeper.customitemlibrary.item.material;
 
 import cz.creeper.customitemlibrary.item.AbstractCustomItem;
-import cz.creeper.customitemlibrary.util.Util;
 import cz.creeper.mineskinsponge.SkinRecord;
 import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.plugin.PluginContainer;
 
 import java.util.Optional;
 
@@ -18,14 +18,16 @@ public class CustomMaterial extends AbstractCustomItem<CustomMaterial, CustomMat
         SkinRecord skinRecord = SkinRecord.of(getItemStack())
                 .orElseThrow(() -> new IllegalStateException("Could not create a SkinRecord out of a"
                         + " CustomMaterial ItemStack."));
-        return registry.getTextureId(skinRecord);
+        PluginContainer pluginContainer = getDefinition().getPluginContainer();
+        return registry.getTexture(pluginContainer, skinRecord);
     }
 
     @Override
     protected void applyModel(String texture) {
         CustomMaterialRegistry registry = CustomMaterialRegistry.getInstance();
-        String textureId = Util.getId(getDefinition().getPluginId(), texture);
-        SkinRecord skin = registry.getSkin(textureId)
+        CustomMaterialDefinition definition = getDefinition();
+        PluginContainer pluginContainer = definition.getPluginContainer();
+        SkinRecord skin = registry.getSkin(pluginContainer, texture)
                 .orElseThrow(() -> new IllegalArgumentException("Could not access the SkinRecord for texture: " + texture));
 
         skin.apply(getItemStack());

@@ -1,6 +1,5 @@
 package cz.creeper.customitemlibrary.item;
 
-import cz.creeper.customitemlibrary.util.Util;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.PluginContainer;
@@ -9,7 +8,6 @@ import org.spongepowered.api.world.extent.Extent;
 
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public interface CustomItemDefinition<T extends CustomItem> {
     /**
@@ -26,14 +24,6 @@ public interface CustomItemDefinition<T extends CustomItem> {
     }
 
     /**
-     * The ID of the plugin that created this item type.
-     * The former part of `<pluginId>:<typeId>`.
-     */
-    default String getPluginId() {
-        return getPluginContainer().getId();
-    }
-
-    /**
      * The string uniquely identifying this item type.
      * The latter part of `<pluginId>:<typeId>`.
      *
@@ -42,37 +32,14 @@ public interface CustomItemDefinition<T extends CustomItem> {
     String getTypeId();
 
     /**
-     * @return "<pluginId>:<typeId>"
-     */
-    default String getId() {
-        return Util.getId(getPluginId(), getTypeId());
-    }
-
-    /**
      * @return The default model assigned to newly created {@link ItemStack}s in the {@link #createItem(Cause)} method.
      */
     String getDefaultModel();
 
     /**
-     * @return A list of "<pluginId>:<model>"
-     */
-    default String getDefaultModelId() {
-        return Util.getId(getPluginId(), getDefaultModel());
-    }
-
-    /**
      * @return All available models
      */
     Set<String> getModels();
-
-    /**
-     * @return A list of "<pluginId>:<model>"
-     */
-    default Set<String> getModelIds() {
-        return getModels().stream()
-                .map(model -> Util.getId(getPluginId(), model))
-                .collect(Collectors.toSet());
-    }
 
     /**
      * @return A {@link CustomItem} with default properties.

@@ -6,7 +6,6 @@ import cz.creeper.customitemlibrary.data.CustomItemData;
 import cz.creeper.customitemlibrary.events.CustomItemCreationEvent;
 import cz.creeper.customitemlibrary.item.CustomItemDefinition;
 import cz.creeper.customitemlibrary.item.tool.CustomToolDefinition;
-import cz.creeper.customitemlibrary.util.Util;
 import cz.creeper.mineskinsponge.SkinRecord;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -83,12 +82,11 @@ public class CustomMaterialDefinition implements CustomItemDefinition<CustomMate
     public CustomMaterial createItem(Cause cause) {
         CustomMaterialRegistry registry = CustomMaterialRegistry.getInstance();
         ItemStack itemStack = itemStackSnapshot.createStack();
-        String defaultModelId = Util.getId(getPluginId(), defaultModel);
-        SkinRecord skin = registry.getSkin(defaultModelId)
+        SkinRecord skin = registry.getSkin(pluginContainer, defaultModel)
                 .orElseThrow(() -> new IllegalStateException("Models are not prepared."));
 
         skin.apply(itemStack);
-        itemStack.offer(new CustomItemData(getId()));
+        itemStack.offer(new CustomItemData(pluginContainer.getId(), typeId));
 
         CustomMaterial material = new CustomMaterial(itemStack, this);
         CustomItemCreationEvent event = new CustomItemCreationEvent(cause, material);

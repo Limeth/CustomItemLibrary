@@ -22,7 +22,12 @@ public class CustomTool extends AbstractCustomItem<CustomTool, CustomToolDefinit
                 .orElseThrow(() -> new IllegalStateException("Could not get the durability of a custom tool."));
         CustomToolRegistry registry = CustomToolRegistry.getInstance();
 
-        return registry.getModelId(itemStack.getItem(), durability);
+        return registry.getModelId(itemStack.getItem(), durability).flatMap(model -> {
+            if(model.getNamespace().equals(getDefinition().getPluginContainer().getId()))
+                return Optional.of(model.getValue());
+            else
+                return Optional.empty();
+        });
     }
 
     @Override

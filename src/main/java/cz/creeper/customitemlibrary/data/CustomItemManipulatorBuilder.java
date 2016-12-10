@@ -18,16 +18,30 @@ public class CustomItemManipulatorBuilder extends AbstractDataBuilder<CustomItem
 
     @Override
     public CustomItemData create() {
-        return new CustomItemData(null);
+        return new CustomItemData();
     }
 
     @Override
     public Optional<CustomItemData> createFrom(DataHolder dataHolder) {
-        return dataHolder.get(CustomItemLibraryKeys.CUSTOM_ITEM_ID).map(CustomItemData::new);
+        Optional<String> pluginId = dataHolder.get(CustomItemLibraryKeys.CUSTOM_ITEM_PLUGIN_ID);
+        Optional<String> typeId = dataHolder.get(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID);
+
+        if(pluginId.isPresent() && typeId.isPresent()) {
+            return Optional.of(new CustomItemData(pluginId.get(), typeId.get()));
+        } else {
+            return Optional.empty();
+        }
     }
 
     @Override
     protected Optional<CustomItemData> buildContent(DataView container) throws InvalidDataException {
-        return container.getString(CustomItemLibraryKeys.CUSTOM_ITEM_ID.getQuery()).map(CustomItemData::new);
+        Optional<String> pluginId = container.getString(CustomItemLibraryKeys.CUSTOM_ITEM_PLUGIN_ID.getQuery());
+        Optional<String> typeId = container.getString(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID.getQuery());
+
+        if(pluginId.isPresent() && typeId.isPresent()) {
+            return Optional.of(new CustomItemData(pluginId.get(), typeId.get()));
+        } else {
+            return Optional.empty();
+        }
     }
 }

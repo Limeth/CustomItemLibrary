@@ -10,17 +10,18 @@ import cz.creeper.customitemlibrary.item.material.CustomMaterialRegistry;
 import cz.creeper.customitemlibrary.item.tool.CustomToolDefinition;
 import cz.creeper.customitemlibrary.item.tool.CustomToolRegistry;
 import lombok.ToString;
+import lombok.val;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.asset.Asset;
-import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.plugin.PluginContainer;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @ToString
 public class CustomItemServiceImpl implements CustomItemService {
@@ -28,7 +29,7 @@ public class CustomItemServiceImpl implements CustomItemService {
     public static final String DIRECTORY_NAME_RESOURCEPACK = "resourcepack";
     public static final String FILE_NAME_PACK = "pack.mcmeta";
     private final CustomItemRegistryMap registryMap = new CustomItemRegistryMap();
-    private final HashMap<String, CustomItemDefinition> definitionMap = Maps.newHashMap();
+    private final Map<String, Map<String, CustomItemDefinition<CustomItem>>> pluginIdsToTypeIdsToDefinitions = Maps.newHashMap();
 
     public CustomItemServiceImpl() {
         registryMap.put(CustomToolDefinition.class, CustomToolRegistry.getInstance());
@@ -43,41 +44,30 @@ public class CustomItemServiceImpl implements CustomItemService {
         if(!registry.isPresent())
             throw new IllegalArgumentException("Invalid definition type.");
 
-        String id = definition.getId();
+        val typeIdsToDefinitions = getTypeIdsToDefinitions(definition.getPluginContainer());
 
-        if(definitionMap.containsKey(id))
-            throw new IllegalStateException("A custom item definition with ID \"" + id + "\" is already registered!");
+        if(typeIdsToDefinitions.containsKey(definition.getTypeId()))
+            throw new IllegalStateException("A custom item definition with ID \"" + definition.getTypeId() + "\" is already registered!");
 
         registry.get().register(definition);
-        definitionMap.put(id, definition);
+        typeIdsToDefinitions.put(definition.getTypeId(), (CustomItemDefinition<CustomItem>) definition);
     }
 
     @Override
-    public Map<String, CustomItemDefinition> getDefinitionMap() {
-        return Collections.unmodifiableMap(definitionMap);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public Optional<CustomItem> getCustomItem(ItemStack itemStack) {
-        return getDefinition(itemStack).flatMap(definition -> definition.wrapIfPossible(itemStack));
-    }
-
-    @Override
-    public void loadDictionary() {
+    public void loadRegistry() {
         Path directory = getDirectoryRegistries();
 
         registryMap.values().forEach(registry -> registry.load(directory));
     }
 
     @Override
-    public void saveDictionary() {
+    public void saveRegistry() {
         Path directory = getDirectoryRegistries();
 
         registryMap.values().forEach(registry -> registry.save(directory));
     }
 
-    public void generateResourcePack() {
+    public Path generateResourcePack() {
         Path directory = getDirectoryResourcePack();
         Path packFile = directory.resolve(FILE_NAME_PACK);
 
@@ -97,6 +87,33 @@ public class CustomItemServiceImpl implements CustomItemService {
         }
 
         registryMap.values().forEach(registry -> registry.generateResourcePack(directory));
+
+        return directory;
+    }
+
+    @Override
+    public Set<CustomItemDefinition<CustomItem>> getDefinitions() {
+        return pluginIdsToTypeIdsToDefinitions.values().stream()
+                .flatMap(typeIdsToDefinitions -> typeIdsToDefinitions.values().stream())
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Optional<CustomItemDefinition<CustomItem>> getDefinition(String pluginId, String typeId) {
+        val typeIdsToDefinitions = pluginIdsToTypeIdsToDefinitions.get(pluginId);
+
+        if(typeIdsToDefinitions == null)
+            return Optional.empty();
+
+        return Optional.ofNullable(typeIdsToDefinitions.get(typeId));
+    }
+
+    private Map<String, CustomItemDefinition<CustomItem>> getTypeIdsToDefinitions(PluginContainer pluginContainer) {
+        return getTypeIdsToDefinitions(pluginContainer.getId());
+    }
+
+    private Map<String, CustomItemDefinition<CustomItem>> getTypeIdsToDefinitions(String pluginId) {
+        return pluginIdsToTypeIdsToDefinitions.computeIfAbsent(pluginId, k -> Maps.newHashMap());
     }
 
     public static Path getDirectoryRegistries() {

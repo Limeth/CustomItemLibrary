@@ -1,6 +1,5 @@
 package cz.creeper.customitemlibrary.item;
 
-import cz.creeper.customitemlibrary.util.Util;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.spongepowered.api.item.inventory.ItemStack;
@@ -22,29 +21,18 @@ public abstract class AbstractCustomItem<I extends AbstractCustomItem<I, T>, T e
 
     @Override
     public final String getModel() {
-        Optional<String> modelId = resolveCurrentModel();
+        Optional<String> model = resolveCurrentModel();
 
-        textureResolution:
-        if(modelId.isPresent()) {
-            String pluginId = Util.getNamespaceFromId(modelId.get());
+        if (!model.isPresent() || !getDefinition().getModels().contains(model.get())) {
+            // If the texture is invalid, change the texture to the default one.
+            String defaultModel = getDefinition().getDefaultModel();
 
-            if (!getDefinition().getPluginId().equals(pluginId))
-                break textureResolution;
+            applyModel(defaultModel);
 
-            String model = Util.getValueFromId(modelId.get());
-
-            if (!getDefinition().getModels().contains(model))
-                break textureResolution;
-
-            return model;
+            return defaultModel;
         }
 
-        // If the texture is invalid, change the texture to the default one.
-        String defaultModel = getDefinition().getDefaultModel();
-
-        applyModel(defaultModel);
-
-        return defaultModel;
+        return model.get();
     }
 
     @Override
