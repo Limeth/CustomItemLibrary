@@ -1,5 +1,6 @@
 package cz.creeper.customitemlibrary.item;
 
+import cz.creeper.customitemlibrary.data.RepresentedCustomItemSnapshotData;
 import org.spongepowered.api.item.inventory.ItemStack;
 
 /**
@@ -27,4 +28,8 @@ public interface CustomItem {
      * @param model One of the models defined by the {@link CustomItemDefinition} returned by {@link #getDefinition()}
      */
     void setModel(String model);
+
+    default RepresentedCustomItemSnapshotData createRepresentedCustomItemSnapshotData() {
+        return new RepresentedCustomItemSnapshotData(getItemStack().createSnapshot());
+    }
 }

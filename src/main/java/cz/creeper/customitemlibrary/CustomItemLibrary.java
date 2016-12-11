@@ -4,9 +4,15 @@ import com.google.inject.Inject;
 import cz.creeper.customitemlibrary.data.CustomItemData;
 import cz.creeper.customitemlibrary.data.CustomItemManipulatorBuilder;
 import cz.creeper.customitemlibrary.data.ImmutableCustomItemData;
+import cz.creeper.customitemlibrary.data.ImmutableRepresentedCustomItemSnapshotData;
+import cz.creeper.customitemlibrary.data.RepresentedCustomItemSnapshotData;
+import cz.creeper.customitemlibrary.data.RepresentedCustomItemSnapshotManipulatorBuilder;
 import cz.creeper.customitemlibrary.item.CustomItem;
 import cz.creeper.customitemlibrary.item.CustomItemDefinition;
+import cz.creeper.customitemlibrary.util.Identifier;
+import cz.creeper.customitemlibrary.util.Util;
 import lombok.Getter;
+import lombok.val;
 import ninja.leaping.configurate.ConfigurationOptions;
 import ninja.leaping.configurate.objectmapping.GuiceObjectMapperFactory;
 import org.slf4j.Logger;
@@ -29,11 +35,16 @@ import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.plugin.Dependency;
 import org.spongepowered.api.plugin.Plugin;
+import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
+import org.spongepowered.api.world.Location;
+import org.spongepowered.api.world.World;
 
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * In order to register custom items, use the {@link CustomItemService}
@@ -52,15 +63,15 @@ import java.util.function.Function;
                 )
         }
 )
+@Getter
 public class CustomItemLibrary {
     private static CustomItemLibrary instance;
-    @Getter @Inject
+    @Inject
     private Logger logger;
-    @Getter @Inject
+    @Inject
     private GuiceObjectMapperFactory objectMapperFactory;
-    @Getter @Inject @DefaultConfig(sharedRoot = false)
+    @Inject @DefaultConfig(sharedRoot = false)
     private Path configPath;
-    @Getter
     private CustomItemServiceImpl service;
 
     @Listener
@@ -71,6 +82,7 @@ public class CustomItemLibrary {
     @Listener
     public void onGamePreInitialization(GamePreInitializationEvent event) {
         Sponge.getDataManager().register(CustomItemData.class, ImmutableCustomItemData.class, new CustomItemManipulatorBuilder());
+        Sponge.getDataManager().register(RepresentedCustomItemSnapshotData.class, ImmutableRepresentedCustomItemSnapshotData.class, new RepresentedCustomItemSnapshotManipulatorBuilder());
     }
 
     @Listener
@@ -89,14 +101,14 @@ public class CustomItemLibrary {
     @Listener
     public void onGameLoadComplete(GameLoadCompleteEvent event) {
         logger.info("Saving CustomItemLibrary...");
-        service.saveDictionary();
+        service.saveRegistry();
         logger.info("CustomItemLibrary saved.");
     }
 
     private void setupService() {
         service = new CustomItemServiceImpl();
 
-        service.loadDictionary();
+        service.loadRegistry();
         Sponge.getServiceManager().setProvider(this, CustomItemService.class, service);
     }
 
@@ -107,7 +119,9 @@ public class CustomItemLibrary {
                 .permission("customitemlibrary.command.customitemlibrary.give")
                 .arguments(
                         GenericArguments.player(Text.of("Target")),
-                        GenericArguments.choices(Text.of("Item"), () -> service.getDefinitionMap().keySet(),
+                        GenericArguments.choices(Text.of("Item"), () -> service.getDefinitions().stream()
+                                        .map(definition -> Identifier.toString(definition.getPluginContainer().getId(),
+                                                definition.getTypeId())).collect(Collectors.toSet()),
                                 Function.identity(), true),
                         GenericArguments.optional(GenericArguments.integer(Text.of("Quantity")))
                 )
@@ -125,12 +139,12 @@ public class CustomItemLibrary {
                     Player target = (Player) rawTarget;
                     String customItemId = args.<String>getOne("Item")
                             .orElseThrow(() -> new IllegalStateException("The item should have been specified."));
+                    Optional<CustomItemDefinition<CustomItem>> definition;
 
-                    if(!service.getDefinitionMap().containsKey(customItemId)) {
-                        src.sendMessage(Text.builder()
-                                .color(TextColors.RED)
-                                .append(Text.of("Invalid item id: " + customItemId))
-                                .build());
+                    if(!Identifier.isParseable(customItemId)
+                            || !(definition = service.getDefinition(Identifier.getNamespaceFromIdString(customItemId),
+                                    Identifier.getValueFromIdString(customItemId))).isPresent()) {
+                        src.sendMessage(Text.of(TextColors.RED, "Invalid item id: " + customItemId));
                         return CommandResult.empty();
                     }
 
@@ -144,12 +158,18 @@ public class CustomItemLibrary {
                         return CommandResult.empty();
                     }
 
-                    CustomItemDefinition definition = service.getDefinitionMap().get(customItemId);
-                    CustomItem item = definition.createItem(Cause.builder()
+                    CustomItem item = definition.get().createItem(Cause.builder()
                             .named(NamedCause.source(src))
                             .build());
 
-                    target.getInventory().offer(item.getItemStack());
+                    val result = target.getInventory().offer(item.getItemStack());
+
+                    result.getRejectedItems().forEach(rejectedSnapshot -> {
+                        Location<World> location = target.getLocation();
+
+                        Util.spawnItem(location, rejectedSnapshot, src);
+                    });
+
                     src.sendMessage(Text.builder()
                             .color(TextColors.GREEN)
                             .append(Text.of("Gave " + target.getName() + " " + quantity + "x " + customItemId))
@@ -163,7 +183,9 @@ public class CustomItemLibrary {
                 .description(Text.of("Creates the resourcepack."))
                 .permission("customitemlibrary.command.customitemlibrary.resourcepack")
                 .executor((CommandSource src, CommandContext args) -> {
-                    service.generateResourcePack();
+                    src.sendMessage(Text.of(TextColors.GRAY, "Generating resourcepack..."));
+                    Path path = service.generateResourcePack();
+                    src.sendMessage(Text.of(TextColors.GRAY, "Resourcepack generated: " + path));
                     return CommandResult.success();
                 })
                 .build();
@@ -181,6 +203,11 @@ public class CustomItemLibrary {
     public ConfigurationOptions getDefaultConfigurationOptions() {
         return ConfigurationOptions.defaults().setShouldCopyDefaults(true)
                 .setObjectMapperFactory(objectMapperFactory);
+    }
+
+    public PluginContainer getPluginContainer() {
+        return Sponge.getPluginManager().fromInstance(this)
+                .orElseThrow(() -> new IllegalStateException("Could not access the plugin container of CustomItemLibrary."));
     }
 
     public static CustomItemLibrary getInstance() {
