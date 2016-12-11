@@ -1,7 +1,9 @@
 package cz.creeper.customitemlibrary.data;
 
-import lombok.*;
-import org.spongepowered.api.Sponge;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.ToString;
 import org.spongepowered.api.data.DataContainer;
 import org.spongepowered.api.data.manipulator.immutable.common.AbstractImmutableData;
 import org.spongepowered.api.data.value.immutable.ImmutableValue;
@@ -34,11 +36,13 @@ public class ImmutableCustomItemData extends AbstractImmutableData<ImmutableCust
     }
 
     public ImmutableValue<String> customItemPluginId() {
-        return Sponge.getRegistry().getValueFactory().createValue(CustomItemLibraryKeys.CUSTOM_ITEM_PLUGIN_ID, this.customItemPluginId, CustomItemData.ID_UNINITIALIZED).asImmutable();
+        return CustomItemData.customItemPluginId(customItemPluginId)
+                .asImmutable();
     }
 
     public ImmutableValue<String> customItemTypeId() {
-        return Sponge.getRegistry().getValueFactory().createValue(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID, this.customItemTypeId, CustomItemData.ID_UNINITIALIZED).asImmutable();
+        return CustomItemData.customItemTypeId(customItemTypeId)
+                .asImmutable();
     }
 
     @Override

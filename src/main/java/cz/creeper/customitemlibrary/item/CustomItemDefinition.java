@@ -1,5 +1,6 @@
 package cz.creeper.customitemlibrary.item;
 
+import cz.creeper.customitemlibrary.data.CustomItemData;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.PluginContainer;
@@ -75,5 +76,9 @@ public interface CustomItemDefinition<T extends CustomItem> {
      */
     default <E extends Extent> Optional<T> wrapIfPossible(Location<E> block) {
         return Optional.empty();
+    }
+
+    default CustomItemData createCustomItemData() {
+        return new CustomItemData(getPluginContainer().getId(), getTypeId());
     }
 }

@@ -3,8 +3,12 @@ package cz.creeper.customitemlibrary;
 import cz.creeper.customitemlibrary.data.CustomItemData;
 import cz.creeper.customitemlibrary.item.CustomItem;
 import cz.creeper.customitemlibrary.item.CustomItemDefinition;
+import cz.creeper.customitemlibrary.item.block.CustomBlock;
+import cz.creeper.customitemlibrary.util.Block;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.world.Location;
+import org.spongepowered.api.world.World;
 
 import java.util.Optional;
 import java.util.Set;
@@ -56,6 +60,12 @@ public interface CustomItemService {
     default Optional<CustomItem> getCustomItem(ItemStack itemStack) {
         return getDefinition(itemStack).flatMap(definition -> definition.wrapIfPossible(itemStack));
     }
+
+    default Optional<CustomBlock> getCustomBlock(Location<World> location) {
+        return getCustomBlock(Block.of(location));
+    }
+
+    Optional<CustomBlock> getCustomBlock(Block block);
 
     /**
      * Loads the custom item indexes

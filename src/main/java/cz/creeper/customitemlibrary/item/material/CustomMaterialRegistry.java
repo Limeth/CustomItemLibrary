@@ -4,6 +4,7 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
+import cz.creeper.customitemlibrary.CustomItemService;
 import cz.creeper.customitemlibrary.item.CustomItemRegistry;
 import cz.creeper.mineskinsponge.MineskinService;
 import cz.creeper.mineskinsponge.SkinRecord;
@@ -13,11 +14,20 @@ import lombok.val;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.asset.Asset;
 import org.spongepowered.api.asset.AssetManager;
+import org.spongepowered.api.data.type.HandType;
+import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.event.Listener;
+import org.spongepowered.api.event.Order;
+import org.spongepowered.api.event.filter.cause.Root;
+import org.spongepowered.api.event.item.inventory.InteractItemEvent;
+import org.spongepowered.api.event.network.ClientConnectionEvent;
+import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.plugin.PluginContainer;
 
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -25,6 +35,7 @@ public class CustomMaterialRegistry implements CustomItemRegistry<CustomMaterial
     private static final CustomMaterialRegistry INSTANCE = new CustomMaterialRegistry();
     private final Map<String, Map<String, CompletableFuture<SkinRecord>>> pluginIdsToTexturesToSkins = Maps.newHashMap();
     private final Map<String, BiMap<String, SkinRecord>> pluginIdsToTexturesToReadySkins = Maps.newHashMap();
+    private final Map<UUID, Map<HandType, ItemStackSnapshot>> lastUsedItem = Maps.newHashMap();
 
     @Override
     public void register(CustomMaterialDefinition definition) {
@@ -90,6 +101,125 @@ public class CustomMaterialRegistry implements CustomItemRegistry<CustomMaterial
     public void generateResourcePack(Path directory) {
         // Not needed
     }
+
+    @Listener
+    public void onClientConnectionDisconnect(ClientConnectionEvent.Disconnect event) {
+        lastUsedItem.remove(event.getTargetEntity().getUniqueId());
+    }
+
+    @Listener(order = Order.LATE)
+    public void onInteractItemSecondary(InteractItemEvent.Secondary event, @Root Player player) {
+        CustomItemService service = CustomItemLibrary.getInstance().getService();
+
+        player.getItemInHand(event.getHandType())
+                .flatMap(service::getCustomItem)
+                .ifPresent(customItem -> event.setCancelled(true));
+    }
+
+    /*
+    I would make it placeable, but there are bugs with the data api.
+
+    @Listener(order = Order.BEFORE_POST)
+    public void onInteractItemSecondary(InteractItemEvent.Secondary event, @Root Player player) {
+        Optional<ItemStack> itemStack = player.getItemInHand(event.getHandType());
+
+        if(itemStack.isPresent()) {
+            val items = lastUsedItem.computeIfAbsent(player.getUniqueId(), k -> Maps.newHashMap());
+
+            items.put(event.getHandType(), itemStack.get().createSnapshot());
+        } else {
+            Optional.ofNullable(lastUsedItem.get(player.getUniqueId()))
+                    .ifPresent(items -> items.remove(event.getHandType()));
+        }
+    }
+
+    @Listener(order = Order.BEFORE_POST)
+    public void onChangeBlockPlace(ChangeBlockEvent.Place event, @Root Player player) {
+        final Wrapper<List<CustomMaterial>> customMaterialsPlaced = Wrapper.of(Lists.newLinkedList());
+
+        Optional.ofNullable(lastUsedItem.get(player.getUniqueId()))
+                .ifPresent(items -> items.values().forEach(item -> {
+                    CustomItemLibrary.getInstance().getService().getCustomItem(item.createStack())
+                            .filter(CustomMaterial.class::isInstance)
+                            .map(CustomMaterial.class::cast)
+                            .ifPresent(customMaterial -> customMaterialsPlaced.getValue().add(customMaterial));
+                }));
+
+        if(customMaterialsPlaced.getValue().size() < 1)
+            return;
+        else if(customMaterialsPlaced.getValue().size() > 1) {
+            event.setCancelled(true);
+            player.sendMessage(Text.of(TextColors.RED, "You can't place down blocks while holding a custom item in each hand."));
+            return;
+        }
+
+        CustomMaterial customMaterial = customMaterialsPlaced.getValue().iterator().next();
+
+        event.getTransactions().forEach(transaction -> {
+            BlockSnapshot defaultSnapshot = transaction.getDefault();
+            Location<World> location = defaultSnapshot.getLocation()
+                    .orElseThrow(() -> new IllegalStateException("Could not get the location of a block snapshot."));
+            TileEntityArchetype customArchetype = defaultSnapshot.createArchetype()
+                    .orElseThrow(() -> new IllegalStateException("Could not create a tile entity archetype."));
+
+            ItemStack savedItemStack = customMaterial.getItemStack().copy();
+
+            savedItemStack.setQuantity(1);
+
+            ItemStackSnapshot savedItemSnapshot = savedItemStack.createSnapshot();
+            RepresentedCustomItemSnapshotData data = new RepresentedCustomItemSnapshotData(savedItemSnapshot);
+
+            customArchetype.offer(data);
+
+            BlockSnapshot customSnapshot = customArchetype.toSnapshot(location);
+
+            transaction.setCustom(customSnapshot);
+
+            // workaround of custom data not being applied immediately
+            Sponge.getScheduler().createTaskBuilder()
+                    .execute(task -> {
+                        TileEntity tileEntity = location.getTileEntity()
+                                .orElseThrow(() -> new IllegalStateException("Could not get the tile entity of the placed skull."));
+
+                        tileEntity.offer(data);
+                    })
+                    .submit(CustomItemLibrary.getInstance());
+        });
+    }
+
+    @Listener(order = Order.BEFORE_POST)
+    public void onChangeBlockBreak(ChangeBlockEvent.Break event) {
+        event.getTransactions().forEach(transaction -> {
+            BlockSnapshot original = transaction.getOriginal();
+
+            original.get(ImmutableRepresentedCustomItemSnapshotData.class).ifPresent(immutableRepresentedCustomItemSnapshotData -> {
+                ItemStackSnapshot snapshot = immutableRepresentedCustomItemSnapshotData.representedCustomItemSnapshot().get();
+                ItemStack itemStack = snapshot.createStack();
+
+                CustomItemLibrary.getInstance().getService().getCustomItem(itemStack)
+                        .filter(CustomMaterial.class::isInstance)
+                        .map(CustomMaterial.class::cast)
+                        .ifPresent(customMaterial -> {
+                            Location<World> location = transaction.getOriginal().getLocation()
+                                    .orElseThrow(() -> new IllegalStateException("Could not get the location of a block snapshot."));
+                            transaction.setValid(false);
+
+                            Sponge.getScheduler().createTaskBuilder()
+                                    .execute(task -> {
+                                        Location<World> itemLocation = location.add(Vector3d.ONE.mul(0.5));
+                                        Cause setBlockCause = Cause.source(CustomItemLibrary.getInstance().getPluginContainer())
+                                                .notifier(event)
+                                                .build();
+
+                                        location.setBlockType(BlockTypes.AIR, setBlockCause);
+                                        Util.spawnItem(itemLocation, customMaterial.getItemStack().createSnapshot(), event);
+                                    })
+                                    .submit(CustomItemLibrary.getInstance());
+                        });
+            });
+        });
+    }
+    */
 
     private Map<String, CompletableFuture<SkinRecord>> getTexturesToSkins(PluginContainer pluginContainer) {
         return pluginIdsToTexturesToSkins.computeIfAbsent(pluginContainer.getId(), k -> Maps.newHashMap());

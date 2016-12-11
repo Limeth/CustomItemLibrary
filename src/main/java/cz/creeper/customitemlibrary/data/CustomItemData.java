@@ -52,11 +52,19 @@ public class CustomItemData extends AbstractData<CustomItemData, ImmutableCustom
     }
 
     public Value<String> customItemPluginId() {
-        return Sponge.getRegistry().getValueFactory().createValue(CustomItemLibraryKeys.CUSTOM_ITEM_PLUGIN_ID, this.customItemPluginId, ID_UNINITIALIZED);
+        return customItemPluginId(customItemPluginId);
+    }
+
+    public static Value<String> customItemPluginId(String customItemPluginId) {
+        return Sponge.getRegistry().getValueFactory().createValue(CustomItemLibraryKeys.CUSTOM_ITEM_PLUGIN_ID, customItemPluginId, CustomItemData.ID_UNINITIALIZED);
     }
 
     public Value<String> customItemTypeId() {
-        return Sponge.getRegistry().getValueFactory().createValue(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID, this.customItemTypeId, ID_UNINITIALIZED);
+        return customItemTypeId(customItemTypeId);
+    }
+
+    public static Value<String> customItemTypeId(String customItemTypeId) {
+        return Sponge.getRegistry().getValueFactory().createValue(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID, customItemTypeId, CustomItemData.ID_UNINITIALIZED);
     }
 
     @Override
