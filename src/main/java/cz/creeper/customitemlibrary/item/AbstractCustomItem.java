@@ -1,7 +1,9 @@
 package cz.creeper.customitemlibrary.item;
 
+import cz.creeper.customitemlibrary.data.CustomItemLibraryKeys;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.spongepowered.api.data.DataTransactionResult;
 import org.spongepowered.api.item.inventory.ItemStack;
 
 import java.util.Optional;
@@ -23,7 +25,9 @@ public abstract class AbstractCustomItem<I extends AbstractCustomItem<I, T>, T e
     public final String getModel() {
         Optional<String> model = resolveCurrentModel();
 
-        if (!model.isPresent() || !getDefinition().getModels().contains(model.get())) {
+        if (!model.isPresent()
+                || !getItemStack().get(CustomItemLibraryKeys.CUSTOM_ITEM_MODEL)
+                        .map(savedModel -> model.get().equals(savedModel)).orElse(false)) {
             // If the texture is invalid, change the texture to the default one.
             String defaultModel = getDefinition().getDefaultModel();
 
@@ -43,5 +47,11 @@ public abstract class AbstractCustomItem<I extends AbstractCustomItem<I, T>, T e
                     + getDefinition().getModels().stream().collect(Collectors.joining(", ")));
 
         applyModel(model);
+
+        DataTransactionResult result = getItemStack().offer(CustomItemLibraryKeys.CUSTOM_ITEM_MODEL, model);
+
+        if(!result.isSuccessful())
+            throw new IllegalStateException("Could not update the item model; rejected: " + result.getRejectedData()
+                                            + "; replaced: " + result.getReplacedData());
     }
 }

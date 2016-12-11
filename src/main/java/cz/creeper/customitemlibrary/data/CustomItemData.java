@@ -30,14 +30,20 @@ public class CustomItemData extends AbstractData<CustomItemData, ImmutableCustom
     @NonNull
     private String customItemTypeId;
 
-    public CustomItemData(String customItemPluginId, String customItemTypeId) {
+    @Getter(AccessLevel.PRIVATE)
+    @Setter(AccessLevel.PRIVATE)
+    @NonNull
+    private String customItemModel;
+
+    public CustomItemData(String customItemPluginId, String customItemTypeId, String customItemModel) {
         this.customItemPluginId = customItemPluginId;
         this.customItemTypeId = customItemTypeId;
+        this.customItemModel = customItemModel;
         registerGettersAndSetters();
     }
 
     public CustomItemData() {
-        this(ID_UNINITIALIZED, ID_UNINITIALIZED);
+        this(ID_UNINITIALIZED, ID_UNINITIALIZED, ID_UNINITIALIZED);
     }
 
     @Override
@@ -49,6 +55,10 @@ public class CustomItemData extends AbstractData<CustomItemData, ImmutableCustom
         registerFieldGetter(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID, this::getCustomItemTypeId);
         registerFieldSetter(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID, this::setCustomItemTypeId);
         registerKeyValue(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID, this::customItemTypeId);
+
+        registerFieldGetter(CustomItemLibraryKeys.CUSTOM_ITEM_MODEL, this::getCustomItemModel);
+        registerFieldSetter(CustomItemLibraryKeys.CUSTOM_ITEM_MODEL, this::setCustomItemModel);
+        registerKeyValue(CustomItemLibraryKeys.CUSTOM_ITEM_MODEL, this::customItemModel);
     }
 
     public Value<String> customItemPluginId() {
@@ -67,6 +77,14 @@ public class CustomItemData extends AbstractData<CustomItemData, ImmutableCustom
         return Sponge.getRegistry().getValueFactory().createValue(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID, customItemTypeId, CustomItemData.ID_UNINITIALIZED);
     }
 
+    public Value<String> customItemModel() {
+        return customItemModel(customItemModel);
+    }
+
+    public static Value<String> customItemModel(String customItemModel) {
+        return Sponge.getRegistry().getValueFactory().createValue(CustomItemLibraryKeys.CUSTOM_ITEM_MODEL, customItemModel, CustomItemData.ID_UNINITIALIZED);
+    }
+
     @Override
     @Nonnull
     public Optional<CustomItemData> fill(@Nonnull DataHolder dataHolder, @Nonnull MergeFunction mergeFunction) {
@@ -78,9 +96,10 @@ public class CustomItemData extends AbstractData<CustomItemData, ImmutableCustom
     public Optional<CustomItemData> from(@Nonnull DataContainer dataContainer) {
         Optional<String> pluginId = dataContainer.getString(CustomItemLibraryKeys.CUSTOM_ITEM_PLUGIN_ID.getQuery());
         Optional<String> typeId = dataContainer.getString(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID.getQuery());
+        Optional<String> model = dataContainer.getString(CustomItemLibraryKeys.CUSTOM_ITEM_MODEL.getQuery());
 
-        if(pluginId.isPresent() && typeId.isPresent()) {
-            return Optional.of(new CustomItemData(pluginId.get(), typeId.get()));
+        if(pluginId.isPresent() && typeId.isPresent() && model.isPresent()) {
+            return Optional.of(new CustomItemData(pluginId.get(), typeId.get(), model.get()));
         } else {
             return Optional.empty();
         }
@@ -89,13 +108,13 @@ public class CustomItemData extends AbstractData<CustomItemData, ImmutableCustom
     @Override
     @Nonnull
     public CustomItemData copy() {
-        return new CustomItemData(customItemPluginId, customItemTypeId);
+        return new CustomItemData(customItemPluginId, customItemTypeId, customItemModel);
     }
 
     @Override
     @Nonnull
     public ImmutableCustomItemData asImmutable() {
-        return new ImmutableCustomItemData(customItemPluginId, customItemTypeId);
+        return new ImmutableCustomItemData(customItemPluginId, customItemTypeId, customItemModel);
     }
 
     @Override
@@ -108,6 +127,7 @@ public class CustomItemData extends AbstractData<CustomItemData, ImmutableCustom
     public DataContainer toContainer() {
         return super.toContainer()
                 .set(CustomItemLibraryKeys.CUSTOM_ITEM_PLUGIN_ID.getQuery(), customItemPluginId)
-                .set(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID.getQuery(), customItemTypeId);
+                .set(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID.getQuery(), customItemTypeId)
+                .set(CustomItemLibraryKeys.CUSTOM_ITEM_MODEL.getQuery(), customItemModel);
     }
 }

@@ -28,9 +28,10 @@ public class CustomItemManipulatorBuilder extends AbstractDataBuilder<CustomItem
     public Optional<CustomItemData> createFrom(@Nonnull DataHolder dataHolder) {
         Optional<String> pluginId = dataHolder.get(CustomItemLibraryKeys.CUSTOM_ITEM_PLUGIN_ID);
         Optional<String> typeId = dataHolder.get(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID);
+        Optional<String> model = dataHolder.get(CustomItemLibraryKeys.CUSTOM_ITEM_MODEL);
 
-        if(pluginId.isPresent() && typeId.isPresent()) {
-            return Optional.of(new CustomItemData(pluginId.get(), typeId.get()));
+        if(pluginId.isPresent() && typeId.isPresent() && model.isPresent()) {
+            return Optional.of(new CustomItemData(pluginId.get(), typeId.get(), model.get()));
         } else {
             return Optional.empty();
         }
@@ -41,9 +42,10 @@ public class CustomItemManipulatorBuilder extends AbstractDataBuilder<CustomItem
     protected Optional<CustomItemData> buildContent(@Nonnull DataView container) throws InvalidDataException {
         Optional<String> pluginId = container.getString(CustomItemLibraryKeys.CUSTOM_ITEM_PLUGIN_ID.getQuery());
         Optional<String> typeId = container.getString(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID.getQuery());
+        Optional<String> model = container.getString(CustomItemLibraryKeys.CUSTOM_ITEM_MODEL.getQuery());
 
-        if(pluginId.isPresent() && typeId.isPresent()) {
-            return Optional.of(new CustomItemData(pluginId.get(), typeId.get()));
+        if(pluginId.isPresent() && typeId.isPresent() && model.isPresent()) {
+            return Optional.of(new CustomItemData(pluginId.get(), typeId.get(), model.get()));
         } else {
             return Optional.empty();
         }

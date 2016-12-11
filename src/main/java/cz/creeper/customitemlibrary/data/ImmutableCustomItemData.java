@@ -20,9 +20,14 @@ public class ImmutableCustomItemData extends AbstractImmutableData<ImmutableCust
     @Getter(AccessLevel.PRIVATE)
     private String customItemTypeId;
 
-    public ImmutableCustomItemData(String customItemPluginId, String customItemTypeId) {
+    @NonNull
+    @Getter(AccessLevel.PRIVATE)
+    private String customItemModel;
+
+    public ImmutableCustomItemData(String customItemPluginId, String customItemTypeId, String customItemModel) {
         this.customItemPluginId = customItemPluginId;
         this.customItemTypeId = customItemTypeId;
+        this.customItemModel = customItemModel;
         registerGetters();
     }
 
@@ -33,6 +38,9 @@ public class ImmutableCustomItemData extends AbstractImmutableData<ImmutableCust
 
         registerFieldGetter(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID, this::getCustomItemTypeId);
         registerKeyValue(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID, this::customItemTypeId);
+
+        registerFieldGetter(CustomItemLibraryKeys.CUSTOM_ITEM_MODEL, this::getCustomItemModel);
+        registerKeyValue(CustomItemLibraryKeys.CUSTOM_ITEM_MODEL, this::customItemModel);
     }
 
     public ImmutableValue<String> customItemPluginId() {
@@ -45,10 +53,15 @@ public class ImmutableCustomItemData extends AbstractImmutableData<ImmutableCust
                 .asImmutable();
     }
 
+    public ImmutableValue<String> customItemModel() {
+        return CustomItemData.customItemModel(customItemModel)
+                .asImmutable();
+    }
+
     @Override
     @Nonnull
     public CustomItemData asMutable() {
-        return new CustomItemData(customItemPluginId, customItemTypeId);
+        return new CustomItemData(customItemPluginId, customItemTypeId, customItemModel);
     }
 
     @Override
@@ -61,6 +74,7 @@ public class ImmutableCustomItemData extends AbstractImmutableData<ImmutableCust
     public DataContainer toContainer() {
         return super.toContainer()
                 .set(CustomItemLibraryKeys.CUSTOM_ITEM_PLUGIN_ID.getQuery(), customItemPluginId)
-                .set(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID.getQuery(), customItemTypeId);
+                .set(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID.getQuery(), customItemTypeId)
+                .set(CustomItemLibraryKeys.CUSTOM_ITEM_MODEL.getQuery(), customItemModel);
     }
 }

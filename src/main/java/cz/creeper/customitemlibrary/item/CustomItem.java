@@ -1,12 +1,14 @@
 package cz.creeper.customitemlibrary.item;
 
+import cz.creeper.customitemlibrary.data.CustomItemData;
+import cz.creeper.customitemlibrary.data.CustomItemLibraryKeys;
 import cz.creeper.customitemlibrary.data.RepresentedCustomItemSnapshotData;
 import org.spongepowered.api.item.inventory.ItemStack;
 
 /**
  * A wrapper class for {@link ItemStack}s created by the CustomItemLibrary
  */
-public interface CustomItem {
+public interface CustomItem extends HasModels {
     /**
      * @return The wrapped {@link ItemStack}
      */
@@ -17,17 +19,13 @@ public interface CustomItem {
      */
     CustomItemDefinition<? extends CustomItem> getDefinition();
 
-    /**
-     * One of the models defined by the {@link CustomItemDefinition} returned by {@link #getDefinition()}
-     *
-     * @return The current model of this {@link CustomItem}
-     */
-    String getModel();
+    default CustomItemData createCustomItemData() {
+        CustomItemData data = getDefinition().createDefaultCustomItemData();
 
-    /**
-     * @param model One of the models defined by the {@link CustomItemDefinition} returned by {@link #getDefinition()}
-     */
-    void setModel(String model);
+        data.set(CustomItemLibraryKeys.CUSTOM_ITEM_MODEL, getModel());
+
+        return data;
+    }
 
     default RepresentedCustomItemSnapshotData createRepresentedCustomItemSnapshotData() {
         return new RepresentedCustomItemSnapshotData(getItemStack().createSnapshot());

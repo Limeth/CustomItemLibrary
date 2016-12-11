@@ -8,9 +8,8 @@ import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.extent.Extent;
 
 import java.util.Optional;
-import java.util.Set;
 
-public interface CustomItemDefinition<T extends CustomItem> {
+public interface CustomItemDefinition<T extends CustomItem> extends DefinesModels {
     /**
      * @return The owner plugin
      */
@@ -31,16 +30,6 @@ public interface CustomItemDefinition<T extends CustomItem> {
      * Must be lower-case, separate words with an underscore.
      */
     String getTypeId();
-
-    /**
-     * @return The default model assigned to newly created {@link ItemStack}s in the {@link #createItem(Cause)} method.
-     */
-    String getDefaultModel();
-
-    /**
-     * @return All available models
-     */
-    Set<String> getModels();
 
     /**
      * @return A {@link CustomItem} with default properties.
@@ -78,7 +67,7 @@ public interface CustomItemDefinition<T extends CustomItem> {
         return Optional.empty();
     }
 
-    default CustomItemData createCustomItemData() {
-        return new CustomItemData(getPluginContainer().getId(), getTypeId());
+    default CustomItemData createDefaultCustomItemData() {
+        return new CustomItemData(getPluginContainer().getId(), getTypeId(), getDefaultModel());
     }
 }
