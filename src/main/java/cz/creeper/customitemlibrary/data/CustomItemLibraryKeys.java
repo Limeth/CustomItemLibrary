@@ -22,6 +22,13 @@ public final class CustomItemLibraryKeys {
                     "customitemlibrary:custom_item_type_id",
                     "Custom Item Type ID");
 
+    public static final Key<Value<String>> CUSTOM_ITEM_MODEL =
+            KeyFactory.makeSingleKey(new TypeToken<String>() {},
+                    new TypeToken<Value<String>>() {},
+                    DataQuery.of("CustomItemModel"),
+                    "customitemlibrary:custom_item_model",
+                    "Custom Item Model");
+
     public static final Key<Value<ItemStackSnapshot>> REPRESENTED_CUSTOM_ITEM_SNAPSHOT =
             KeyFactory.makeSingleKey(new TypeToken<ItemStackSnapshot>() {},
                     new TypeToken<Value<ItemStackSnapshot>>() {},

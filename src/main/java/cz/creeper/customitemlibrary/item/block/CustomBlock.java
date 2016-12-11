@@ -1,11 +1,6 @@
 package cz.creeper.customitemlibrary.item.block;
 
-import cz.creeper.customitemlibrary.item.material.CustomMaterial;
-import cz.creeper.customitemlibrary.item.material.CustomMaterialDefinition;
-import org.spongepowered.api.item.inventory.ItemStack;
+import cz.creeper.customitemlibrary.item.HasModels;
 
-public class CustomBlock extends CustomMaterial {
-    public CustomBlock(ItemStack itemStack, CustomMaterialDefinition definition) {
-        super(itemStack, definition);
-    }
+public interface CustomBlock extends HasModels {
 }

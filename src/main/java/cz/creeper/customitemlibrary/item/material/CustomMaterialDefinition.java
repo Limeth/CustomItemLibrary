@@ -2,7 +2,6 @@ package cz.creeper.customitemlibrary.item.material;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
-import cz.creeper.customitemlibrary.data.CustomItemData;
 import cz.creeper.customitemlibrary.events.CustomItemCreationEvent;
 import cz.creeper.customitemlibrary.item.CustomItemDefinition;
 import cz.creeper.customitemlibrary.item.tool.CustomToolDefinition;
@@ -20,8 +19,6 @@ import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.plugin.PluginContainer;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
@@ -86,7 +83,7 @@ public class CustomMaterialDefinition implements CustomItemDefinition<CustomMate
                 .orElseThrow(() -> new IllegalStateException("Models are not prepared."));
 
         skin.apply(itemStack);
-        itemStack.offer(new CustomItemData(pluginContainer.getId(), typeId));
+        itemStack.offer(createDefaultCustomItemData());
 
         CustomMaterial material = new CustomMaterial(itemStack, this);
         CustomItemCreationEvent event = new CustomItemCreationEvent(cause, material);
@@ -102,10 +99,6 @@ public class CustomMaterialDefinition implements CustomItemDefinition<CustomMate
             return Optional.empty();
 
         return Optional.of(new CustomMaterial(itemStack, this));
-    }
-
-    public static Path getTexturePath(PluginContainer pluginContainer, String model) {
-        return Paths.get(pluginContainer.getId(), pluginContainer.getVersion().orElse("unknown"), "models", model + ".png");
     }
 
     public static String getTextureAsset(String model) {

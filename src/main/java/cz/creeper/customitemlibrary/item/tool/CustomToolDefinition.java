@@ -3,7 +3,6 @@ package cz.creeper.customitemlibrary.item.tool;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import cz.creeper.customitemlibrary.data.CustomItemData;
 import cz.creeper.customitemlibrary.events.CustomItemCreationEvent;
 import cz.creeper.customitemlibrary.item.CustomItemDefinition;
 import lombok.AccessLevel;
@@ -107,7 +106,7 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
         itemStack.offer(Keys.ITEM_DURABILITY, durability);
         itemStack.offer(Keys.HIDE_UNBREAKABLE, true);
         itemStack.offer(Keys.HIDE_ATTRIBUTES, true);
-        itemStack.offer(new CustomItemData(getPluginContainer().getId(), typeId));
+        itemStack.offer(createDefaultCustomItemData());
 
         CustomTool tool = new CustomTool(itemStack, this);
         CustomItemCreationEvent event = new CustomItemCreationEvent(cause, tool);
