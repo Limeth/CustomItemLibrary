@@ -7,7 +7,7 @@ import org.spongepowered.api.plugin.PluginContainer;
 
 import java.util.Optional;
 
-public class CustomMaterial extends AbstractCustomItem<CustomMaterial, CustomMaterialDefinition> {
+public class CustomMaterial extends AbstractCustomItem<CustomMaterialDefinition> {
     public CustomMaterial(ItemStack itemStack, CustomMaterialDefinition definition) {
         super(itemStack, definition);
     }

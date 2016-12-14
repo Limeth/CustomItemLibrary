@@ -13,7 +13,6 @@ import cz.creeper.customitemlibrary.CustomItemServiceImpl;
 import cz.creeper.customitemlibrary.feature.item.CustomItem;
 import cz.creeper.customitemlibrary.feature.item.CustomItemDefinition;
 import cz.creeper.customitemlibrary.feature.item.tool.CustomToolDefinition;
-import cz.creeper.customitemlibrary.feature.item.tool.DurabilityIdentifier;
 import cz.creeper.customitemlibrary.util.Identifier;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.ConfigurationOptions;

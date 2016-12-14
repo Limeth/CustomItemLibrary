@@ -2,6 +2,8 @@ package cz.creeper.customitemlibrary.feature;
 
 import com.google.common.collect.ImmutableSet;
 import cz.creeper.customitemlibrary.data.CustomFeatureData;
+import cz.creeper.customitemlibrary.feature.item.material.CustomMaterialDefinition;
+import cz.creeper.customitemlibrary.feature.item.tool.CustomToolDefinition;
 import org.spongepowered.api.plugin.PluginContainer;
 
 import java.util.Set;
@@ -34,5 +36,13 @@ public interface CustomFeatureDefinition<T extends CustomFeature<? extends Custo
 
     default CustomFeatureData createDefaultCustomItemData() {
         return new CustomFeatureData(getPluginContainer().getId(), getTypeId(), getDefaultModel());
+    }
+
+    static CustomToolDefinition.CustomToolDefinitionBuilder itemToolBuilder() {
+        return CustomToolDefinition.builder();
+    }
+
+    static CustomMaterialDefinition.CustomMaterialDefinitionBuilder itemMaterialBuilder() {
+        return CustomMaterialDefinition.builder();
     }
 }
