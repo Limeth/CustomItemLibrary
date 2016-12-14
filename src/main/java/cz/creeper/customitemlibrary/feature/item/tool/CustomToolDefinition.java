@@ -1,16 +1,11 @@
-package cz.creeper.customitemlibrary.item.tool;
+package cz.creeper.customitemlibrary.feature.item.tool;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import cz.creeper.customitemlibrary.events.CustomItemCreationEvent;
-import cz.creeper.customitemlibrary.item.CustomItemDefinition;
-import cz.creeper.customitemlibrary.item.DurabilityRegistry;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.ToString;
+import cz.creeper.customitemlibrary.feature.item.CustomItemDefinition;
+import cz.creeper.customitemlibrary.feature.DurabilityRegistry;
+import lombok.*;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.Property;
 import org.spongepowered.api.data.key.Keys;
@@ -26,10 +21,10 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Defines a custom item.
- * This class is immutable and only a single instance should be created for each custom item type.
+ * Defines a custom feature.
+ * This class is immutable and only a single instance should be created for each custom feature type.
  *
- * The item is represented as remodelled shears, where a specific durability value
+ * The feature is represented as remodelled shears, where a specific durability value
  * signifies a specific model of the {@link CustomToolDefinition}.
  *
  * Note: Shears cannot be stacked together.
@@ -51,14 +46,14 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
     private final ItemStackSnapshot itemStackSnapshot;
 
     /**
-     * The default model of this custom item.
+     * The default model of this custom feature.
      */
     @Getter
     @NonNull
     private final String defaultModel;
 
     /**
-     * The Asset API is used to access the item models.
+     * The Asset API is used to access the feature models.
      * The path to the model file in a JAR is the following:
      * `assets/<pluginId>/models/tools/<model>.png`
      *
@@ -76,11 +71,12 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
     @NonNull
     private final Set<String> assets;
 
-    public static CustomToolDefinition create(Object plugin, String typeId, ItemStackSnapshot itemStackSnapshot, String defaultModel, Collection<String> additionalModels, Collection<String> assets) {
+    @Builder
+    public static CustomToolDefinition create(Object plugin, String typeId, ItemStackSnapshot itemStackSnapshot, String defaultModel, @Singular Collection<String> additionalModels, @Singular Collection<String> assets) {
         PluginContainer pluginContainer = Sponge.getPluginManager().fromInstance(plugin)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid plugin instance."));
         Preconditions.checkArgument(itemStackSnapshot.getCount() == 1, "The ItemStack count must be equal to 1.");
-        Preconditions.checkArgument(getNumberOfUses(itemStackSnapshot.createStack()).isPresent(), "Invalid item type, the item must have a durability.");
+        Preconditions.checkArgument(getNumberOfUses(itemStackSnapshot.createStack()).isPresent(), "Invalid feature type, the feature must have a durability.");
         Preconditions.checkNotNull(defaultModel, "The default model must not be null.");
         additionalModels.forEach(model ->
                 Preconditions.checkNotNull(model, "The model array must not contain null values."));

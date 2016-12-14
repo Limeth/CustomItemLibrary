@@ -1,4 +1,4 @@
-package cz.creeper.customitemlibrary.item;
+package cz.creeper.customitemlibrary.feature;
 
 /**
  * Access to the current model of the instance.

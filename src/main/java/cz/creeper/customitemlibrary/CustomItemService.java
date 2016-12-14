@@ -1,9 +1,9 @@
 package cz.creeper.customitemlibrary;
 
-import cz.creeper.customitemlibrary.data.CustomItemData;
-import cz.creeper.customitemlibrary.item.CustomItem;
-import cz.creeper.customitemlibrary.item.CustomItemDefinition;
-import cz.creeper.customitemlibrary.item.block.CustomBlock;
+import cz.creeper.customitemlibrary.data.CustomFeatureData;
+import cz.creeper.customitemlibrary.feature.item.CustomItem;
+import cz.creeper.customitemlibrary.feature.item.CustomItemDefinition;
+import cz.creeper.customitemlibrary.feature.block.CustomBlock;
 import cz.creeper.customitemlibrary.util.Block;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.item.inventory.ItemStack;
@@ -30,9 +30,9 @@ public interface CustomItemService {
      * @param itemStack The {@link ItemStack} to get the definition of
      * @return The definition, if one is registered.
      */
-    default Optional<CustomItemDefinition<CustomItem>> getDefinition(ItemStack itemStack) {
-        return itemStack.get(CustomItemData.class).flatMap(data ->
-                getDefinition(data.customItemPluginId().get(), data.customItemTypeId().get()));
+    default Optional<CustomItemDefinition<? extends CustomItem>> getDefinition(ItemStack itemStack) {
+        return itemStack.get(CustomFeatureData.class).flatMap(data ->
+                getDefinition(data.customFeaturePluginId().get(), data.customFeatureTypeId().get()));
     }
 
     /**
@@ -55,7 +55,7 @@ public interface CustomItemService {
 
     /**
      * @param itemStack The ItemStack to wrap
-     * @return The wrapped ItemStack, if it is a registered custom item.
+     * @return The wrapped ItemStack, if it is a registered custom feature.
      */
     default Optional<CustomItem> getCustomItem(ItemStack itemStack) {
         return getDefinition(itemStack).flatMap(definition -> definition.wrapIfPossible(itemStack));
@@ -68,12 +68,12 @@ public interface CustomItemService {
     Optional<CustomBlock> getCustomBlock(Block block);
 
     /**
-     * Loads the custom item indexes
+     * Loads the custom feature indexes
      */
     void loadRegistry();
 
     /**
-     * Saves the custom item indexes
+     * Saves the custom feature indexes
      */
     void saveRegistry();
 

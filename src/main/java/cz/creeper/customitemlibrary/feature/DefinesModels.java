@@ -1,4 +1,4 @@
-package cz.creeper.customitemlibrary.item;
+package cz.creeper.customitemlibrary.feature;
 
 import java.util.Set;
 

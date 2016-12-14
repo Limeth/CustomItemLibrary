@@ -1,11 +1,11 @@
-package cz.creeper.customitemlibrary.item.material;
+package cz.creeper.customitemlibrary.feature.item.material;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
 import cz.creeper.customitemlibrary.CustomItemService;
-import cz.creeper.customitemlibrary.item.CustomItemRegistry;
+import cz.creeper.customitemlibrary.feature.CustomFeatureRegistry;
 import cz.creeper.mineskinsponge.MineskinService;
 import cz.creeper.mineskinsponge.SkinRecord;
 import lombok.AccessLevel;
@@ -31,7 +31,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class CustomMaterialRegistry implements CustomItemRegistry<CustomMaterial, CustomMaterialDefinition> {
+public class CustomMaterialRegistry implements CustomFeatureRegistry<CustomMaterial, CustomMaterialDefinition> {
     private static final CustomMaterialRegistry INSTANCE = new CustomMaterialRegistry();
     private final Map<String, Map<String, CompletableFuture<SkinRecord>>> pluginIdsToTexturesToSkins = Maps.newHashMap();
     private final Map<String, BiMap<String, SkinRecord>> pluginIdsToTexturesToReadySkins = Maps.newHashMap();
@@ -131,8 +131,8 @@ public class CustomMaterialRegistry implements CustomItemRegistry<CustomMaterial
         final Wrapper<List<CustomMaterial>> customMaterialsPlaced = Wrapper.of(Lists.newLinkedList());
 
         Optional.ofNullable(lastUsedItem.get(player.getUniqueId()))
-                .ifPresent(items -> items.values().forEach(item -> {
-                    CustomItemLibrary.getInstance().getService().getCustomItem(item.createStack())
+                .ifPresent(items -> items.values().forEach(feature -> {
+                    CustomItemLibrary.getInstance().getService().getCustomItem(feature.createStack())
                             .filter(CustomMaterial.class::isInstance)
                             .map(CustomMaterial.class::cast)
                             .ifPresent(customMaterial -> customMaterialsPlaced.getValue().add(customMaterial));
@@ -142,7 +142,7 @@ public class CustomMaterialRegistry implements CustomItemRegistry<CustomMaterial
             return;
         else if(customMaterialsPlaced.getValue().size() > 1) {
             event.setCancelled(true);
-            player.sendMessage(Text.of(TextColors.RED, "You can't place down blocks while holding a custom item in each hand."));
+            player.sendMessage(Text.of(TextColors.RED, "You can't place down blocks while holding a custom feature in each hand."));
             return;
         }
 

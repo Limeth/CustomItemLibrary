@@ -1,6 +1,6 @@
-package cz.creeper.customitemlibrary.item.material;
+package cz.creeper.customitemlibrary.feature.item.material;
 
-import cz.creeper.customitemlibrary.item.AbstractCustomItem;
+import cz.creeper.customitemlibrary.feature.item.AbstractCustomItem;
 import cz.creeper.mineskinsponge.SkinRecord;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.PluginContainer;

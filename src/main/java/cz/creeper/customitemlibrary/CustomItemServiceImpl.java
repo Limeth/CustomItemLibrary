@@ -1,16 +1,16 @@
 package cz.creeper.customitemlibrary;
 
 import com.google.common.collect.Maps;
-import cz.creeper.customitemlibrary.item.CustomItem;
-import cz.creeper.customitemlibrary.item.CustomItemDefinition;
-import cz.creeper.customitemlibrary.item.CustomItemRegistry;
-import cz.creeper.customitemlibrary.item.CustomItemRegistryMap;
-import cz.creeper.customitemlibrary.item.DurabilityRegistry;
-import cz.creeper.customitemlibrary.item.block.CustomBlock;
-import cz.creeper.customitemlibrary.item.material.CustomMaterialDefinition;
-import cz.creeper.customitemlibrary.item.material.CustomMaterialRegistry;
-import cz.creeper.customitemlibrary.item.tool.CustomToolDefinition;
-import cz.creeper.customitemlibrary.item.tool.CustomToolRegistry;
+import cz.creeper.customitemlibrary.feature.item.CustomItem;
+import cz.creeper.customitemlibrary.feature.item.CustomItemDefinition;
+import cz.creeper.customitemlibrary.feature.CustomFeatureRegistry;
+import cz.creeper.customitemlibrary.feature.CustomFeatureRegistryMap;
+import cz.creeper.customitemlibrary.feature.DurabilityRegistry;
+import cz.creeper.customitemlibrary.feature.block.CustomBlock;
+import cz.creeper.customitemlibrary.feature.item.material.CustomMaterialDefinition;
+import cz.creeper.customitemlibrary.feature.item.material.CustomMaterialRegistry;
+import cz.creeper.customitemlibrary.feature.item.tool.CustomToolDefinition;
+import cz.creeper.customitemlibrary.feature.item.tool.CustomToolRegistry;
 import cz.creeper.customitemlibrary.util.Block;
 import lombok.ToString;
 import lombok.val;
@@ -32,7 +32,7 @@ public class CustomItemServiceImpl implements CustomItemService {
     public static final String DIRECTORY_NAME_REGISTRIES = "registries";
     public static final String DIRECTORY_NAME_RESOURCEPACK = "resourcepack";
     public static final String FILE_NAME_PACK = "pack.mcmeta";
-    private final CustomItemRegistryMap registryMap = new CustomItemRegistryMap();
+    private final CustomFeatureRegistryMap registryMap = new CustomFeatureRegistryMap();
     private final Map<String, Map<String, CustomItemDefinition<CustomItem>>> pluginIdsToTypeIdsToDefinitions = Maps.newHashMap();
 
     public CustomItemServiceImpl() {
@@ -48,7 +48,7 @@ public class CustomItemServiceImpl implements CustomItemService {
     @SuppressWarnings("unchecked")
     @Override
     public <I extends CustomItem, T extends CustomItemDefinition<I>> void register(T definition) {
-        Optional<CustomItemRegistry<I, T>> registry = registryMap.get(definition);
+        Optional<CustomFeatureRegistry<I, T>> registry = registryMap.get(definition);
 
         if(!registry.isPresent())
             throw new IllegalArgumentException("Invalid definition type.");
@@ -56,7 +56,7 @@ public class CustomItemServiceImpl implements CustomItemService {
         val typeIdsToDefinitions = getTypeIdsToDefinitions(definition.getPluginContainer());
 
         if(typeIdsToDefinitions.containsKey(definition.getTypeId()))
-            throw new IllegalStateException("A custom item definition with ID \"" + definition.getTypeId() + "\" is already registered!");
+            throw new IllegalStateException("A custom feature definition with ID \"" + definition.getTypeId() + "\" is already registered!");
 
         registry.get().register(definition);
         typeIdsToDefinitions.put(definition.getTypeId(), (CustomItemDefinition<CustomItem>) definition);
@@ -78,7 +78,7 @@ public class CustomItemServiceImpl implements CustomItemService {
 
     @Override
     public void finalize() {
-        registryMap.values().forEach(CustomItemRegistry::finalize);
+        registryMap.values().forEach(CustomFeatureRegistry::finalize);
     }
 
     public Path generateResourcePack() {
