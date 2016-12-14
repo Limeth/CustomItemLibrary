@@ -75,14 +75,7 @@ public class CustomMaterialRegistry implements CustomItemRegistry<CustomMaterial
     }
 
     @Override
-    public void load(Path directory) {
-        // Clear previously loaded
-        pluginIdsToTexturesToSkins.clear();
-        pluginIdsToTexturesToReadySkins.clear();
-    }
-
-    @Override
-    public void save(Path directory) {
+    public void finalize() {
         // Wait for all the textures to download
         CustomItemLibrary.getInstance().getLogger()
                 .info("Waiting for skins to finish being downloaded.");

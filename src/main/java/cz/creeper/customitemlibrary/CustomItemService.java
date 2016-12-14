@@ -76,4 +76,6 @@ public interface CustomItemService {
      * Saves the custom item indexes
      */
     void saveRegistry();
+
+    void finalize();
 }

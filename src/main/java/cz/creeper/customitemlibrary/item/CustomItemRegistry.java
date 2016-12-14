@@ -11,14 +11,9 @@ public interface CustomItemRegistry<I extends CustomItem, T extends CustomItemDe
     void register(T definition);
 
     /**
-     * Loads the registry from persistent storage.
+     * Finish all preparations
      */
-    void load(Path directory);
-
-    /**
-     * Saves the registry to persistent storage.
-     */
-    void save(Path directory);
+    void finalize();
 
     /**
      * Adds files to the resourcepack specified by the argument
