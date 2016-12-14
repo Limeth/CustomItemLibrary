@@ -1,17 +1,12 @@
-package cz.creeper.customitemlibrary.item.material;
+package cz.creeper.customitemlibrary.feature.item.material;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import cz.creeper.customitemlibrary.events.CustomItemCreationEvent;
-import cz.creeper.customitemlibrary.item.CustomItemDefinition;
-import cz.creeper.customitemlibrary.item.tool.CustomToolDefinition;
+import cz.creeper.customitemlibrary.feature.item.CustomItemDefinition;
+import cz.creeper.customitemlibrary.feature.item.tool.CustomToolDefinition;
 import cz.creeper.mineskinsponge.SkinRecord;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.ToString;
+import lombok.*;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.item.ItemTypes;
@@ -25,14 +20,14 @@ import java.util.Set;
 
 /**
  * Defines a custom material.
- * This class is immutable and only a single instance should be created for each custom item type.
+ * This class is immutable and only a single instance should be created for each custom feature type.
  *
- * The item is represented as a player head with a custom skin.
+ * The feature is represented as a player head with a custom skin.
  * The textures are sent to Mojang via the Mineskin service, where they are signed and sent back.
  *
  * The advantage of using this class is,
  * that these items can be stacked together (in contrast with {@link CustomToolDefinition}).
- * The disadvantage, on the other hand, is, that this item cannot have custom models assigned to it
+ * The disadvantage, on the other hand, is, that this feature cannot have custom models assigned to it
  * and has to make use of the {@link #models} instead.
  */
 @EqualsAndHashCode
@@ -59,7 +54,8 @@ public class CustomMaterialDefinition implements CustomItemDefinition<CustomMate
     @NonNull
     private final Set<String> models;
 
-    public static CustomMaterialDefinition create(Object plugin, String typeId, ItemStackSnapshot itemStackSnapshot, String defaultModel, Collection<String> additionalModels) {
+    @Builder
+    public static CustomMaterialDefinition create(Object plugin, String typeId, ItemStackSnapshot itemStackSnapshot, String defaultModel, @Singular Collection<String> additionalModels) {
         PluginContainer pluginContainer = Sponge.getPluginManager().fromInstance(plugin)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid plugin instance."));
         Preconditions.checkArgument(itemStackSnapshot.getCount() == 1, "The ItemStack count must be equal to 1.");

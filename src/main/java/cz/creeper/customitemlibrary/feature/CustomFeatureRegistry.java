@@ -1,8 +1,11 @@
-package cz.creeper.customitemlibrary.item;
+package cz.creeper.customitemlibrary.feature;
+
+import cz.creeper.customitemlibrary.feature.item.CustomItem;
+import cz.creeper.customitemlibrary.feature.item.CustomItemDefinition;
 
 import java.nio.file.Path;
 
-public interface CustomItemRegistry<I extends CustomItem, T extends CustomItemDefinition<I>> {
+public interface CustomFeatureRegistry<I extends CustomFeature<T>, T extends CustomFeatureDefinition<I>> {
     /**
      * Registers the definition.
      *

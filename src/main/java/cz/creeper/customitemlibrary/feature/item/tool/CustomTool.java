@@ -1,7 +1,7 @@
-package cz.creeper.customitemlibrary.item.tool;
+package cz.creeper.customitemlibrary.feature.item.tool;
 
-import cz.creeper.customitemlibrary.item.AbstractCustomItem;
-import cz.creeper.customitemlibrary.item.DurabilityRegistry;
+import cz.creeper.customitemlibrary.feature.item.AbstractCustomItem;
+import cz.creeper.customitemlibrary.feature.DurabilityRegistry;
 import lombok.ToString;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.item.ItemType;

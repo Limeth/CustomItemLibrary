@@ -1,7 +1,10 @@
-package cz.creeper.customitemlibrary.item;
+package cz.creeper.customitemlibrary.feature.block;
 
 import com.google.common.collect.ImmutableSet;
-import cz.creeper.customitemlibrary.data.CustomItemData;
+import cz.creeper.customitemlibrary.data.CustomFeatureData;
+import cz.creeper.customitemlibrary.feature.CustomFeatureDefinition;
+import cz.creeper.customitemlibrary.feature.item.CustomItem;
+import cz.creeper.customitemlibrary.feature.item.CustomItemDefinition;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.PluginContainer;
@@ -11,7 +14,17 @@ import org.spongepowered.api.world.extent.Extent;
 import java.util.Optional;
 import java.util.Set;
 
-public interface CustomItemDefinition<T extends CustomItem> extends DefinesModels {
+/**
+ * Apply to models:
+
+ "display": {
+   "head": {
+   "translation": [0, -43.225, 0],
+   "scale": [1.6, 1.6, 1.6]
+   }
+ }
+ */
+public interface CustomBlockDefinition<T extends CustomBlock<? extends CustomBlockDefinition<T>>> extends CustomFeatureDefinition<T> {
     /**
      * @return The owner plugin
      */
@@ -26,7 +39,7 @@ public interface CustomItemDefinition<T extends CustomItem> extends DefinesModel
     }
 
     /**
-     * The string uniquely identifying this item type.
+     * The string uniquely identifying this feature type.
      * The latter part of `<pluginId>:<typeId>`.
      *
      * Must be lower-case, separate words with an underscore.
@@ -53,27 +66,27 @@ public interface CustomItemDefinition<T extends CustomItem> extends DefinesModel
 
     /**
      * Wraps the {@link ItemStack} in a helper class extending {@link CustomItem},
-     * if the {@link ItemStack} is representing an actual custom item
+     * if the {@link ItemStack} is representing an actual custom feature
      * created by the {@link CustomItemDefinition#createItem(Cause)} method.
      *
      * @param itemStack The {@link ItemStack} to wrap
-     * @return The wrapped {@link ItemStack}, if the item actually represents this definition
+     * @return The wrapped {@link ItemStack}, if the feature actually represents this definition
      */
     Optional<T> wrapIfPossible(ItemStack itemStack);
 
     /**
      * Wraps the {@link Location} in a helper class extending {@link CustomItem},
-     * if the {@link Location} is representing an actual custom item
+     * if the {@link Location} is representing an actual custom feature
      * created by the {@link CustomItemDefinition#placeBlock(Location, Cause)} method.
      *
      * @param block The block to wrap
-     * @return The wrapped {@link ItemStack}, if the item actually represents this definition
+     * @return The wrapped {@link ItemStack}, if the feature actually represents this definition
      */
     default <E extends Extent> Optional<T> wrapIfPossible(Location<E> block) {
         return Optional.empty();
     }
 
-    default CustomItemData createDefaultCustomItemData() {
-        return new CustomItemData(getPluginContainer().getId(), getTypeId(), getDefaultModel());
+    default CustomFeatureData createDefaultCustomItemData() {
+        return new CustomFeatureData(getPluginContainer().getId(), getTypeId(), getDefaultModel());
     }
 }

@@ -1,4 +1,4 @@
-package cz.creeper.customitemlibrary.item;
+package cz.creeper.customitemlibrary.feature;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -10,8 +10,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
 import cz.creeper.customitemlibrary.CustomItemServiceImpl;
-import cz.creeper.customitemlibrary.item.tool.CustomToolDefinition;
-import cz.creeper.customitemlibrary.item.tool.DurabilityIdentifier;
+import cz.creeper.customitemlibrary.feature.item.CustomItem;
+import cz.creeper.customitemlibrary.feature.item.CustomItemDefinition;
+import cz.creeper.customitemlibrary.feature.item.tool.CustomToolDefinition;
+import cz.creeper.customitemlibrary.feature.item.tool.DurabilityIdentifier;
 import cz.creeper.customitemlibrary.util.Identifier;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.ConfigurationOptions;
@@ -56,7 +58,7 @@ public class DurabilityRegistry {
 
     /**
      * Returns the first available durability of shears.
-     * The durability of 0 is skipped to preserve the vanilla item with the unbreakable property enabled.
+     * The durability of 0 is skipped to preserve the vanilla feature with the unbreakable property enabled.
      *
      * @return The first available durability
      */
@@ -236,7 +238,7 @@ public class DurabilityRegistry {
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             Path modelPath = CustomItemServiceImpl.getDirectoryResourcePack()
                     .resolve("assets").resolve(namespace).resolve("models")
-                    .resolve("item").resolve(typeName + ".json");
+                    .resolve("feature").resolve(typeName + ".json");
 
             try {
                 Files.createDirectories(modelPath.getParent());
@@ -261,7 +263,7 @@ public class DurabilityRegistry {
     }
 
     private static String getItemModelIdentifier(String pluginId, String model) {
-        return getFileIdentifier(pluginId, "item", model);
+        return getFileIdentifier(pluginId, "feature", model);
     }
 
     private static String getFileIdentifier(String pluginId, String directory, String file) {
