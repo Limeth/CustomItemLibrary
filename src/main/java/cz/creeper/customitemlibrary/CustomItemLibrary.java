@@ -1,14 +1,16 @@
 package cz.creeper.customitemlibrary;
 
 import com.google.inject.Inject;
-import cz.creeper.customitemlibrary.data.CustomItemData;
-import cz.creeper.customitemlibrary.data.CustomItemManipulatorBuilder;
-import cz.creeper.customitemlibrary.data.ImmutableCustomItemData;
+import cz.creeper.customitemlibrary.data.CustomFeatureData;
+import cz.creeper.customitemlibrary.data.CustomFeatureManipulatorBuilder;
+import cz.creeper.customitemlibrary.data.ImmutableCustomFeatureData;
 import cz.creeper.customitemlibrary.data.ImmutableRepresentedCustomItemSnapshotData;
 import cz.creeper.customitemlibrary.data.RepresentedCustomItemSnapshotData;
 import cz.creeper.customitemlibrary.data.RepresentedCustomItemSnapshotManipulatorBuilder;
-import cz.creeper.customitemlibrary.item.CustomItem;
-import cz.creeper.customitemlibrary.item.CustomItemDefinition;
+import cz.creeper.customitemlibrary.feature.CustomFeature;
+import cz.creeper.customitemlibrary.feature.CustomFeatureDefinition;
+import cz.creeper.customitemlibrary.feature.item.CustomItem;
+import cz.creeper.customitemlibrary.feature.item.CustomItemDefinition;
 import cz.creeper.customitemlibrary.util.Identifier;
 import cz.creeper.customitemlibrary.util.Util;
 import lombok.Getter;
@@ -81,7 +83,7 @@ public class CustomItemLibrary {
 
     @Listener
     public void onGamePreInitialization(GamePreInitializationEvent event) {
-        Sponge.getDataManager().register(CustomItemData.class, ImmutableCustomItemData.class, new CustomItemManipulatorBuilder());
+        Sponge.getDataManager().register(CustomFeatureData.class, ImmutableCustomFeatureData.class, new CustomFeatureManipulatorBuilder());
         Sponge.getDataManager().register(RepresentedCustomItemSnapshotData.class, ImmutableRepresentedCustomItemSnapshotData.class, new RepresentedCustomItemSnapshotManipulatorBuilder());
     }
 
@@ -103,6 +105,8 @@ public class CustomItemLibrary {
         logger.info("Saving CustomItemLibrary...");
         service.saveRegistry();
         logger.info("CustomItemLibrary saved.");
+
+        service.finalize();
     }
 
     private void setupService() {
@@ -139,14 +143,22 @@ public class CustomItemLibrary {
                     Player target = (Player) rawTarget;
                     String customItemId = args.<String>getOne("Item")
                             .orElseThrow(() -> new IllegalStateException("The item should have been specified."));
-                    Optional<CustomItemDefinition<CustomItem>> definition;
+                    Optional<CustomFeatureDefinition<? extends CustomFeature>> rawDefinition;
 
                     if(!Identifier.isParseable(customItemId)
-                            || !(definition = service.getDefinition(Identifier.getNamespaceFromIdString(customItemId),
+                            || !(rawDefinition = service.getDefinition(Identifier.getNamespaceFromIdString(customItemId),
                                     Identifier.getValueFromIdString(customItemId))).isPresent()) {
                         src.sendMessage(Text.of(TextColors.RED, "Invalid item id: " + customItemId));
                         return CommandResult.empty();
                     }
+
+                    if(!(rawDefinition.get() instanceof CustomItemDefinition)) {
+                        src.sendMessage(Text.of(TextColors.RED, "The requested id is assigned to a"
+                                + " feature which is not an item that could be given: " + customItemId));
+                        return CommandResult.empty();
+                    }
+
+                    CustomItemDefinition<? extends CustomItem> definition = (CustomItemDefinition<? extends CustomItem>) rawDefinition.get();
 
                     int quantity = args.<Integer>getOne("Quantity").orElse(1);
 
@@ -158,7 +170,7 @@ public class CustomItemLibrary {
                         return CommandResult.empty();
                     }
 
-                    CustomItem item = definition.get().createItem(Cause.builder()
+                    CustomItem item = definition.createItem(Cause.builder()
                             .named(NamedCause.source(src))
                             .build());
 

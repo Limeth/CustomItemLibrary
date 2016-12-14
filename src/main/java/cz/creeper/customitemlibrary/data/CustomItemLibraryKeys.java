@@ -31,7 +31,7 @@ public class CustomItemLibraryKeys {
                     "customitemlibrary:custom_feature_model",
                     "Custom Feature Model");
 
-    public Key<Value<ItemStackSnapshot>> REPRESENTED_CUSTOM_FEATURE_SNAPSHOT =
+    public Key<Value<ItemStackSnapshot>> REPRESENTED_CUSTOM_ITEM_SNAPSHOT =
             KeyFactory.makeSingleKey(new TypeToken<ItemStackSnapshot>() {},
                     new TypeToken<Value<ItemStackSnapshot>>() {},
                     DataQuery.of("RepresentedCustomFeatureSnapshot"),

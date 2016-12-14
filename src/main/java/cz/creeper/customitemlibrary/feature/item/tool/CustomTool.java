@@ -11,7 +11,7 @@ import org.spongepowered.api.plugin.PluginContainer;
 import java.util.Optional;
 
 @ToString
-public class CustomTool extends AbstractCustomItem<CustomTool, CustomToolDefinition> {
+public class CustomTool extends AbstractCustomItem<CustomToolDefinition> {
     public CustomTool(ItemStack itemStack, CustomToolDefinition definition) {
         super(itemStack, definition);
     }

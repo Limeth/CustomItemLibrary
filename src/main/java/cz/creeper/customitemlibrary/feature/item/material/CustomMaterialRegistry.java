@@ -10,7 +10,6 @@ import cz.creeper.mineskinsponge.MineskinService;
 import cz.creeper.mineskinsponge.SkinRecord;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import lombok.val;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.asset.Asset;
 import org.spongepowered.api.asset.AssetManager;
@@ -40,7 +39,7 @@ public class CustomMaterialRegistry implements CustomFeatureRegistry<CustomMater
     @Override
     public void register(CustomMaterialDefinition definition) {
         PluginContainer pluginContainer = definition.getPluginContainer();
-        val texturesToSkins = getTexturesToSkins(pluginContainer);
+        Map<String, CompletableFuture<SkinRecord>> texturesToSkins = getTexturesToSkins(pluginContainer);
 
         definition.getModels().stream()
                 .filter(texture -> !texturesToSkins.containsKey(texture))

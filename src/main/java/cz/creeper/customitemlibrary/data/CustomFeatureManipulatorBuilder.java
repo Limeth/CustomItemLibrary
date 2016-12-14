@@ -11,9 +11,9 @@ import javax.annotation.Nonnull;
 import java.util.Optional;
 
 @ToString
-public class CustomItemManipulatorBuilder extends AbstractDataBuilder<CustomFeatureData>
+public class CustomFeatureManipulatorBuilder extends AbstractDataBuilder<CustomFeatureData>
         implements DataManipulatorBuilder<CustomFeatureData, ImmutableCustomFeatureData> {
-    public CustomItemManipulatorBuilder() {
+    public CustomFeatureManipulatorBuilder() {
         super(CustomFeatureData.class, 1);
     }
 
@@ -27,8 +27,8 @@ public class CustomItemManipulatorBuilder extends AbstractDataBuilder<CustomFeat
     @Nonnull
     public Optional<CustomFeatureData> createFrom(@Nonnull DataHolder dataHolder) {
         Optional<String> pluginId = dataHolder.get(CustomItemLibraryKeys.CUSTOM_FEATURE_PLUGIN_ID);
-        Optional<String> typeId = dataHolder.get(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID);
-        Optional<String> model = dataHolder.get(CustomItemLibraryKeys.CUSTOM_ITEM_MODEL);
+        Optional<String> typeId = dataHolder.get(CustomItemLibraryKeys.CUSTOM_FEATURE_TYPE_ID);
+        Optional<String> model = dataHolder.get(CustomItemLibraryKeys.CUSTOM_FEATURE_MODEL);
 
         if(pluginId.isPresent() && typeId.isPresent() && model.isPresent()) {
             return Optional.of(new CustomFeatureData(pluginId.get(), typeId.get(), model.get()));
@@ -41,8 +41,8 @@ public class CustomItemManipulatorBuilder extends AbstractDataBuilder<CustomFeat
     @Nonnull
     protected Optional<CustomFeatureData> buildContent(@Nonnull DataView container) throws InvalidDataException {
         Optional<String> pluginId = container.getString(CustomItemLibraryKeys.CUSTOM_FEATURE_PLUGIN_ID.getQuery());
-        Optional<String> typeId = container.getString(CustomItemLibraryKeys.CUSTOM_ITEM_TYPE_ID.getQuery());
-        Optional<String> model = container.getString(CustomItemLibraryKeys.CUSTOM_ITEM_MODEL.getQuery());
+        Optional<String> typeId = container.getString(CustomItemLibraryKeys.CUSTOM_FEATURE_TYPE_ID.getQuery());
+        Optional<String> model = container.getString(CustomItemLibraryKeys.CUSTOM_FEATURE_MODEL.getQuery());
 
         if(pluginId.isPresent() && typeId.isPresent() && model.isPresent()) {
             return Optional.of(new CustomFeatureData(pluginId.get(), typeId.get(), model.get()));

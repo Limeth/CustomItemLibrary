@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import org.spongepowered.api.Sponge;
+import org.spongepowered.api.world.Chunk;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
@@ -59,12 +60,16 @@ public class Block {
         return Sponge.getServer().getWorld(extentId);
     }
 
-    public Vector3i getChunk() {
+    public Optional<Chunk> getChunk() {
+        return getExtent().flatMap(extent -> extent.getChunk(getChunkPosition()));
+    }
+
+    public Vector3i getChunkPosition() {
         return Sponge.getServer().getChunkLayout().forceToChunk(position);
     }
 
     public Vector3i getPositionInChunk() {
-        return position.sub(Sponge.getServer().getChunkLayout().getChunkSize().mul(getChunk()));
+        return position.sub(Sponge.getServer().getChunkLayout().getChunkSize().mul(getChunkPosition()));
     }
 
     public Block add(Vector3i relative) {
