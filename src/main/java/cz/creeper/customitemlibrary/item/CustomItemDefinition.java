@@ -1,5 +1,6 @@
 package cz.creeper.customitemlibrary.item;
 
+import com.google.common.collect.ImmutableSet;
 import cz.creeper.customitemlibrary.data.CustomItemData;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.item.inventory.ItemStack;
@@ -8,6 +9,7 @@ import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.extent.Extent;
 
 import java.util.Optional;
+import java.util.Set;
 
 public interface CustomItemDefinition<T extends CustomItem> extends DefinesModels {
     /**
@@ -30,6 +32,10 @@ public interface CustomItemDefinition<T extends CustomItem> extends DefinesModel
      * Must be lower-case, separate words with an underscore.
      */
     String getTypeId();
+
+    default Set<String> getAssets() {
+        return ImmutableSet.of();
+    }
 
     /**
      * @return A {@link CustomItem} with default properties.

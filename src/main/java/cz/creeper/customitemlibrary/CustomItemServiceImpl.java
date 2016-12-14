@@ -5,6 +5,7 @@ import cz.creeper.customitemlibrary.item.CustomItem;
 import cz.creeper.customitemlibrary.item.CustomItemDefinition;
 import cz.creeper.customitemlibrary.item.CustomItemRegistry;
 import cz.creeper.customitemlibrary.item.CustomItemRegistryMap;
+import cz.creeper.customitemlibrary.item.DurabilityRegistry;
 import cz.creeper.customitemlibrary.item.block.CustomBlock;
 import cz.creeper.customitemlibrary.item.material.CustomMaterialDefinition;
 import cz.creeper.customitemlibrary.item.material.CustomMaterialRegistry;
@@ -20,6 +21,7 @@ import org.spongepowered.api.plugin.PluginContainer;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -64,14 +66,19 @@ public class CustomItemServiceImpl implements CustomItemService {
     public void loadRegistry() {
         Path directory = getDirectoryRegistries();
 
-        registryMap.values().forEach(registry -> registry.load(directory));
+        DurabilityRegistry.getInstance().load(directory);
     }
 
     @Override
     public void saveRegistry() {
         Path directory = getDirectoryRegistries();
 
-        registryMap.values().forEach(registry -> registry.save(directory));
+        DurabilityRegistry.getInstance().save(directory);
+    }
+
+    @Override
+    public void finalize() {
+        registryMap.values().forEach(CustomItemRegistry::finalize);
     }
 
     public Path generateResourcePack() {
@@ -92,6 +99,10 @@ public class CustomItemServiceImpl implements CustomItemService {
                     .warn("Could not create the 'pack.mcmeta' file.");
             e.printStackTrace();
         }
+
+        getDefinitions().forEach(definition ->
+            definition.getAssets().forEach(asset -> copyAsset(definition.getPluginContainer(), asset))
+        );
 
         registryMap.values().forEach(registry -> registry.generateResourcePack(directory));
 
@@ -136,5 +147,33 @@ public class CustomItemServiceImpl implements CustomItemService {
     public static Path getDirectoryResourcePack() {
         return CustomItemLibrary.getInstance().getConfigPath()
                 .resolveSibling(DIRECTORY_NAME_RESOURCEPACK);
+    }
+
+    public static void copyAsset(PluginContainer plugin, String assetPath) {
+        String filePath = CustomToolDefinition.getAssetPrefix(plugin) + assetPath;
+        Optional<Asset> optionalAsset = Sponge.getAssetManager().getAsset(plugin, assetPath);
+
+        if (!optionalAsset.isPresent()) {
+            CustomItemLibrary.getInstance().getLogger()
+                    .warn("Could not locate an asset for plugin '"
+                            + plugin.getName() + "' with path '" + filePath + "'.");
+            return;
+        }
+
+        Asset asset = optionalAsset.get();
+        Path outputFile = CustomItemServiceImpl.getDirectoryResourcePack()
+                .resolve(Paths.get(filePath));
+
+        try {
+            Files.createDirectories(outputFile.getParent());
+
+            if (Files.exists(outputFile))
+                Files.delete(outputFile);
+
+            asset.copyToFile(outputFile);
+        } catch (IOException e) {
+            CustomItemLibrary.getInstance().getLogger()
+                    .warn("Could not copy a file from assets (" + filePath + "): " + e.getLocalizedMessage());
+        }
     }
 }

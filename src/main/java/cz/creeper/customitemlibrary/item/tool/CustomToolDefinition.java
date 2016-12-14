@@ -1,10 +1,10 @@
 package cz.creeper.customitemlibrary.item.tool;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import cz.creeper.customitemlibrary.events.CustomItemCreationEvent;
 import cz.creeper.customitemlibrary.item.CustomItemDefinition;
+import cz.creeper.customitemlibrary.item.DurabilityRegistry;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -22,7 +22,6 @@ import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.plugin.PluginContainer;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -70,12 +69,12 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
     private final Set<String> models;
 
     /**
-     * A list of additional assets to be copied to the resourcepack.
+     * A list of assets to be copied to the resourcepack.
      * Should be located at `assets/<pluginId>/<asset>` in the JAR.
      */
     @Getter
     @NonNull
-    private final List<String> assets;
+    private final Set<String> assets;
 
     public static CustomToolDefinition create(Object plugin, String typeId, ItemStackSnapshot itemStackSnapshot, String defaultModel, Collection<String> additionalModels, Collection<String> assets) {
         PluginContainer pluginContainer = Sponge.getPluginManager().fromInstance(plugin)
@@ -89,8 +88,12 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
                 .add(defaultModel)
                 .addAll(additionalModels)
                 .build();
+        Set<String> assetSet = ImmutableSet.<String>builder()
+                .add(getModelPath(typeId))
+                .addAll(assets)
+                .build();
 
-        return new CustomToolDefinition(pluginContainer, typeId, itemStackSnapshot, defaultModel, modelSet, assets == null ? ImmutableList.of() : ImmutableList.copyOf(assets));
+        return new CustomToolDefinition(pluginContainer, typeId, itemStackSnapshot, defaultModel, modelSet, assetSet);
     }
 
     @Override
@@ -99,7 +102,7 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
         CustomToolRegistry registry = CustomToolRegistry.getInstance();
         ItemStack itemStack = itemStackSnapshot.createStack();
         ItemType itemType = itemStack.getItem();
-        int durability = registry.getDurability(itemType, plugin, defaultModel)
+        int durability = DurabilityRegistry.getInstance().getDurability(itemType, plugin, defaultModel)
                 .orElseThrow(() -> new IllegalStateException("Could not get the durability for the default models."));
 
         itemStack.offer(Keys.UNBREAKABLE, true);
@@ -124,7 +127,7 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
         int durability = itemStack.get(Keys.ITEM_DURABILITY)
                 .orElseThrow(() -> new IllegalStateException("Could not access the durability of a tool."));
 
-        if(!CustomToolRegistry.getInstance().getModelId(itemStack.getItem(), durability).isPresent())
+        if(!DurabilityRegistry.getInstance().getModelId(itemStack.getItem(), durability).isPresent())
             return Optional.empty();
 
         return Optional.of(new CustomTool(itemStack, this));
@@ -134,13 +137,11 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
         return getNumberOfUses(itemType.getTemplate());
     }
 
-    @SuppressWarnings("ConstantConditions")
     public static Optional<Integer> getNumberOfUses(ItemStackSnapshot itemStack) {
         return itemStack.getProperty(UseLimitProperty.class)
                 .map(Property::getValue);
     }
 
-    @SuppressWarnings("ConstantConditions")
     public static Optional<Integer> getNumberOfUses(ItemStack itemStack) {
         return itemStack.getProperty(UseLimitProperty.class)
                 .map(Property::getValue);
