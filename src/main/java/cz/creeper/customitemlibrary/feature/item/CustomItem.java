@@ -11,10 +11,7 @@ import org.spongepowered.api.item.inventory.ItemStack;
  * A wrapper class for {@link ItemStack}s created by the CustomItemLibrary
  */
 public interface CustomItem<T extends CustomItemDefinition<? extends CustomItem<T>>> extends CustomFeature<T> {
-    /**
-     * @return The wrapped {@link ItemStack}
-     */
-    ItemStack getItemStack();
+    ItemStack getDataHolder();
 
     default CustomFeatureData createCustomItemData() {
         CustomFeatureData data = getDefinition().createDefaultCustomItemData();
@@ -25,6 +22,6 @@ public interface CustomItem<T extends CustomItemDefinition<? extends CustomItem<
     }
 
     default RepresentedCustomItemSnapshotData createRepresentedCustomItemSnapshotData() {
-        return new RepresentedCustomItemSnapshotData(getItemStack().createSnapshot());
+        return new RepresentedCustomItemSnapshotData(getDataHolder().createSnapshot());
     }
 }

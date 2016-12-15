@@ -10,5 +10,4 @@ public interface CustomBlock<T extends CustomBlockDefinition<? extends CustomBlo
     BlockType BLOCK_TYPE_CUSTOM = BlockTypes.BARRIER;
 
     Block getBlock();
-    DataHolder getDataHolder();
 }
