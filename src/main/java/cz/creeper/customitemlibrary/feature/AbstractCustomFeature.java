@@ -1,17 +1,16 @@
 package cz.creeper.customitemlibrary.feature;
 
 import cz.creeper.customitemlibrary.data.CustomItemLibraryKeys;
-import cz.creeper.customitemlibrary.feature.item.CustomItem;
-import cz.creeper.customitemlibrary.feature.item.CustomItemDefinition;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import org.spongepowered.api.data.DataTransactionResult;
-import org.spongepowered.api.item.inventory.ItemStack;
 
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@EqualsAndHashCode
 @AllArgsConstructor
 @Getter
 public abstract class AbstractCustomFeature<T extends CustomFeatureDefinition<? extends AbstractCustomFeature<T>>> implements CustomFeature<T> {

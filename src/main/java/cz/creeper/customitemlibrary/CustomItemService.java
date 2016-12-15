@@ -92,6 +92,4 @@ public interface CustomItemService {
      * Saves the custom feature indexes
      */
     void saveRegistry();
-
-    void finalize();
 }

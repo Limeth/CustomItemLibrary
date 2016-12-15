@@ -11,7 +11,7 @@ public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCu
     }
 
     @Override
-    public void finalize() {
+    public void prepare() {
 
     }
 

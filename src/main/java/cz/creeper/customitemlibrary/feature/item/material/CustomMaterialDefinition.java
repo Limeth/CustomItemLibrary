@@ -1,12 +1,16 @@
 package cz.creeper.customitemlibrary.feature.item.material;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
 import cz.creeper.customitemlibrary.events.CustomItemCreationEvent;
-import cz.creeper.customitemlibrary.feature.item.CustomItemDefinition;
+import cz.creeper.customitemlibrary.feature.item.AbstractCustomItemDefinition;
 import cz.creeper.customitemlibrary.feature.item.tool.CustomToolDefinition;
 import cz.creeper.mineskinsponge.SkinRecord;
-import lombok.*;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.Singular;
+import lombok.ToString;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.item.ItemTypes;
@@ -16,7 +20,6 @@ import org.spongepowered.api.plugin.PluginContainer;
 
 import java.util.Collection;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Defines a custom material.
@@ -30,29 +33,18 @@ import java.util.Set;
  * The disadvantage, on the other hand, is, that this feature cannot have custom models assigned to it
  * and has to make use of the {@link #models} instead.
  */
-@EqualsAndHashCode
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@EqualsAndHashCode(callSuper = true)
 @ToString
-public class CustomMaterialDefinition implements CustomItemDefinition<CustomMaterial> {
-    @Getter
-    @NonNull
-    private final PluginContainer pluginContainer;
-
-    @Getter
-    @NonNull
-    private final String typeId;
-
+public class CustomMaterialDefinition extends AbstractCustomItemDefinition<CustomMaterial> {
     @Getter
     @NonNull
     private final ItemStackSnapshot itemStackSnapshot;
 
-    @Getter
-    @NonNull
-    private final String defaultModel;
+    public CustomMaterialDefinition(PluginContainer pluginContainer, String typeId, String defaultModel, Iterable<String> models, ItemStackSnapshot itemStackSnapshot) {
+        super(pluginContainer, typeId, defaultModel, models);
 
-    @Getter
-    @NonNull
-    private final Set<String> models;
+        this.itemStackSnapshot = itemStackSnapshot;
+    }
 
     @Builder
     public static CustomMaterialDefinition create(Object plugin, String typeId, ItemStackSnapshot itemStackSnapshot, String defaultModel, @Singular Collection<String> additionalModels) {
@@ -60,22 +52,15 @@ public class CustomMaterialDefinition implements CustomItemDefinition<CustomMate
                 .orElseThrow(() -> new IllegalArgumentException("Invalid plugin instance."));
         Preconditions.checkArgument(itemStackSnapshot.getCount() == 1, "The ItemStack count must be equal to 1.");
         Preconditions.checkArgument(itemStackSnapshot.getType() == ItemTypes.SKULL, "The ItemStack must be a skull.");
-        Preconditions.checkNotNull(defaultModel, "The default model must not be null.");
-        additionalModels.forEach(model ->
-                Preconditions.checkNotNull(model, "The model array must not contain null values."));
-        Set<String> modelSet = ImmutableSet.<String>builder()
-                .add(defaultModel)
-                .addAll(additionalModels)
-                .build();
 
-        return new CustomMaterialDefinition(pluginContainer, typeId, itemStackSnapshot, defaultModel, modelSet);
+        return new CustomMaterialDefinition(pluginContainer, typeId, defaultModel, additionalModels, itemStackSnapshot);
     }
 
     @Override
     public CustomMaterial createItem(Cause cause) {
         CustomMaterialRegistry registry = CustomMaterialRegistry.getInstance();
         ItemStack itemStack = itemStackSnapshot.createStack();
-        SkinRecord skin = registry.getSkin(pluginContainer, defaultModel)
+        SkinRecord skin = registry.getSkin(getPluginContainer(), getDefaultModel())
                 .orElseThrow(() -> new IllegalStateException("Models are not prepared."));
 
         skin.apply(itemStack);

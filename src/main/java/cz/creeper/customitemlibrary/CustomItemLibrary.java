@@ -106,7 +106,7 @@ public class CustomItemLibrary {
         service.saveRegistry();
         logger.info("CustomItemLibrary saved.");
 
-        service.finalize();
+        service.prepare();
     }
 
     private void setupService() {
@@ -174,7 +174,7 @@ public class CustomItemLibrary {
                             .named(NamedCause.source(src))
                             .build());
 
-                    val result = target.getInventory().offer(item.getItemStack());
+                    val result = target.getInventory().offer(item.getDataHolder());
 
                     result.getRejectedItems().forEach(rejectedSnapshot -> {
                         Location<World> location = target.getLocation();

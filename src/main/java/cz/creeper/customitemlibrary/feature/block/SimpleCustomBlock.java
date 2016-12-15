@@ -1,66 +1,58 @@
 package cz.creeper.customitemlibrary.feature.block;
 
-import com.google.common.base.Preconditions;
-import cz.creeper.customitemlibrary.data.CustomItemLibraryKeys;
-import cz.creeper.customitemlibrary.feature.AbstractCustomFeature;
-import cz.creeper.customitemlibrary.feature.item.tool.CustomTool;
+import cz.creeper.customitemlibrary.feature.DurabilityRegistry;
 import cz.creeper.customitemlibrary.util.Block;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NonNull;
-import org.spongepowered.api.data.DataHolder;
-import org.spongepowered.api.entity.Entity;
+import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.entity.living.ArmorStand;
+import org.spongepowered.api.item.ItemType;
+import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
-import org.spongepowered.api.world.extent.Extent;
+import org.spongepowered.api.plugin.PluginContainer;
 
 import java.util.Optional;
 import java.util.UUID;
 
+@EqualsAndHashCode(callSuper = true)
 @Getter
-public class SimpleCustomBlock extends AbstractCustomFeature<SimpleCustomBlockDefinition> implements CustomBlock<SimpleCustomBlockDefinition> {
-    @NonNull
-    private final Block block;
+public class SimpleCustomBlock extends AbstractCustomBlock<SimpleCustomBlockDefinition> {
+    public static final ItemType HELMET_ITEM_TYPE = ItemTypes.DIAMOND_SHOVEL;
 
-    @NonNull
-    private final UUID dataHolderId;
-
-    public SimpleCustomBlock(SimpleCustomBlockDefinition definition, Block block, UUID dataHolderId) {
-        super(definition);
-        Preconditions.checkArgument(block.getExtent().isPresent(), "Invalid extent.");
-        Preconditions.checkArgument(getExtent().getEntity(dataHolderId).isPresent(), "The data holder is not accessible.");
-
-        this.block = block;
-        this.dataHolderId = dataHolderId;
+    public SimpleCustomBlock(SimpleCustomBlockDefinition definition, Block block, UUID armorStandId) {
+        super(definition, block, armorStandId);
     }
 
-    public SimpleCustomBlock(SimpleCustomBlockDefinition definition, Block block, Entity dataHolder) {
-        this(definition, block, dataHolder.getUniqueId());
+    public SimpleCustomBlock(SimpleCustomBlockDefinition definition, Block block, ArmorStand armorStand) {
+        super(definition, block, armorStand.getUniqueId());
     }
 
-    @Override
-    public Entity getDataHolder() {
-        return getExtent().getEntity(dataHolderId)
-                .orElseThrow(() -> new IllegalStateException("Could not access the data holder. Did the entity disappear?"));
-    }
+    public ItemStack createHelmet(String model) {
+        PluginContainer pluginContainer = getDefinition().getPluginContainer();
+        int durability = DurabilityRegistry.getInstance().getDurability(HELMET_ITEM_TYPE, pluginContainer, model)
+                .orElseThrow(() -> new IllegalStateException("The model should have been registered by now, is the definition actually being registered?"));
 
-    public Extent getExtent() {
-        return block.getExtent()
-                .orElseThrow(() -> new IllegalStateException("Could not access the extent of the block."));
+        ItemStack itemStack = ItemStack.of(HELMET_ITEM_TYPE, 1);
+
+        itemStack.offer(Keys.ITEM_DURABILITY, durability);
+
+        return itemStack;
     }
 
     @Override
     protected Optional<String> resolveCurrentModel() {
-        return Optional.of(getDataHolder())
-                .filter(ArmorStand.class::isInstance)
-                .map(ArmorStand.class::cast)
-                .flatMap(armorStand -> {
-                    ItemStack itemStack = armorStand.getInventory()
-                    CustomTool.resolveCurrentModel()
-                });
+        ArmorStand armorStand = getDataHolder();
+        PluginContainer pluginContainer = getDefinition().getPluginContainer();
+
+        return armorStand.getHelmet()
+                .flatMap(itemStack -> DurabilityRegistry.resolveCurrentModel(itemStack, pluginContainer));
     }
 
     @Override
     protected void applyModel(String model) {
+        ArmorStand armorStand = getDataHolder();
+        ItemStack itemStack = createHelmet(model);
 
+        armorStand.setHelmet(itemStack);
     }
 }

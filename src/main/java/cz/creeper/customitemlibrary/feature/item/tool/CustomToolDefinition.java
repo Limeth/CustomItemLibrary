@@ -3,9 +3,15 @@ package cz.creeper.customitemlibrary.feature.item.tool;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import cz.creeper.customitemlibrary.events.CustomItemCreationEvent;
-import cz.creeper.customitemlibrary.feature.item.CustomItemDefinition;
 import cz.creeper.customitemlibrary.feature.DurabilityRegistry;
-import lombok.*;
+import cz.creeper.customitemlibrary.feature.item.AbstractCustomItemDefinition;
+import cz.creeper.customitemlibrary.util.Util;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.Singular;
+import lombok.ToString;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.Property;
 import org.spongepowered.api.data.key.Keys;
@@ -18,7 +24,7 @@ import org.spongepowered.api.plugin.PluginContainer;
 
 import java.util.Collection;
 import java.util.Optional;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Defines a custom feature.
@@ -29,39 +35,12 @@ import java.util.Set;
  *
  * Note: Shears cannot be stacked together.
  */
-@EqualsAndHashCode
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@EqualsAndHashCode(callSuper = true)
 @ToString
-public final class CustomToolDefinition implements CustomItemDefinition<CustomTool> {
-    @Getter
-    @NonNull
-    private final PluginContainer pluginContainer;
-
-    @Getter
-    @NonNull
-    private final String typeId;
-
+public final class CustomToolDefinition extends AbstractCustomItemDefinition<CustomTool> {
     @Getter
     @NonNull
     private final ItemStackSnapshot itemStackSnapshot;
-
-    /**
-     * The default model of this custom feature.
-     */
-    @Getter
-    @NonNull
-    private final String defaultModel;
-
-    /**
-     * The Asset API is used to access the feature models.
-     * The path to the model file in a JAR is the following:
-     * `assets/<pluginId>/models/tools/<model>.png`
-     *
-     * Must be lower-case, separate words with an underscore.
-     */
-    @Getter
-    @NonNull
-    private final Set<String> models;
 
     /**
      * A list of assets to be copied to the resourcepack.
@@ -69,7 +48,18 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
      */
     @Getter
     @NonNull
-    private final Set<String> assets;
+    private final ImmutableSet<String> assets;
+
+    private CustomToolDefinition(PluginContainer pluginContainer, String typeId, String defaultModel,
+                                Iterable<String> models, ItemStackSnapshot itemStackSnapshot, Iterable<String> assets) {
+        super(pluginContainer, typeId, defaultModel, models);
+
+        this.itemStackSnapshot = itemStackSnapshot;
+        this.assets = ImmutableSet.<String>builder()
+                .add(getModelPath(typeId))
+                .addAll(Util.removeNull(assets).collect(Collectors.toSet()))
+                .build();
+    }
 
     @Builder
     public static CustomToolDefinition create(Object plugin, String typeId, ItemStackSnapshot itemStackSnapshot, String defaultModel, @Singular Collection<String> additionalModels, @Singular Collection<String> assets) {
@@ -77,19 +67,8 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
                 .orElseThrow(() -> new IllegalArgumentException("Invalid plugin instance."));
         Preconditions.checkArgument(itemStackSnapshot.getCount() == 1, "The ItemStack count must be equal to 1.");
         Preconditions.checkArgument(getNumberOfUses(itemStackSnapshot.createStack()).isPresent(), "Invalid feature type, the feature must have a durability.");
-        Preconditions.checkNotNull(defaultModel, "The default model must not be null.");
-        additionalModels.forEach(model ->
-                Preconditions.checkNotNull(model, "The model array must not contain null values."));
-        Set<String> modelSet = ImmutableSet.<String>builder()
-                .add(defaultModel)
-                .addAll(additionalModels)
-                .build();
-        Set<String> assetSet = ImmutableSet.<String>builder()
-                .add(getModelPath(typeId))
-                .addAll(assets)
-                .build();
 
-        return new CustomToolDefinition(pluginContainer, typeId, itemStackSnapshot, defaultModel, modelSet, assetSet);
+        return new CustomToolDefinition(pluginContainer, typeId, defaultModel, additionalModels, itemStackSnapshot, assets);
     }
 
     @Override
@@ -98,7 +77,7 @@ public final class CustomToolDefinition implements CustomItemDefinition<CustomTo
         CustomToolRegistry registry = CustomToolRegistry.getInstance();
         ItemStack itemStack = itemStackSnapshot.createStack();
         ItemType itemType = itemStack.getItem();
-        int durability = DurabilityRegistry.getInstance().getDurability(itemType, plugin, defaultModel)
+        int durability = DurabilityRegistry.getInstance().getDurability(itemType, plugin, getDefaultModel())
                 .orElseThrow(() -> new IllegalStateException("Could not get the durability for the default models."));
 
         itemStack.offer(Keys.UNBREAKABLE, true);

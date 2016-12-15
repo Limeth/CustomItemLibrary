@@ -1,15 +1,15 @@
 package cz.creeper.customitemlibrary.feature;
 
-import java.util.Set;
+import com.google.common.collect.ImmutableSet;
 
 public interface DefinesModels {
     /**
-     * @return The default model assigned to newly created {@link ItemStack}s in the {@link #createItem(Cause)} method.
+     * @return The default model which is used by default
      */
     String getDefaultModel();
 
     /**
      * @return All available models
      */
-    Set<String> getModels();
+    ImmutableSet<String> getModels();
 }

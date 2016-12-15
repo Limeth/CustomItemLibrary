@@ -1,8 +1,5 @@
 package cz.creeper.customitemlibrary.feature;
 
-import cz.creeper.customitemlibrary.feature.item.CustomItem;
-import cz.creeper.customitemlibrary.feature.item.CustomItemDefinition;
-
 import java.nio.file.Path;
 
 public interface CustomFeatureRegistry<I extends CustomFeature<T>, T extends CustomFeatureDefinition<I>> {
@@ -16,7 +13,7 @@ public interface CustomFeatureRegistry<I extends CustomFeature<T>, T extends Cus
     /**
      * Finish all preparations
      */
-    void finalize();
+    void prepare();
 
     /**
      * Adds files to the resourcepack specified by the argument

@@ -15,7 +15,7 @@ public class CustomMaterial extends AbstractCustomItem<CustomMaterialDefinition>
     @Override
     protected Optional<String> resolveCurrentModel() {
         CustomMaterialRegistry registry = CustomMaterialRegistry.getInstance();
-        SkinRecord skinRecord = SkinRecord.of(getItemStack())
+        SkinRecord skinRecord = SkinRecord.of(getDataHolder())
                 .orElseThrow(() -> new IllegalStateException("Could not create a SkinRecord out of a"
                         + " CustomMaterial ItemStack."));
         PluginContainer pluginContainer = getDefinition().getPluginContainer();
@@ -30,6 +30,6 @@ public class CustomMaterial extends AbstractCustomItem<CustomMaterialDefinition>
         SkinRecord skin = registry.getSkin(pluginContainer, texture)
                 .orElseThrow(() -> new IllegalArgumentException("Could not access the SkinRecord for texture: " + texture));
 
-        skin.apply(getItemStack());
+        skin.apply(getDataHolder());
     }
 }

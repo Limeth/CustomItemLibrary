@@ -12,6 +12,10 @@ import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
+import java.util.Objects;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
 @UtilityClass
 public class Util {
     public void spawnItem(Location<World> location, ItemStackSnapshot snapshot, Object notifier) {
@@ -30,5 +34,10 @@ public class Util {
 
         rejectedItem.offer(Keys.REPRESENTED_ITEM, snapshot);
         world.spawnEntity(rejectedItem, cause);
+    }
+
+    public <T> Stream<T> removeNull(Iterable<T> iterable) {
+        return StreamSupport.stream(iterable.spliterator(), true)
+                .filter(Objects::nonNull);
     }
 }
