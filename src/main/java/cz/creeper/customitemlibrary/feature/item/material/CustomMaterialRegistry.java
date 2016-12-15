@@ -74,7 +74,7 @@ public class CustomMaterialRegistry implements CustomFeatureRegistry<CustomMater
     }
 
     @Override
-    public void finalize() {
+    public void prepare() {
         // Wait for all the textures to download
         CustomItemLibrary.getInstance().getLogger()
                 .info("Waiting for skins to finish being downloaded.");

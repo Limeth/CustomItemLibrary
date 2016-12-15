@@ -1,31 +1,16 @@
 package cz.creeper.customitemlibrary.feature.block;
 
 import cz.creeper.customitemlibrary.util.Block;
+import lombok.EqualsAndHashCode;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.plugin.PluginContainer;
 
 import java.util.Optional;
-import java.util.Set;
 
-public class SimpleCustomBlockDefinition implements CustomBlockDefinition<SimpleCustomBlock> {
-    @Override
-    public String getDefaultModel() {
-        return null;
-    }
-
-    @Override
-    public Set<String> getModels() {
-        return null;
-    }
-
-    @Override
-    public PluginContainer getPluginContainer() {
-        return null;
-    }
-
-    @Override
-    public String getTypeId() {
-        return null;
+@EqualsAndHashCode(callSuper = true)
+public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<SimpleCustomBlock> {
+    public SimpleCustomBlockDefinition(PluginContainer pluginContainer, String typeId, String defaultModel, Iterable<String> models) {
+        super(pluginContainer, typeId, defaultModel, models);
     }
 
     @Override
@@ -34,7 +19,7 @@ public class SimpleCustomBlockDefinition implements CustomBlockDefinition<Simple
     }
 
     @Override
-    public Optional<SimpleCustomBlock> wrapIfPossible(Block block) {
+    protected Optional<SimpleCustomBlock> wrapBarrierIfPossible(Block block) {
         return null;
     }
 }

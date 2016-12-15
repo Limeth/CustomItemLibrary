@@ -85,11 +85,10 @@ public class CustomItemServiceImpl implements CustomItemService {
         DurabilityRegistry.getInstance().save(directory);
     }
 
-    @Override
-    public void finalize() {
+    public void prepare() {
         // It doesn't work with a method reference
         //noinspection Convert2MethodRef
-        registryMap.values().forEach(registry -> registry.finalize());
+        registryMap.values().forEach(registry -> registry.prepare());
     }
 
     public Path generateResourcePack() {

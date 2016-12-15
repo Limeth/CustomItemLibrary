@@ -19,7 +19,9 @@ import ninja.leaping.configurate.ConfigurationOptions;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
+import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.item.ItemType;
+import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.PluginContainer;
 
 import java.io.FileWriter;
@@ -285,6 +287,25 @@ public class DurabilityRegistry {
             return Optional.empty();
 
         return Optional.ofNullable(durabilityToModelId.get(durability));
+    }
+
+    public static Optional<String> resolveCurrentModel(ItemStack itemStack, PluginContainer pluginContainer) {
+        int durability = itemStack.get(Keys.ITEM_DURABILITY)
+                .orElseThrow(() -> new IllegalStateException("Could not get the durability of a custom tool."));
+
+        return DurabilityRegistry.getInstance().getModelId(itemStack.getItem(), durability).flatMap(model -> {
+            if(model.getNamespace().equals(pluginContainer.getId()))
+                return Optional.of(model.getValue());
+            else
+                return Optional.empty();
+        });
+    }
+
+    public static void applyModel(ItemStack itemStack, PluginContainer pluginContainer, ItemType itemType, String model) {
+        int durability = DurabilityRegistry.getInstance().getDurability(itemType, pluginContainer, model)
+                .orElseThrow(() -> new IllegalArgumentException("No custom tool with such model registered: " + model));
+
+        itemStack.offer(Keys.ITEM_DURABILITY, durability).isSuccessful();
     }
 
     public static DurabilityRegistry getInstance() {

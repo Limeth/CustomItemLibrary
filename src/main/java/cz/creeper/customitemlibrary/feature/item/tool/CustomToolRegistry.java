@@ -26,7 +26,7 @@ public class CustomToolRegistry implements CustomFeatureRegistry<CustomTool, Cus
     }
 
     @Override
-    public void finalize() {
+    public void prepare() {
         // Empty
     }
 
