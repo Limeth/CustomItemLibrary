@@ -9,8 +9,11 @@ import cz.creeper.customitemlibrary.data.RepresentedCustomItemSnapshotData;
 import cz.creeper.customitemlibrary.data.RepresentedCustomItemSnapshotManipulatorBuilder;
 import cz.creeper.customitemlibrary.feature.CustomFeature;
 import cz.creeper.customitemlibrary.feature.CustomFeatureDefinition;
+import cz.creeper.customitemlibrary.feature.block.CustomBlock;
+import cz.creeper.customitemlibrary.feature.block.CustomBlockDefinition;
 import cz.creeper.customitemlibrary.feature.item.CustomItem;
 import cz.creeper.customitemlibrary.feature.item.CustomItemDefinition;
+import cz.creeper.customitemlibrary.util.Block;
 import cz.creeper.customitemlibrary.util.Identifier;
 import cz.creeper.customitemlibrary.util.Util;
 import lombok.Getter;
@@ -40,6 +43,7 @@ import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
+import org.spongepowered.api.util.blockray.BlockRay;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
@@ -135,26 +139,26 @@ public class CustomItemLibrary {
                     if(!(rawTarget instanceof Player)) {
                         src.sendMessage(Text.builder()
                                 .color(TextColors.RED)
-                                .append(Text.of("Only players may run this command."))
+                                .append(Text.of("Please, specify a player to give the item to."))
                                 .build());
                         return CommandResult.empty();
                     }
 
                     Player target = (Player) rawTarget;
-                    String customItemId = args.<String>getOne("Item")
+                    String customFeatureId = args.<String>getOne("Item")
                             .orElseThrow(() -> new IllegalStateException("The item should have been specified."));
                     Optional<CustomFeatureDefinition<? extends CustomFeature>> rawDefinition;
 
-                    if(!Identifier.isParseable(customItemId)
-                            || !(rawDefinition = service.getDefinition(Identifier.getNamespaceFromIdString(customItemId),
-                                    Identifier.getValueFromIdString(customItemId))).isPresent()) {
-                        src.sendMessage(Text.of(TextColors.RED, "Invalid item id: " + customItemId));
+                    if(!Identifier.isParseable(customFeatureId)
+                            || !(rawDefinition = service.getDefinition(Identifier.getNamespaceFromIdString(customFeatureId),
+                            Identifier.getValueFromIdString(customFeatureId))).isPresent()) {
+                        src.sendMessage(Text.of(TextColors.RED, "Invalid feature id: " + customFeatureId));
                         return CommandResult.empty();
                     }
 
                     if(!(rawDefinition.get() instanceof CustomItemDefinition)) {
                         src.sendMessage(Text.of(TextColors.RED, "The requested id is assigned to a"
-                                + " feature which is not an item that could be given: " + customItemId));
+                                + " feature which is not an item that could be given: " + customFeatureId));
                         return CommandResult.empty();
                     }
 
@@ -184,10 +188,64 @@ public class CustomItemLibrary {
 
                     src.sendMessage(Text.builder()
                             .color(TextColors.GREEN)
-                            .append(Text.of("Gave " + target.getName() + " " + quantity + "x " + customItemId))
+                            .append(Text.of("Gave " + target.getName() + " " + quantity + "x " + customFeatureId))
                             .build());
 
                     return CommandResult.affectedItems(quantity);
+                })
+                .build();
+
+        CommandSpec setBlock = CommandSpec.builder()
+                .description(Text.of("Changes the block the player is looking at."))
+                .permission("customitemlibrary.command.customitemlibrary.setblock")
+                .arguments(
+                        GenericArguments.choices(Text.of("Block"), () -> service.getDefinitions().stream()
+                                        .map(definition -> Identifier.toString(definition.getPluginContainer().getId(),
+                                                definition.getTypeId())).collect(Collectors.toSet()),
+                                Function.identity(), true)
+                )
+                .executor((CommandSource src, CommandContext args) -> {
+                    if(!(src instanceof Player)) {
+                        src.sendMessage(Text.builder()
+                                .color(TextColors.RED)
+                                .append(Text.of("Only players may run this command."))
+                                .build());
+                        return CommandResult.empty();
+                    }
+
+                    Player player = (Player) src;
+                    String customFeatureId = args.<String>getOne("Block")
+                            .orElseThrow(() -> new IllegalStateException("The block should have been specified."));
+                    Optional<CustomFeatureDefinition<? extends CustomFeature>> rawDefinition;
+
+                    if(!Identifier.isParseable(customFeatureId)
+                            || !(rawDefinition = service.getDefinition(Identifier.getNamespaceFromIdString(customFeatureId),
+                                    Identifier.getValueFromIdString(customFeatureId))).isPresent()) {
+                        src.sendMessage(Text.of(TextColors.RED, "Invalid feature id: " + customFeatureId));
+                        return CommandResult.empty();
+                    }
+
+                    if(!(rawDefinition.get() instanceof CustomBlockDefinition)) {
+                        src.sendMessage(Text.of(TextColors.RED, "The requested id is not assigned to a custom block definition: " + customFeatureId));
+                        return CommandResult.empty();
+                    }
+
+                    BlockRay<World> ray = BlockRay.from(player).distanceLimit(5).skipFilter(BlockRay.<World>onlyAirFilter().negate()).build();
+
+                    if(!ray.hasNext()) {
+                        src.sendMessage(Text.of(TextColors.RED, "You must be looking at a block withing reach."));
+                        return CommandResult.empty();
+                    }
+
+                    Block block = Block.of(ray.next().getLocation());
+                    CustomBlockDefinition<? extends CustomBlock> definition = (CustomBlockDefinition<? extends CustomBlock>) rawDefinition.get();
+                    CustomBlock customBlock = definition.placeBlock(block, Cause.builder()
+                            .named(NamedCause.source(getPluginContainer()))
+                            .build());
+
+                    src.sendMessage(Text.of(TextColors.GREEN, "Block changed to '" + customFeatureId + "'."));
+
+                    return CommandResult.success();
                 })
                 .build();
 
@@ -206,6 +264,7 @@ public class CustomItemLibrary {
                 .description(Text.of("CustomItemLibrary commands."))
                 .permission("customitemlibrary.command.customitemlibrary")
                 .child(give, "give", "g")
+                .child(setBlock, "setBlock", "sb", "b")
                 .child(resourcepack, "resourcepack", "rp", "r")
                 .build();
 

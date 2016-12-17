@@ -11,6 +11,8 @@ import cz.creeper.customitemlibrary.feature.CustomFeatureRegistryMap;
 import cz.creeper.customitemlibrary.feature.DurabilityRegistry;
 import cz.creeper.customitemlibrary.feature.block.CustomBlock;
 import cz.creeper.customitemlibrary.feature.block.CustomBlockDefinition;
+import cz.creeper.customitemlibrary.feature.block.simple.SimpleCustomBlockDefinition;
+import cz.creeper.customitemlibrary.feature.block.simple.SimpleCustomBlockRegistry;
 import cz.creeper.customitemlibrary.feature.item.material.CustomMaterialDefinition;
 import cz.creeper.customitemlibrary.feature.item.material.CustomMaterialRegistry;
 import cz.creeper.customitemlibrary.feature.item.tool.CustomToolDefinition;
@@ -21,20 +23,29 @@ import lombok.val;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.asset.Asset;
 import org.spongepowered.api.entity.Entity;
+import org.spongepowered.api.entity.living.ArmorStand;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.util.AABB;
-import org.spongepowered.api.world.Location;
-import org.spongepowered.api.world.World;
+import org.spongepowered.api.util.Identifiable;
+import org.spongepowered.api.world.Chunk;
 
 import java.io.IOException;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @ToString
 public class CustomItemServiceImpl implements CustomItemService {
@@ -43,10 +54,12 @@ public class CustomItemServiceImpl implements CustomItemService {
     public static final String FILE_NAME_PACK = "pack.mcmeta";
     private final CustomFeatureRegistryMap registryMap = new CustomFeatureRegistryMap();
     private final Map<String, Map<String, CustomFeatureDefinition<? extends CustomFeature>>> pluginIdsToTypeIdsToDefinitions = Maps.newHashMap();
+    private final Map<Block, Optional<UUID>> blockToArmorStand = Maps.newHashMap();
 
     public CustomItemServiceImpl() {
         registryMap.put(CustomToolDefinition.class, CustomToolRegistry.getInstance());
         registryMap.put(CustomMaterialDefinition.class, CustomMaterialRegistry.getInstance());
+        registryMap.put(SimpleCustomBlockDefinition.class, SimpleCustomBlockRegistry.getInstance());
 
         registryMap.values().forEach(registry -> Sponge.getEventManager().registerListeners(
                 CustomItemLibrary.getInstance(),
@@ -111,10 +124,10 @@ public class CustomItemServiceImpl implements CustomItemService {
         }
 
         getDefinitions().forEach(definition ->
-            definition.getAssets().forEach(asset -> copyAsset(definition.getPluginContainer(), asset))
+            definition.getAssets().forEach(asset -> copyAsset(definition, asset))
         );
 
-        registryMap.values().forEach(registry -> registry.generateResourcePack(directory));
+        DurabilityRegistry.getInstance().generateResourcePack(directory);
 
         return directory;
     }
@@ -128,33 +141,53 @@ public class CustomItemServiceImpl implements CustomItemService {
 
     @Override
     public Optional<CustomBlockDefinition<? extends CustomBlock>> getDefinition(Block block) {
-        return block.getChunk().flatMap(chunk -> {
-            Optional<Location<World>> location = block.getLocation();
-
-            if(!location.isPresent() || location.get().getBlockType() != CustomBlock.BLOCK_TYPE_CUSTOM)
-                return Optional.empty();
-
-            Vector3i blockPosition = block.getPosition();
-            AABB aabb = new AABB(blockPosition, blockPosition.add(Vector3i.ONE));
-            Set<Entity> entities = chunk.getIntersectingEntities(aabb, entity -> entity.get(CustomFeatureData.class).isPresent());
-            Iterator<Entity> entityIterator = entities.iterator();
-
-            if(!entityIterator.hasNext())
-                return Optional.empty();
-
-            Entity dataHolder = entityIterator.next();
-
-            while(entityIterator.hasNext()) {
-                entityIterator.next().remove();
-            }
-
-            String pluginId = dataHolder.get(CustomItemLibraryKeys.CUSTOM_FEATURE_PLUGIN_ID).get();
-            String typeId = dataHolder.get(CustomItemLibraryKeys.CUSTOM_FEATURE_TYPE_ID).get();
+        return getArmorStandAt(block).flatMap(armorStand -> {
+            String pluginId = armorStand.get(CustomItemLibraryKeys.CUSTOM_FEATURE_PLUGIN_ID).get();
+            String typeId = armorStand.get(CustomItemLibraryKeys.CUSTOM_FEATURE_TYPE_ID).get();
 
             return getDefinition(pluginId, typeId)
                     .filter(CustomBlockDefinition.class::isInstance)
                     .map(CustomBlockDefinition.class::cast);
         });
+    }
+
+    public void setArmorStandAt(Block block, ArmorStand armorStand) {
+        blockToArmorStand.put(block, Optional.of(armorStand.getUniqueId()));
+    }
+
+    public Optional<ArmorStand> getArmorStandAt(Block block) {
+        return blockToArmorStand.computeIfAbsent(block, k -> findArmorStandAt(k).map(Identifiable::getUniqueId))
+                .flatMap(id -> block.getExtent().flatMap(extent -> extent.getEntity(id)).map(ArmorStand.class::cast));
+    }
+
+    public Optional<ArmorStand> findArmorStandAt(Block block) {
+        Set<ArmorStand> armorStands = findArmorStandsAt(block);
+
+        if (armorStands.isEmpty())
+            return Optional.empty();
+
+        Iterator<ArmorStand> armorStandIterator = armorStands.iterator();
+        ArmorStand armorStand = armorStandIterator.next();
+
+        while (armorStandIterator.hasNext()) {
+            armorStandIterator.next().remove();
+        }
+
+        return Optional.of(armorStand);
+    }
+
+    public Set<ArmorStand> findArmorStandsAt(Block block) {
+        Chunk chunk = block.getChunk()
+                .orElseThrow(() -> new IllegalStateException("Could not access the chunk of this block."));
+        Vector3i blockPosition = block.getPosition();
+        AABB aabb = new AABB(blockPosition, blockPosition.add(Vector3i.ONE));
+        Set<Entity> entities = chunk.getIntersectingEntities(aabb, entity ->
+                entity instanceof ArmorStand && entity.get(CustomFeatureData.class).isPresent());
+        Iterator<Entity> entityIterator = entities.iterator();
+
+        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(entityIterator, Spliterator.ORDERED), false)
+                .map(ArmorStand.class::cast)
+                .collect(Collectors.toSet());
     }
 
     @Override
@@ -185,7 +218,8 @@ public class CustomItemServiceImpl implements CustomItemService {
                 .resolveSibling(DIRECTORY_NAME_RESOURCEPACK);
     }
 
-    public static void copyAsset(PluginContainer plugin, String assetPath) {
+    public void copyAsset(CustomFeatureDefinition<? extends CustomFeature> definition, String assetPath) {
+        PluginContainer plugin = definition.getPluginContainer();
         String filePath = CustomToolDefinition.getAssetPrefix(plugin) + assetPath;
         Optional<Asset> optionalAsset = Sponge.getAssetManager().getAsset(plugin, assetPath);
 
@@ -206,8 +240,19 @@ public class CustomItemServiceImpl implements CustomItemService {
             if (Files.exists(outputFile))
                 Files.delete(outputFile);
 
-            asset.copyToFile(outputFile);
+            Files.createFile(outputFile);
+
+            CustomFeatureRegistry registry = (CustomFeatureRegistry) registryMap.get(definition.getClass()).get();
+
+            try (
+                    ReadableByteChannel input = Channels.newChannel(asset.getUrl().openStream());
+                    SeekableByteChannel output = Files.newByteChannel(outputFile, StandardOpenOption.WRITE)
+            ) {
+                //noinspection unchecked
+                registry.writeAsset(definition, assetPath, input, output);
+            }
         } catch (IOException e) {
+            e.printStackTrace();
             CustomItemLibrary.getInstance().getLogger()
                     .warn("Could not copy a file from assets (" + filePath + "): " + e.getLocalizedMessage());
         }

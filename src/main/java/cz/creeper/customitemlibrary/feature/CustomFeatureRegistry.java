@@ -1,6 +1,9 @@
 package cz.creeper.customitemlibrary.feature;
 
-import java.nio.file.Path;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
 
 public interface CustomFeatureRegistry<I extends CustomFeature<T>, T extends CustomFeatureDefinition<I>> {
     /**
@@ -13,12 +16,20 @@ public interface CustomFeatureRegistry<I extends CustomFeature<T>, T extends Cus
     /**
      * Finish all preparations
      */
-    void prepare();
+    default void prepare() {}
 
     /**
-     * Adds files to the resourcepack specified by the argument
-     *
-     * @param directory The resourcepack directory
+     * @param asset The asset to modify
+     * @param input The data that would be written to the file
+     * @param output Where to write the data to
      */
-    void generateResourcePack(Path directory);
+    default void writeAsset(T definition, String asset, ReadableByteChannel input, WritableByteChannel output) throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocateDirect(2048);
+
+        while(input.read(buffer) != -1) {
+            buffer.flip();
+            output.write(buffer);
+            buffer.clear();
+        }
+    }
 }

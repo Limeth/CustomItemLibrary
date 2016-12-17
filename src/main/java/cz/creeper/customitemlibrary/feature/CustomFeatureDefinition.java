@@ -2,6 +2,7 @@ package cz.creeper.customitemlibrary.feature;
 
 import com.google.common.collect.ImmutableSet;
 import cz.creeper.customitemlibrary.data.CustomFeatureData;
+import cz.creeper.customitemlibrary.feature.block.simple.SimpleCustomBlockDefinition;
 import cz.creeper.customitemlibrary.feature.item.material.CustomMaterialDefinition;
 import cz.creeper.customitemlibrary.feature.item.tool.CustomToolDefinition;
 import org.spongepowered.api.plugin.PluginContainer;
@@ -34,7 +35,9 @@ public interface CustomFeatureDefinition<T extends CustomFeature<? extends Custo
         return ImmutableSet.of();
     }
 
-    default CustomFeatureData createDefaultCustomItemData() {
+
+
+    default CustomFeatureData createDefaultCustomFeatureData() {
         return new CustomFeatureData(getPluginContainer().getId(), getTypeId(), getDefaultModel());
     }
 
@@ -44,5 +47,9 @@ public interface CustomFeatureDefinition<T extends CustomFeature<? extends Custo
 
     static CustomMaterialDefinition.CustomMaterialDefinitionBuilder itemMaterialBuilder() {
         return CustomMaterialDefinition.builder();
+    }
+
+    static SimpleCustomBlockDefinition.SimpleCustomBlockDefinitionBuilder simpleBlockBuilder() {
+        return SimpleCustomBlockDefinition.builder();
     }
 }

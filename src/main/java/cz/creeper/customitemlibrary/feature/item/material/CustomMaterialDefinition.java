@@ -64,7 +64,7 @@ public class CustomMaterialDefinition extends AbstractCustomItemDefinition<Custo
                 .orElseThrow(() -> new IllegalStateException("Models are not prepared."));
 
         skin.apply(itemStack);
-        itemStack.offer(createDefaultCustomItemData());
+        itemStack.offer(createDefaultCustomFeatureData());
 
         CustomMaterial material = new CustomMaterial(itemStack, this);
         CustomItemCreationEvent event = new CustomItemCreationEvent(cause, material);

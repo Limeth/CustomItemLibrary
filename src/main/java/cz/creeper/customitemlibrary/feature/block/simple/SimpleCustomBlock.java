@@ -1,6 +1,7 @@
-package cz.creeper.customitemlibrary.feature.block;
+package cz.creeper.customitemlibrary.feature.block.simple;
 
 import cz.creeper.customitemlibrary.feature.DurabilityRegistry;
+import cz.creeper.customitemlibrary.feature.block.AbstractCustomBlock;
 import cz.creeper.customitemlibrary.util.Block;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -24,7 +25,7 @@ public class SimpleCustomBlock extends AbstractCustomBlock<SimpleCustomBlockDefi
     }
 
     public SimpleCustomBlock(SimpleCustomBlockDefinition definition, Block block, ArmorStand armorStand) {
-        super(definition, block, armorStand.getUniqueId());
+        super(definition, block, armorStand);
     }
 
     public ItemStack createHelmet(String model) {
@@ -34,6 +35,7 @@ public class SimpleCustomBlock extends AbstractCustomBlock<SimpleCustomBlockDefi
 
         ItemStack itemStack = ItemStack.of(HELMET_ITEM_TYPE, 1);
 
+        itemStack.offer(Keys.UNBREAKABLE, true);
         itemStack.offer(Keys.ITEM_DURABILITY, durability);
 
         return itemStack;

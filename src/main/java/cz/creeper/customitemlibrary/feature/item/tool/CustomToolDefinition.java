@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableSet;
 import cz.creeper.customitemlibrary.events.CustomItemCreationEvent;
 import cz.creeper.customitemlibrary.feature.DurabilityRegistry;
 import cz.creeper.customitemlibrary.feature.item.AbstractCustomItemDefinition;
+import cz.creeper.customitemlibrary.feature.item.DefinesDurabilityModels;
 import cz.creeper.customitemlibrary.util.Util;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -37,7 +38,9 @@ import java.util.stream.Collectors;
  */
 @EqualsAndHashCode(callSuper = true)
 @ToString
-public final class CustomToolDefinition extends AbstractCustomItemDefinition<CustomTool> {
+public final class CustomToolDefinition extends AbstractCustomItemDefinition<CustomTool> implements DefinesDurabilityModels {
+    public static final String MODEL_DIRECTORY_NAME = "tools";
+
     @Getter
     @NonNull
     private final ItemStackSnapshot itemStackSnapshot;
@@ -56,7 +59,9 @@ public final class CustomToolDefinition extends AbstractCustomItemDefinition<Cus
 
         this.itemStackSnapshot = itemStackSnapshot;
         this.assets = ImmutableSet.<String>builder()
-                .add(getModelPath(typeId))
+                .addAll(getModels().stream()
+                        .map(CustomToolDefinition::getModelPath)
+                        .collect(Collectors.toSet()))
                 .addAll(Util.removeNull(assets).collect(Collectors.toSet()))
                 .build();
     }
@@ -84,7 +89,7 @@ public final class CustomToolDefinition extends AbstractCustomItemDefinition<Cus
         itemStack.offer(Keys.ITEM_DURABILITY, durability);
         itemStack.offer(Keys.HIDE_UNBREAKABLE, true);
         itemStack.offer(Keys.HIDE_ATTRIBUTES, true);
-        itemStack.offer(createDefaultCustomItemData());
+        itemStack.offer(createDefaultCustomFeatureData());
 
         CustomTool tool = new CustomTool(itemStack, this);
         CustomItemCreationEvent event = new CustomItemCreationEvent(cause, tool);
@@ -125,6 +130,11 @@ public final class CustomToolDefinition extends AbstractCustomItemDefinition<Cus
     public int getNumberOfUses() {
         return getNumberOfUses(itemStackSnapshot)
                 .orElseThrow(() -> new IllegalStateException("Could not access the custom tool use limit property."));
+    }
+
+    @Override
+    public String getModelDirectoryName() {
+        return MODEL_DIRECTORY_NAME;
     }
 
     public static String getModelPath(String model) {

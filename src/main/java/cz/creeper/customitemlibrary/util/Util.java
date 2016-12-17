@@ -37,6 +37,9 @@ public class Util {
     }
 
     public <T> Stream<T> removeNull(Iterable<T> iterable) {
+        if(iterable == null)
+            return Stream.empty();
+
         return StreamSupport.stream(iterable.spliterator(), true)
                 .filter(Objects::nonNull);
     }

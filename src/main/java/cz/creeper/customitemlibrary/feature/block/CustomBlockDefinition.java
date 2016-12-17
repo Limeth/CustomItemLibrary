@@ -1,25 +1,56 @@
 package cz.creeper.customitemlibrary.feature.block;
 
+import com.flowpowered.math.vector.Vector3d;
+import cz.creeper.customitemlibrary.CustomItemLibrary;
 import cz.creeper.customitemlibrary.feature.CustomFeatureDefinition;
 import cz.creeper.customitemlibrary.feature.item.CustomItem;
+import cz.creeper.customitemlibrary.feature.item.DefinesDurabilityModels;
 import cz.creeper.customitemlibrary.util.Block;
+import org.spongepowered.api.data.key.Keys;
+import org.spongepowered.api.entity.Entity;
+import org.spongepowered.api.entity.EntityTypes;
+import org.spongepowered.api.entity.living.ArmorStand;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.world.Location;
+import org.spongepowered.api.world.World;
 
 import java.util.Optional;
 
-/**
- * Apply to models:
+public interface CustomBlockDefinition<T extends CustomBlock<? extends CustomBlockDefinition<T>>> extends CustomFeatureDefinition<T>, DefinesDurabilityModels {
+    String MODEL_DIRECTORY_NAME = "blocks";
 
- "display": {
-   "head": {
-   "translation": [0, -43.225, 0],
-   "scale": [1.6, 1.6, 1.6]
-   }
- }
- */
-public interface CustomBlockDefinition<T extends CustomBlock<? extends CustomBlockDefinition<T>>> extends CustomFeatureDefinition<T> {
-    T placeBlock(Block block, Cause cause);
+    T customizeBlock(Block block, ArmorStand armorStand, Cause cause);
+
+    default T placeBlock(Block block, Cause cause) {
+        Location<World> location = block.getLocation()
+                .orElseThrow(() -> new IllegalStateException("Could not access the location of the provided block."));
+        World world = location.getExtent();
+
+        // Remove the previous custom block
+        CustomItemLibrary.getInstance().getService().findArmorStandsAt(block)
+                .forEach(Entity::remove);
+
+        location.setBlockType(CustomBlock.BLOCK_TYPE_CUSTOM, cause);
+
+        Vector3d armorStandPosition = block.getPosition().toDouble().add(Vector3d.ONE.mul(0.5));
+        ArmorStand armorStand = (ArmorStand) world.createEntity(EntityTypes.ARMOR_STAND, armorStandPosition);
+
+        armorStand.offer(Keys.INVISIBLE, true);
+        armorStand.offer(Keys.ARMOR_STAND_MARKER, true);
+        armorStand.offer(Keys.HAS_GRAVITY, false);
+        armorStand.offer(Keys.PERSISTS, true);
+        armorStand.offer(createDefaultCustomFeatureData());
+        armorStand.setRotation(Vector3d.ZERO);
+        armorStand.setHeadRotation(Vector3d.ZERO);
+
+        world.spawnEntity(armorStand, cause);
+
+        T result = customizeBlock(block, armorStand, cause);
+
+        result.setModel(getDefaultModel());
+
+        return result;
+    }
 
     /**
      * Wraps the {@link Location} in a helper class extending {@link CustomItem},
@@ -30,4 +61,9 @@ public interface CustomBlockDefinition<T extends CustomBlock<? extends CustomBlo
      * @return The wrapped {@link Block}, if the feature actually represents this definition
      */
     Optional<T> wrapIfPossible(Block block);
+
+    @Override
+    default String getModelDirectoryName() {
+        return MODEL_DIRECTORY_NAME;
+    }
 }
