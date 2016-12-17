@@ -8,10 +8,19 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
+import cz.creeper.customitemlibrary.event.MiningProgressEvent;
 import cz.creeper.customitemlibrary.feature.CustomFeatureRegistry;
 import cz.creeper.customitemlibrary.feature.DurabilityRegistry;
 import lombok.AccessLevel;
 import lombok.Getter;
+import org.spongepowered.api.block.BlockSnapshot;
+import org.spongepowered.api.block.BlockTypes;
+import org.spongepowered.api.effect.particle.ParticleEffect;
+import org.spongepowered.api.effect.particle.ParticleOptions;
+import org.spongepowered.api.effect.particle.ParticleTypes;
+import org.spongepowered.api.event.Listener;
+import org.spongepowered.api.event.Order;
+import org.spongepowered.api.world.World;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -67,6 +76,26 @@ public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCu
             }
         } else {
             CustomFeatureRegistry.super.writeAsset(definition, asset, input, output);
+        }
+    }
+
+    @Listener(order = Order.BEFORE_POST)
+    public void onMiningProgress(MiningProgressEvent event) {
+        if(event.getDuration() > 3) {
+            BlockSnapshot snapshot = event.getSnapshot();
+
+            snapshot.getLocation().ifPresent(location -> {
+                World world = location.getExtent();
+                ParticleEffect particleEffect = ParticleEffect.builder()
+                        .type(ParticleTypes.BREAK_BLOCK)
+                        .option(ParticleOptions.BLOCK_STATE, snapshot.getExtendedState())
+                        .build();
+                Vector3d particlePosition = location.getBlockPosition().toDouble();
+
+                world.spawnParticles(particleEffect, particlePosition);
+                location.setBlockType(BlockTypes.AIR, event.getCause());
+                event.setCancelled(true);
+            });
         }
     }
 

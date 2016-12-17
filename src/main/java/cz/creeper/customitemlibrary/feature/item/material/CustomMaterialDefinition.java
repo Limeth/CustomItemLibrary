@@ -1,7 +1,7 @@
 package cz.creeper.customitemlibrary.feature.item.material;
 
 import com.google.common.base.Preconditions;
-import cz.creeper.customitemlibrary.events.CustomItemCreationEvent;
+import cz.creeper.customitemlibrary.event.CustomItemCreationEvent;
 import cz.creeper.customitemlibrary.feature.item.AbstractCustomItemDefinition;
 import cz.creeper.customitemlibrary.feature.item.tool.CustomToolDefinition;
 import cz.creeper.mineskinsponge.SkinRecord;
@@ -67,7 +67,7 @@ public class CustomMaterialDefinition extends AbstractCustomItemDefinition<Custo
         itemStack.offer(createDefaultCustomFeatureData());
 
         CustomMaterial material = new CustomMaterial(itemStack, this);
-        CustomItemCreationEvent event = new CustomItemCreationEvent(cause, material);
+        CustomItemCreationEvent event = new CustomItemCreationEvent(material, cause);
 
         Sponge.getEventManager().post(event);
 

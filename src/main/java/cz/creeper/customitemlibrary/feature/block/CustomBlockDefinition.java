@@ -7,7 +7,6 @@ import cz.creeper.customitemlibrary.feature.item.CustomItem;
 import cz.creeper.customitemlibrary.feature.item.DefinesDurabilityModels;
 import cz.creeper.customitemlibrary.util.Block;
 import org.spongepowered.api.data.key.Keys;
-import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.EntityTypes;
 import org.spongepowered.api.entity.living.ArmorStand;
 import org.spongepowered.api.event.cause.Cause;
@@ -27,8 +26,7 @@ public interface CustomBlockDefinition<T extends CustomBlock<? extends CustomBlo
         World world = location.getExtent();
 
         // Remove the previous custom block
-        CustomItemLibrary.getInstance().getService().findArmorStandsAt(block)
-                .forEach(Entity::remove);
+        CustomItemLibrary.getInstance().getService().removeArmorStandsAt(block);
 
         location.setBlockType(CustomBlock.BLOCK_TYPE_CUSTOM, cause);
 
