@@ -69,8 +69,8 @@ public class CustomItemServiceImpl implements CustomItemService {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <I extends CustomFeature<T>, T extends CustomFeatureDefinition<I>> void register(T definition) {
-        Optional<CustomFeatureRegistry<I, T>> registry = registryMap.get(definition);
+    public void register(CustomFeatureDefinition definition) {
+        Optional<CustomFeatureRegistry> registry = registryMap.get(definition);
 
         if(!registry.isPresent())
             throw new IllegalArgumentException("Invalid definition type.");
