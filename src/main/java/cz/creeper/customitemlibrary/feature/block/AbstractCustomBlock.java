@@ -22,10 +22,12 @@ public abstract class AbstractCustomBlock<T extends CustomBlockDefinition<? exte
     public AbstractCustomBlock(T definition, Block block, UUID armorStandId) {
         super(definition);
         Preconditions.checkArgument(block.getExtent().isPresent(), "Invalid extent.");
+
+        this.block = block;
+
         Preconditions.checkArgument(getExtent().getEntity(armorStandId)
                 .filter(ArmorStand.class::isInstance).isPresent(), "The armor stand is not accessible.");
 
-        this.block = block;
         this.armorStandId = armorStandId;
     }
 

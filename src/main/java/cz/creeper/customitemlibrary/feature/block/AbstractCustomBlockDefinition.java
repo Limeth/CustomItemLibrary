@@ -6,6 +6,8 @@ import lombok.EqualsAndHashCode;
 import org.spongepowered.api.plugin.PluginContainer;
 
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @EqualsAndHashCode(callSuper = true)
 public abstract class AbstractCustomBlockDefinition<T extends CustomBlock<? extends AbstractCustomBlockDefinition<T>>> extends AbstractCustomFeatureDefinition<T> implements CustomBlockDefinition<T> {
@@ -20,5 +22,15 @@ public abstract class AbstractCustomBlockDefinition<T extends CustomBlock<? exte
         return block.getLocation()
                 .filter(location -> location.getBlockType() == CustomBlock.BLOCK_TYPE_CUSTOM)
                 .flatMap(location -> wrapBarrierIfPossible(block));
+    }
+
+    public Set<String> getModelAssets() {
+        return getModels().stream()
+                .map(AbstractCustomBlockDefinition::getModelPath)
+                .collect(Collectors.toSet());
+    }
+
+    public static String getModelPath(String model) {
+        return "models/blocks/" + model + ".json";
     }
 }

@@ -89,11 +89,6 @@ public class CustomMaterialRegistry implements CustomFeatureRegistry<CustomMater
                 .info("Skins ready.");
     }
 
-    @Override
-    public void generateResourcePack(Path directory) {
-        // Not needed
-    }
-
     @Listener
     public void onClientConnectionDisconnect(ClientConnectionEvent.Disconnect event) {
         lastUsedItem.remove(event.getTargetEntity().getUniqueId());

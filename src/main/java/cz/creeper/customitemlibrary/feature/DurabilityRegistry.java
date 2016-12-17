@@ -10,8 +10,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
 import cz.creeper.customitemlibrary.CustomItemServiceImpl;
-import cz.creeper.customitemlibrary.feature.item.CustomItem;
-import cz.creeper.customitemlibrary.feature.item.CustomItemDefinition;
+import cz.creeper.customitemlibrary.feature.item.DefinesDurabilityModels;
 import cz.creeper.customitemlibrary.feature.item.tool.CustomToolDefinition;
 import cz.creeper.customitemlibrary.util.Identifier;
 import ninja.leaping.configurate.ConfigurationNode;
@@ -38,22 +37,27 @@ public class DurabilityRegistry {
     public static final String FILE_NAME = "toolRegistry.conf";
     public static final String NODE_MODEL_IDS = "modelIds";
     private static final DurabilityRegistry INSTANCE = new DurabilityRegistry();
+    private final Map<DurabilityIdentifier, String> durabilityIdToDirectoryName = Maps.newHashMap();
     private final BiMap<DurabilityIdentifier, Identifier> durabilityIdToModelId = HashBiMap.create();
     private final Map<ItemType, BiMap<Integer, Identifier>> typeToDurabilityToModelId = Maps.newHashMap();
 
-    public void register(ItemType itemType, CustomItemDefinition<? extends CustomItem> definition) {
+    public <T extends CustomFeatureDefinition<? extends CustomFeature> & DefinesDurabilityModels> void register(ItemType itemType, T definition) {
         definition.getModels().forEach(model -> {
             BiMap<Integer, Identifier> durabilityToModelId = typeToDurabilityToModelId.computeIfAbsent(itemType, k -> HashBiMap.create());
             Identifier modelId = new Identifier(definition.getPluginContainer().getId(), model);
 
             // Is the model already registered? If so, skip.
-            if (durabilityToModelId.containsValue(modelId))
-                return;
+            Integer registeredDurability = durabilityToModelId.inverse().get(modelId);
 
-            int availableDurability = getAvailableDurability(itemType);
+            if(registeredDurability == null) {
+                registeredDurability = getAvailableDurability(itemType);
+            }
 
-            durabilityToModelId.put(availableDurability, modelId);
-            durabilityIdToModelId.put(new DurabilityIdentifier(itemType, availableDurability, true), modelId);
+            DurabilityIdentifier durabilityId = new DurabilityIdentifier(itemType, registeredDurability, true);
+
+            durabilityIdToDirectoryName.put(durabilityId, definition.getModelDirectoryName());
+            durabilityIdToModelId.put(durabilityId, modelId);
+            durabilityToModelId.put(registeredDurability, modelId);
         });
     }
 
@@ -211,8 +215,10 @@ public class DurabilityRegistry {
                 modelPredicate.addProperty("damage", damage);
 
                 JsonObject modelJson = new JsonObject();
+                DurabilityIdentifier durabilityId = new DurabilityIdentifier(itemType, durability, true);
+                String modelDirectory = durabilityIdToDirectoryName.get(durabilityId);
                 modelJson.add("predicate", modelPredicate);
-                modelJson.addProperty("model", getToolModelIdentifier(pluginId, model));
+                modelJson.addProperty("model", getFileIdentifier(pluginId, modelDirectory, model));
                 modelOverrides.add(modelJson);
             }
 
@@ -239,7 +245,7 @@ public class DurabilityRegistry {
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             Path modelPath = CustomItemServiceImpl.getDirectoryResourcePack()
                     .resolve("assets").resolve(namespace).resolve("models")
-                    .resolve("feature").resolve(typeName + ".json");
+                    .resolve("item").resolve(typeName + ".json");
 
             try {
                 Files.createDirectories(modelPath.getParent());
@@ -255,16 +261,12 @@ public class DurabilityRegistry {
         }
     }
 
-    private static String getToolModelIdentifier(String pluginId, String tool) {
-        return getFileIdentifier(pluginId, "tools", tool);
-    }
-
     private static String getItemTextureIdentifier(String pluginId, String texture) {
         return getFileIdentifier(pluginId, "items", texture);
     }
 
     private static String getItemModelIdentifier(String pluginId, String model) {
-        return getFileIdentifier(pluginId, "feature", model);
+        return getFileIdentifier(pluginId, "item", model);
     }
 
     private static String getFileIdentifier(String pluginId, String directory, String file) {
@@ -301,8 +303,8 @@ public class DurabilityRegistry {
         });
     }
 
-    public static void applyModel(ItemStack itemStack, PluginContainer pluginContainer, ItemType itemType, String model) {
-        int durability = DurabilityRegistry.getInstance().getDurability(itemType, pluginContainer, model)
+    public static void applyModel(ItemStack itemStack, PluginContainer pluginContainer, String model) {
+        int durability = DurabilityRegistry.getInstance().getDurability(itemStack.getItem(), pluginContainer, model)
                 .orElseThrow(() -> new IllegalArgumentException("No custom tool with such model registered: " + model));
 
         itemStack.offer(Keys.ITEM_DURABILITY, durability).isSuccessful();

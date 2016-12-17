@@ -22,6 +22,6 @@ public class CustomTool extends AbstractCustomItem<CustomToolDefinition> {
     protected void applyModel(String model) {
         CustomToolDefinition definition = getDefinition();
 
-        DurabilityRegistry.applyModel(getDataHolder(), definition.getPluginContainer(), definition.getItemStackSnapshot().getType(), model);
+        DurabilityRegistry.applyModel(getDataHolder(), definition.getPluginContainer(), model);
     }
 }
