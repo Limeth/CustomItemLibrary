@@ -38,6 +38,7 @@ public class MiningManager {
         Mining mining = playerToMining.get(playerId);
         int durationTicks;
 
+        // BlockSnapshot.NONE signifies, that the mouse button is being held on the clicked block
         if(mining != null && BlockSnapshot.NONE.equals(snapshot)) {
             durationTicks = currentTick - mining.tickStarted;
         } else {
