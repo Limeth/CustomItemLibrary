@@ -22,8 +22,13 @@ import lombok.ToString;
 import lombok.val;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.asset.Asset;
+import org.spongepowered.api.block.BlockSnapshot;
+import org.spongepowered.api.data.Transaction;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.living.ArmorStand;
+import org.spongepowered.api.event.Listener;
+import org.spongepowered.api.event.Order;
+import org.spongepowered.api.event.block.ChangeBlockEvent;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.util.AABB;
 import org.spongepowered.api.util.Identifiable;
@@ -65,12 +70,14 @@ public class CustomItemServiceImpl implements CustomItemService {
                 CustomItemLibrary.getInstance(),
                 registry
         ));
+
+        Sponge.getEventManager().registerListeners(CustomItemLibrary.getInstance(), this);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public void register(CustomFeatureDefinition definition) {
-        Optional<CustomFeatureRegistry> registry = registryMap.get(definition);
+    public <I extends CustomFeature<T>, T extends CustomFeatureDefinition<I>> void register(T definition) {
+        Optional<CustomFeatureRegistry<I, T>> registry = registryMap.get(definition);
 
         if(!registry.isPresent())
             throw new IllegalArgumentException("Invalid definition type.");
@@ -190,6 +197,11 @@ public class CustomItemServiceImpl implements CustomItemService {
                 .collect(Collectors.toSet());
     }
 
+    public boolean removeArmorStandsAt(Block block) {
+        findArmorStandsAt(block).forEach(Entity::remove);
+        return blockToArmorStand.remove(block) != null;
+    }
+
     @Override
     public Optional<CustomFeatureDefinition<? extends CustomFeature>> getDefinition(String pluginId, String typeId) {
         Map<String, CustomFeatureDefinition<? extends CustomFeature>> typeIdsToDefinitions = pluginIdsToTypeIdsToDefinitions.get(pluginId);
@@ -206,16 +218,6 @@ public class CustomItemServiceImpl implements CustomItemService {
 
     private Map<String, CustomFeatureDefinition<? extends CustomFeature>> getTypeIdsToDefinitions(String pluginId) {
         return pluginIdsToTypeIdsToDefinitions.computeIfAbsent(pluginId, k -> Maps.newHashMap());
-    }
-
-    public static Path getDirectoryRegistries() {
-        return CustomItemLibrary.getInstance().getConfigPath()
-                .resolveSibling(DIRECTORY_NAME_REGISTRIES);
-    }
-
-    public static Path getDirectoryResourcePack() {
-        return CustomItemLibrary.getInstance().getConfigPath()
-                .resolveSibling(DIRECTORY_NAME_RESOURCEPACK);
     }
 
     public void copyAsset(CustomFeatureDefinition<? extends CustomFeature> definition, String assetPath) {
@@ -256,5 +258,25 @@ public class CustomItemServiceImpl implements CustomItemService {
             CustomItemLibrary.getInstance().getLogger()
                     .warn("Could not copy a file from assets (" + filePath + "): " + e.getLocalizedMessage());
         }
+    }
+
+    @Listener(order = Order.BEFORE_POST)
+    public void onChangeBlockBreak(ChangeBlockEvent event) {
+        event.getTransactions().stream()
+                .filter(Transaction::isValid)
+                .forEach(blockSnapshotTransaction -> {
+            BlockSnapshot original = blockSnapshotTransaction.getOriginal();
+            original.getLocation().map(Block::of).ifPresent(this::removeArmorStandsAt);
+        });
+    }
+
+    public static Path getDirectoryRegistries() {
+        return CustomItemLibrary.getInstance().getConfigPath()
+                .resolveSibling(DIRECTORY_NAME_REGISTRIES);
+    }
+
+    public static Path getDirectoryResourcePack() {
+        return CustomItemLibrary.getInstance().getConfigPath()
+                .resolveSibling(DIRECTORY_NAME_RESOURCEPACK);
     }
 }

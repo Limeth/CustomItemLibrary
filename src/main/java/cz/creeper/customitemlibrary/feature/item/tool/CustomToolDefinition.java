@@ -2,7 +2,7 @@ package cz.creeper.customitemlibrary.feature.item.tool;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
-import cz.creeper.customitemlibrary.events.CustomItemCreationEvent;
+import cz.creeper.customitemlibrary.event.CustomItemCreationEvent;
 import cz.creeper.customitemlibrary.feature.DurabilityRegistry;
 import cz.creeper.customitemlibrary.feature.item.AbstractCustomItemDefinition;
 import cz.creeper.customitemlibrary.feature.item.DefinesDurabilityModels;
@@ -92,7 +92,7 @@ public final class CustomToolDefinition extends AbstractCustomItemDefinition<Cus
         itemStack.offer(createDefaultCustomFeatureData());
 
         CustomTool tool = new CustomTool(itemStack, this);
-        CustomItemCreationEvent event = new CustomItemCreationEvent(cause, tool);
+        CustomItemCreationEvent event = new CustomItemCreationEvent(tool, cause);
 
         Sponge.getEventManager().post(event);
 

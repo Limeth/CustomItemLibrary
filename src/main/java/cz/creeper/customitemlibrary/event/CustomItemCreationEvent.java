@@ -1,18 +1,18 @@
-package cz.creeper.customitemlibrary.events;
+package cz.creeper.customitemlibrary.event;
 
 import cz.creeper.customitemlibrary.feature.item.CustomItem;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
-import org.spongepowered.api.event.Event;
 import org.spongepowered.api.event.cause.Cause;
+import org.spongepowered.api.event.impl.AbstractEvent;
 
 @AllArgsConstructor
 @Getter
-public class CustomItemCreationEvent implements Event {
-    @NonNull
-    private final Cause cause;
-
+public class CustomItemCreationEvent extends AbstractEvent {
     @NonNull
     private final CustomItem item;
+
+    @NonNull
+    private final Cause cause;
 }

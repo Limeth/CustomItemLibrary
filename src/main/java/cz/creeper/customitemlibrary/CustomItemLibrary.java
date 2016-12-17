@@ -13,6 +13,7 @@ import cz.creeper.customitemlibrary.feature.block.CustomBlock;
 import cz.creeper.customitemlibrary.feature.block.CustomBlockDefinition;
 import cz.creeper.customitemlibrary.feature.item.CustomItem;
 import cz.creeper.customitemlibrary.feature.item.CustomItemDefinition;
+import cz.creeper.customitemlibrary.managers.MiningManager;
 import cz.creeper.customitemlibrary.util.Block;
 import cz.creeper.customitemlibrary.util.Identifier;
 import cz.creeper.customitemlibrary.util.Util;
@@ -38,6 +39,7 @@ import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.event.game.state.GameLoadCompleteEvent;
 import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
+import org.spongepowered.api.event.game.state.GameStoppedEvent;
 import org.spongepowered.api.plugin.Dependency;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
@@ -78,6 +80,7 @@ public class CustomItemLibrary {
     private GuiceObjectMapperFactory objectMapperFactory;
     @Inject @DefaultConfig(sharedRoot = false)
     private Path configPath;
+    private MiningManager miningManager;
     private CustomItemServiceImpl service;
 
     @Listener
@@ -94,6 +97,7 @@ public class CustomItemLibrary {
     @Listener
     public void onGameInitialization(GameInitializationEvent event) {
         logger.info("Loading CustomItemLibrary...");
+        setupManagers();
         setupService();
         setupCommands();
         logger.info("CustomItemLibrary loaded.");
@@ -111,6 +115,15 @@ public class CustomItemLibrary {
         logger.info("CustomItemLibrary saved.");
 
         service.prepare();
+    }
+
+    @Listener
+    public void onGameStopped(GameStoppedEvent event) {
+        miningManager.stop();
+    }
+
+    private void setupManagers() {
+        miningManager = new MiningManager().start();
     }
 
     private void setupService() {
