@@ -36,19 +36,24 @@ public class MiningManager {
         int currentTick = Sponge.getServer().getRunningTimeTicks();
         BlockSnapshot snapshot = event.getTargetBlock();
         Mining mining = playerToMining.get(playerId);
+        int durationTicks;
 
         if(mining != null && BlockSnapshot.NONE.equals(snapshot)) {
-            int durationTicks = currentTick - mining.tickStarted;
-            MiningProgressEvent miningEvent = new MiningProgressEvent(player, mining.snapshot, durationTicks,
-                    Cause.source(CustomItemLibrary.getInstance().getPluginContainer()).build(), false);
-
-            Sponge.getEventManager().post(miningEvent);
-
-            if (miningEvent.isCancelled()) {
-                playerToMining.remove(playerId);
-            }
+            durationTicks = currentTick - mining.tickStarted;
         } else {
-            playerToMining.put(playerId, new Mining(currentTick, snapshot));
+            mining = new Mining(currentTick, snapshot);
+            durationTicks = 0;
+
+            playerToMining.put(playerId, mining);
+        }
+
+        MiningProgressEvent miningEvent = new MiningProgressEvent(player, mining.snapshot, durationTicks,
+                Cause.source(CustomItemLibrary.getInstance().getPluginContainer()).build(), false);
+
+        Sponge.getEventManager().post(miningEvent);
+
+        if (miningEvent.isCancelled()) {
+            playerToMining.remove(playerId);
         }
     }
 
