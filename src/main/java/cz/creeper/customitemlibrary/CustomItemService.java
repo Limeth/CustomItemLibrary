@@ -22,7 +22,7 @@ public interface CustomItemService {
      *
      * @param definition The definition to register
      */
-    <I extends CustomFeature<T>, T extends CustomFeatureDefinition<I>> void register(T definition);
+    void register(CustomFeatureDefinition definition);
 
     /**
      * @return An unmodifiable set of all registered definitions
