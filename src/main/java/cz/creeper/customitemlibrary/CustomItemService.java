@@ -1,5 +1,6 @@
 package cz.creeper.customitemlibrary;
 
+import com.google.common.collect.Sets;
 import cz.creeper.customitemlibrary.data.CustomFeatureData;
 import cz.creeper.customitemlibrary.feature.CustomFeature;
 import cz.creeper.customitemlibrary.feature.CustomFeatureDefinition;
@@ -27,33 +28,58 @@ public interface CustomItemService {
     /**
      * @return An unmodifiable set of all registered definitions
      */
-    Set<CustomFeatureDefinition<? extends CustomFeature>> getDefinitions();
+    default Set<CustomFeatureDefinition<? extends CustomFeature>> getDefinitions() {
+        Set<CustomFeatureDefinition<? extends CustomFeature>> result = Sets.newHashSet();
+
+        result.addAll(getItemDefinitions());
+        result.addAll(getBlockDefinitions());
+
+        return result;
+    }
+
+    /**
+     * @return An unmodifiable set of all registered item definitions
+     */
+    Set<CustomItemDefinition<? extends CustomItem>> getItemDefinitions();
+
+    /**
+     * @return An unmodifiable set of all registered block definitions
+     */
+    Set<CustomBlockDefinition<? extends CustomBlock>> getBlockDefinitions();
 
     /**
      * @param itemStack The {@link ItemStack} to get the definition of
      * @return The definition, if one is registered.
      */
-    default Optional<CustomItemDefinition<? extends CustomItem>> getDefinition(ItemStack itemStack) {
+    default Optional<CustomItemDefinition<? extends CustomItem>> getItemDefinition(ItemStack itemStack) {
         //noinspection unchecked
         return itemStack.get(CustomFeatureData.class)
-                .flatMap(data -> getDefinition(data.customFeaturePluginId().get(), data.customFeatureTypeId().get()))
+                .flatMap(data -> getItemDefinition(data.customFeaturePluginId().get(), data.customFeatureTypeId().get()))
                 .filter(CustomItemDefinition.class::isInstance)
                 .map(CustomItemDefinition.class::cast);
     }
 
-    default Optional<CustomBlockDefinition<? extends CustomBlock>> getDefinition(Location<World> location) {
-        return getDefinition(Block.of(location));
+    /**
+     * @param location The block to get the definition of
+     * @return The definition, if found
+     */
+    default Optional<CustomBlockDefinition<? extends CustomBlock>> getBlockDefinition(Location<World> location) {
+        return getBlockDefinition(Block.of(location));
     }
 
-    Optional<CustomBlockDefinition<? extends CustomBlock>> getDefinition(Block block);
+    /**
+     * @param block The block to get the definition of
+     * @return The definition, if found
+     */
+    Optional<CustomBlockDefinition<? extends CustomBlock>> getBlockDefinition(Block block);
 
     /**
      * @param plugin The instance of the plugin that registered the {@link CustomItemDefinition}
      * @param typeId The id to look for
      * @return The definition, if one is registered.
      */
-    default Optional<CustomFeatureDefinition<? extends CustomFeature>> getDefinition(Object plugin, String typeId) {
-        return getDefinition(Sponge.getPluginManager().fromInstance(plugin)
+    default Optional<CustomItemDefinition<? extends CustomItem>> getItemDefinition(Object plugin, String typeId) {
+        return getItemDefinition(Sponge.getPluginManager().fromInstance(plugin)
                 .orElseThrow(() -> new IllegalArgumentException("Could not find a PluginContainer with "
                         + "plugin instance: " + plugin)).getId(), typeId);
     }
@@ -63,23 +89,49 @@ public interface CustomItemService {
      * @param typeId The id to look for
      * @return The definition, if one is registered.
      */
-    Optional<CustomFeatureDefinition<? extends CustomFeature>> getDefinition(String pluginId, String typeId);
+    Optional<CustomItemDefinition<? extends CustomItem>> getItemDefinition(String pluginId, String typeId);
+
+    /**
+     * @param plugin The instance of the plugin that registered the {@link CustomBlockDefinition}
+     * @param typeId The id to look for
+     * @return The definition, if one is registered.
+     */
+    default Optional<CustomBlockDefinition<? extends CustomBlock>> getBlockDefinition(Object plugin, String typeId) {
+        return getBlockDefinition(Sponge.getPluginManager().fromInstance(plugin)
+                .orElseThrow(() -> new IllegalArgumentException("Could not find a PluginContainer with "
+                        + "plugin instance: " + plugin)).getId(), typeId);
+    }
+
+    /**
+     * @param pluginId The plugin that registered the {@link CustomBlockDefinition}
+     * @param typeId The id to look for
+     * @return The definition, if one is registered.
+     */
+    Optional<CustomBlockDefinition<? extends CustomBlock>> getBlockDefinition(String pluginId, String typeId);
 
     /**
      * @param itemStack The ItemStack to wrap
-     * @return The wrapped ItemStack, if it is a registered custom feature.
+     * @return The wrapped ItemStack, if it is a registered custom item.
      */
-    default Optional<? extends CustomItem> getCustomItem(ItemStack itemStack) {
-        return getDefinition(itemStack)
+    default Optional<? extends CustomItem> getItem(ItemStack itemStack) {
+        return getItemDefinition(itemStack)
                 .flatMap((CustomItemDefinition<? extends CustomItem> definition) -> definition.wrapIfPossible(itemStack));
     }
 
-    default Optional<? extends CustomBlock> getCustomBlock(Location<World> location) {
-        return getCustomBlock(Block.of(location));
+    /**
+     * @param location The block to wrap
+     * @return The wrapped block, if it is a registered custom block.
+     */
+    default Optional<? extends CustomBlock> getBlock(Location<World> location) {
+        return getBlock(Block.of(location));
     }
 
-    default Optional<? extends CustomBlock> getCustomBlock(Block block) {
-        return getDefinition(block)
+    /**
+     * @param block The block to wrap
+     * @return The wrapped block, if it is a registered custom block.
+     */
+    default Optional<? extends CustomBlock> getBlock(Block block) {
+        return getBlockDefinition(block)
                 .flatMap((CustomBlockDefinition<? extends CustomBlock> definition) -> definition.wrapIfPossible(block));
     }
 

@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
 import cz.creeper.customitemlibrary.feature.block.AbstractCustomBlockDefinition;
+import cz.creeper.customitemlibrary.feature.item.CustomItem;
 import cz.creeper.customitemlibrary.util.Block;
 import cz.creeper.customitemlibrary.util.Util;
 import lombok.Builder;
@@ -17,6 +18,7 @@ import org.spongepowered.api.block.BlockType;
 import org.spongepowered.api.data.property.block.HardnessProperty;
 import org.spongepowered.api.entity.living.ArmorStand;
 import org.spongepowered.api.event.cause.Cause;
+import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.PluginContainer;
 
 import java.util.Collections;
@@ -88,7 +90,12 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
             breakEffectState = harvestingType.getDefaultState();
 
         if(dropProvider == null)
-            dropProvider = (a, b, c) -> Collections.emptyList();
+            dropProvider = (a, b, cause) -> CustomItemLibrary.getInstance().getService().getItemDefinition(plugin, typeId)
+                    .map(itemDefinition -> itemDefinition.createItem(cause))
+                    .map(CustomItem::getDataHolder)
+                    .map(ItemStack::createSnapshot)
+                    .map(Collections::singletonList)
+                    .orElseGet(Collections::emptyList);
 
         return new SimpleCustomBlockDefinition(pluginContainer, typeId, harvestingType, hardness, breakEffectState, dropProvider, defaultModel, models, additionalAssets);
     }
