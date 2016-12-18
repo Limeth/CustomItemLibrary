@@ -15,7 +15,9 @@ import lombok.Singular;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockState;
 import org.spongepowered.api.block.BlockType;
+import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.data.property.block.HardnessProperty;
+import org.spongepowered.api.effect.sound.SoundType;
 import org.spongepowered.api.entity.living.ArmorStand;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.item.inventory.ItemStack;
@@ -56,8 +58,8 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
 
     private SimpleCustomBlockDefinition(PluginContainer pluginContainer, String typeId, @NonNull BlockType harvestingType,
             double hardness, @NonNull BlockState breakEffectState, @NonNull DropProvider dropProvider,
-            String defaultModel, Iterable<String> models, Iterable<String> additionalAssets) {
-        super(pluginContainer, typeId, defaultModel, models);
+            String defaultModel, Iterable<String> models, Iterable<String> additionalAssets, SoundType soundPlace) {
+        super(pluginContainer, typeId, defaultModel, models, soundPlace);
 
         this.assets = ImmutableSet.<String>builder()
                 .addAll(getModels().stream()
@@ -73,11 +75,14 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
     }
 
     @Builder
-    public static SimpleCustomBlockDefinition create(Object plugin, String typeId, @NonNull BlockType harvestingType,
+    public static SimpleCustomBlockDefinition create(Object plugin, String typeId, BlockType harvestingType,
             Double hardness, BlockState breakEffectState, DropProvider dropProvider, String defaultModel,
-            @Singular Iterable<String> models, @Singular Iterable<String> additionalAssets) {
+            @Singular Iterable<String> models, @Singular Iterable<String> additionalAssets, SoundType soundPlace) {
         PluginContainer pluginContainer = Sponge.getPluginManager().fromInstance(plugin)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid plugin instance."));
+        if(harvestingType == null)
+            harvestingType = BlockTypes.STONE;
+
         if(hardness == null)
             hardness = harvestingType.getDefaultState()
                     .getProperty(HardnessProperty.class)
@@ -97,7 +102,10 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
                     .map(Collections::singletonList)
                     .orElseGet(Collections::emptyList);
 
-        return new SimpleCustomBlockDefinition(pluginContainer, typeId, harvestingType, hardness, breakEffectState, dropProvider, defaultModel, models, additionalAssets);
+        if(soundPlace == null)
+            soundPlace = harvestingType.getSoundGroup().getPlaceSound();
+
+        return new SimpleCustomBlockDefinition(pluginContainer, typeId, harvestingType, hardness, breakEffectState, dropProvider, defaultModel, models, additionalAssets, soundPlace);
     }
 
     @Override

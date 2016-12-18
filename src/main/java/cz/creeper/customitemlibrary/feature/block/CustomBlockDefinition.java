@@ -7,6 +7,7 @@ import cz.creeper.customitemlibrary.feature.item.CustomItem;
 import cz.creeper.customitemlibrary.feature.item.DefinesDurabilityModels;
 import cz.creeper.customitemlibrary.util.Block;
 import org.spongepowered.api.data.key.Keys;
+import org.spongepowered.api.effect.sound.SoundType;
 import org.spongepowered.api.entity.EntityTypes;
 import org.spongepowered.api.entity.living.ArmorStand;
 import org.spongepowered.api.event.cause.Cause;
@@ -18,6 +19,7 @@ import java.util.Optional;
 public interface CustomBlockDefinition<T extends CustomBlock<? extends CustomBlockDefinition<T>>> extends CustomFeatureDefinition<T>, DefinesDurabilityModels {
     String MODEL_DIRECTORY_NAME = "blocks";
 
+    SoundType getSoundPlace();
     T customizeBlock(Block block, ArmorStand armorStand, Cause cause);
 
     default T placeBlock(Block block, Cause cause) {

@@ -1,11 +1,14 @@
 package cz.creeper.customitemlibrary.feature.item.material;
 
+import com.flowpowered.math.vector.Vector3d;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
 import cz.creeper.customitemlibrary.CustomItemService;
+import cz.creeper.customitemlibrary.event.CustomBlockPlaceEvent;
 import cz.creeper.customitemlibrary.feature.CustomFeatureRegistry;
+import cz.creeper.customitemlibrary.feature.block.CustomBlock;
 import cz.creeper.mineskinsponge.MineskinService;
 import cz.creeper.mineskinsponge.SkinRecord;
 import lombok.AccessLevel;
@@ -13,21 +16,35 @@ import lombok.NoArgsConstructor;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.asset.Asset;
 import org.spongepowered.api.asset.AssetManager;
+import org.spongepowered.api.block.BlockSnapshot;
+import org.spongepowered.api.block.BlockState;
+import org.spongepowered.api.block.BlockTypes;
+import org.spongepowered.api.data.Transaction;
 import org.spongepowered.api.data.type.HandType;
+import org.spongepowered.api.effect.sound.SoundCategories;
+import org.spongepowered.api.effect.sound.SoundType;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.Order;
+import org.spongepowered.api.event.block.InteractBlockEvent;
+import org.spongepowered.api.event.cause.Cause;
+import org.spongepowered.api.event.cause.NamedCause;
 import org.spongepowered.api.event.filter.cause.Root;
-import org.spongepowered.api.event.item.inventory.InteractItemEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
+import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.plugin.PluginContainer;
+import org.spongepowered.api.util.Direction;
+import org.spongepowered.api.world.Location;
+import org.spongepowered.api.world.World;
 
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class CustomMaterialRegistry implements CustomFeatureRegistry<CustomMaterial, CustomMaterialDefinition> {
@@ -95,12 +112,64 @@ public class CustomMaterialRegistry implements CustomFeatureRegistry<CustomMater
     }
 
     @Listener(order = Order.LATE)
-    public void onInteractItemSecondary(InteractItemEvent.Secondary event, @Root Player player) {
+    public void onInteractItemSecondary(InteractBlockEvent.Secondary event, @Root Player player) {
         CustomItemService service = CustomItemLibrary.getInstance().getService();
 
         player.getItemInHand(event.getHandType())
                 .flatMap(service::getItem)
-                .ifPresent(customItem -> event.setCancelled(true));
+                .filter(CustomMaterial.class::isInstance)
+                .map(CustomMaterial.class::cast)
+                .ifPresent(customMaterial -> {
+                    event.setCancelled(true);
+
+                    if(event.getTargetBlock() == BlockSnapshot.NONE)
+                        return;
+
+                    CustomMaterialDefinition definition = customMaterial.getDefinition();
+                    PlaceProvider placeProvider = definition.getPlaceProvider();
+                    BlockSnapshot targetBlock = event.getTargetBlock();
+                    Direction targetSide = event.getTargetSide();
+                    Location<World> targetLocation = targetBlock.getLocation()
+                            .orElseThrow(() -> new IllegalStateException("Could not access the location of the clicked block."));
+                    Location<World> placeLocation = targetLocation.getRelative(targetSide);
+                    BlockState placeState = placeLocation.getBlock();
+
+                    if(placeState.getType() == BlockTypes.AIR) {
+                        Cause placeCause = Cause.source(CustomItemLibrary.getInstance().getPluginContainer())
+                                .notifier(player)
+                                .addAll(event.getCause().getNamedCauses().entrySet().stream()
+                                        .filter(entry -> !entry.getKey().equals(NamedCause.SOURCE)
+                                                            && !entry.getKey().equals(NamedCause.NOTIFIER))
+                                        .map(entry -> NamedCause.of(entry.getKey(), entry.getValue()))
+                                        .collect(Collectors.toList()))
+                                .build();
+
+                        placeProvider.provideBlock(customMaterial, player, placeLocation, placeCause)
+                                .ifPresent(blockSnapshot -> {
+                                    World world = placeLocation.getExtent();
+                                    BlockSnapshot original = world.createSnapshot(placeLocation.getBlockPosition());
+                                    Transaction<BlockSnapshot> transaction = new Transaction<>(original, blockSnapshot);
+                                    CustomBlockPlaceEvent placeEvent = new CustomBlockPlaceEvent(Collections.singletonList(transaction), world, placeCause, false);
+                                    boolean cancelled = Sponge.getEventManager().post(placeEvent);
+
+                                    if(!cancelled) {
+                                        ItemStack itemInHand = customMaterial.getDataHolder();
+
+                                        itemInHand.setQuantity(itemInHand.getQuantity() - 1);
+                                        placeProvider.afterBlockPlace(customMaterial, player, placeLocation, placeCause);
+                                        player.setItemInHand(event.getHandType(), itemInHand);
+
+                                        Optional<? extends CustomBlock<?>> placedCustomBlock = CustomItemLibrary.getInstance().getService().getBlock(placeLocation);
+                                        Vector3d soundPosition = placeLocation.getPosition().add(Vector3d.ONE.mul(0.5));
+                                        SoundType placeSound = placedCustomBlock.map(customBlock -> customBlock.getDefinition().getSoundPlace())
+                                                .orElseGet(() -> placeState.getType().getSoundGroup().getPlaceSound());
+
+                                        // TODO: plays some sort of dog breathing sound, get rid of that
+                                        world.playSound(placeSound, SoundCategories.BLOCK, soundPosition, 1, 1);
+                                    }
+                                });
+                    }
+                });
     }
 
     /*
