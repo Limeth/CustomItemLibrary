@@ -40,7 +40,7 @@ public class CustomMaterialDefinition extends AbstractCustomItemDefinition<Custo
     @NonNull
     private final ItemStackSnapshot itemStackSnapshot;
 
-    public CustomMaterialDefinition(PluginContainer pluginContainer, String typeId, String defaultModel, Iterable<String> models, ItemStackSnapshot itemStackSnapshot) {
+    public CustomMaterialDefinition(PluginContainer pluginContainer, String typeId, String defaultModel, Iterable<String> models, @NonNull ItemStackSnapshot itemStackSnapshot) {
         super(pluginContainer, typeId, defaultModel, models);
 
         this.itemStackSnapshot = itemStackSnapshot;

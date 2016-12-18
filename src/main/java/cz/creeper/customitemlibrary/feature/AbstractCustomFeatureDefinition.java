@@ -24,7 +24,8 @@ public abstract class AbstractCustomFeatureDefinition<T extends CustomFeature<? 
     @NonNull
     private final ImmutableSet<String> models;
 
-    public AbstractCustomFeatureDefinition(PluginContainer pluginContainer, String typeId, String defaultModel, Iterable<String> models) {
+    public AbstractCustomFeatureDefinition(@NonNull PluginContainer pluginContainer, @NonNull String typeId,
+                                           @NonNull String defaultModel, Iterable<String> models) {
         this.pluginContainer = pluginContainer;
         this.typeId = typeId;
         this.defaultModel = defaultModel;
