@@ -10,6 +10,7 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
 import cz.creeper.customitemlibrary.event.CustomBlockBreakEvent;
+import cz.creeper.customitemlibrary.event.CustomBlockBreakItemDropEvent;
 import cz.creeper.customitemlibrary.event.MiningProgressEvent;
 import cz.creeper.customitemlibrary.feature.CustomFeatureRegistry;
 import cz.creeper.customitemlibrary.feature.DurabilityRegistry;
@@ -20,14 +21,20 @@ import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.block.BlockType;
 import org.spongepowered.api.block.BlockTypes;
+import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.effect.particle.ParticleEffect;
 import org.spongepowered.api.effect.particle.ParticleOptions;
 import org.spongepowered.api.effect.particle.ParticleTypes;
+import org.spongepowered.api.entity.EntityTypes;
+import org.spongepowered.api.entity.Item;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.Order;
+import org.spongepowered.api.event.cause.Cause;
+import org.spongepowered.api.event.cause.entity.spawn.EntitySpawnCause;
+import org.spongepowered.api.event.cause.entity.spawn.SpawnTypes;
 import org.spongepowered.api.event.filter.cause.First;
-import org.spongepowered.api.text.Text;
+import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
@@ -37,7 +44,9 @@ import java.io.Writer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.util.List;
 import java.util.function.BinaryOperator;
+import java.util.stream.Collectors;
 
 public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCustomBlock, SimpleCustomBlockDefinition> {
     public static final Vector3d TRANSLATION_DEFAULT = Vector3d.ZERO;
@@ -104,7 +113,8 @@ public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCu
                 MiningManager.MiningDuration duration = MiningManager.computeDuration(player, harvestingType, hardness);
 
                 if (event.getDuration() >= duration.getBreakDuration()) {
-                    CustomBlockBreakEvent customEvent = CustomBlockBreakEvent.of(customBlock, event.getCause());
+                    Cause cause = event.getCause();
+                    CustomBlockBreakEvent customEvent = CustomBlockBreakEvent.of(customBlock, cause);
 
                     Sponge.getEventManager().post(customEvent);
 
@@ -112,8 +122,44 @@ public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCu
                         return;
 
                     if(duration.isCorrectToolUsed()) {
-                        // TODO: Drop items
-                        player.sendMessage(Text.of("Dropped"));
+                        List<ItemStackSnapshot> drops = definition.getDropProvider()
+                                .provideDrops(customBlock, player, cause);
+
+                        if(!drops.isEmpty()) {
+                            World world = player.getWorld();
+                            Vector3d itemPosition = customBlock.getBlock().getPosition().toDouble()
+                                    .add(Vector3d.ONE.mul(0.5));
+                            List<Item> items = drops.stream()
+                                    .map(itemStackSnapshot -> {
+                                        Item item = (Item) world.createEntity(EntityTypes.ITEM, itemPosition);
+
+                                        item.offer(Keys.REPRESENTED_ITEM, itemStackSnapshot);
+
+                                        return item;
+                                    })
+                                    .collect(Collectors.toList());
+
+                            Cause subEventItemCause = Cause.source(snapshot).from(cause).build();
+                            CustomBlockBreakItemDropEvent subEventItem = new CustomBlockBreakItemDropEvent(items, world, subEventItemCause);
+
+                            Sponge.getEventManager().post(subEventItem);
+
+                            if(!subEventItem.isCancelled()) {
+                                subEventItem.getEntities().forEach(entity -> {
+                                    Cause itemSpawnCause = Cause.source(
+                                                EntitySpawnCause.builder()
+                                                        .entity(entity)
+                                                        .type(SpawnTypes.PLUGIN)
+                                                        .build()
+                                            )
+                                            .from(cause)
+                                            .owner(CustomItemLibrary.getInstance().getPluginContainer())
+                                            .build();
+
+                                    world.spawnEntity(entity, itemSpawnCause);
+                                });
+                            }
+                        }
                     }
 
                     World world = location.getExtent();
@@ -124,7 +170,7 @@ public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCu
                     Vector3d particlePosition = location.getBlockPosition().toDouble();
 
                     world.spawnParticles(particleEffect, particlePosition);
-                    location.setBlockType(BlockTypes.AIR, event.getCause());
+                    location.setBlockType(BlockTypes.AIR, cause);
                     event.setCancelled(true);
                 }
             });

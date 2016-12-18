@@ -19,6 +19,7 @@ import org.spongepowered.api.entity.living.ArmorStand;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.plugin.PluginContainer;
 
+import java.util.Collections;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -40,12 +41,20 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
     private final double hardness;
 
     /**
-     * The {@link BlockState} used to figure out which particle effect texture to use
+     * The {@link BlockState} used to figure out which particle effect texture to use.
      */
     @NonNull
     private final BlockState breakEffectState;
 
-    private SimpleCustomBlockDefinition(PluginContainer pluginContainer, String typeId, @NonNull BlockType harvestingType, double hardness, @NonNull BlockState breakEffectState, String defaultModel, Iterable<String> models, Iterable<String> additionalAssets) {
+    /**
+     * A list of items dropped when the block is broken.
+     */
+    @NonNull
+    private final DropProvider dropProvider;
+
+    private SimpleCustomBlockDefinition(PluginContainer pluginContainer, String typeId, @NonNull BlockType harvestingType,
+            double hardness, @NonNull BlockState breakEffectState, @NonNull DropProvider dropProvider,
+            String defaultModel, Iterable<String> models, Iterable<String> additionalAssets) {
         super(pluginContainer, typeId, defaultModel, models);
 
         this.assets = ImmutableSet.<String>builder()
@@ -58,10 +67,13 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
         this.harvestingType = harvestingType;
         this.hardness = hardness;
         this.breakEffectState = breakEffectState;
+        this.dropProvider = dropProvider;
     }
 
     @Builder
-    public static SimpleCustomBlockDefinition create(Object plugin, String typeId, @NonNull BlockType harvestingType, Double hardness, BlockState breakEffectState, String defaultModel, @Singular Iterable<String> models, @Singular Iterable<String> additionalAssets) {
+    public static SimpleCustomBlockDefinition create(Object plugin, String typeId, @NonNull BlockType harvestingType,
+            Double hardness, BlockState breakEffectState, DropProvider dropProvider, String defaultModel,
+            @Singular Iterable<String> models, @Singular Iterable<String> additionalAssets) {
         PluginContainer pluginContainer = Sponge.getPluginManager().fromInstance(plugin)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid plugin instance."));
         if(hardness == null)
@@ -75,7 +87,10 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
         if(breakEffectState == null)
             breakEffectState = harvestingType.getDefaultState();
 
-        return new SimpleCustomBlockDefinition(pluginContainer, typeId, harvestingType, hardness, breakEffectState, defaultModel, models, additionalAssets);
+        if(dropProvider == null)
+            dropProvider = (a, b, c) -> Collections.emptyList();
+
+        return new SimpleCustomBlockDefinition(pluginContainer, typeId, harvestingType, hardness, breakEffectState, dropProvider, defaultModel, models, additionalAssets);
     }
 
     @Override
