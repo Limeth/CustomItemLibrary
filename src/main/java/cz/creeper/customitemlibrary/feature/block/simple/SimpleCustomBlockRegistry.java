@@ -8,18 +8,27 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
+import cz.creeper.customitemlibrary.CustomItemLibrary;
+import cz.creeper.customitemlibrary.event.CustomBlockBreakEvent;
 import cz.creeper.customitemlibrary.event.MiningProgressEvent;
 import cz.creeper.customitemlibrary.feature.CustomFeatureRegistry;
 import cz.creeper.customitemlibrary.feature.DurabilityRegistry;
+import cz.creeper.customitemlibrary.managers.MiningManager;
 import lombok.AccessLevel;
 import lombok.Getter;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
+import org.spongepowered.api.block.BlockType;
 import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.effect.particle.ParticleEffect;
 import org.spongepowered.api.effect.particle.ParticleOptions;
 import org.spongepowered.api.effect.particle.ParticleTypes;
+import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.Order;
+import org.spongepowered.api.event.filter.cause.First;
+import org.spongepowered.api.text.Text;
+import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
 import java.io.IOException;
@@ -80,23 +89,45 @@ public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCu
     }
 
     @Listener(order = Order.BEFORE_POST)
-    public void onMiningProgress(MiningProgressEvent event) {
-        if(event.getDuration() > 3) {
-            BlockSnapshot snapshot = event.getSnapshot();
+    public void onMiningProgress(MiningProgressEvent event, @First Player player) {
+        BlockSnapshot snapshot = event.getSnapshot();
+        Location<World> location = snapshot.getLocation()
+                .orElseThrow(() -> new IllegalStateException("Could not access the location of the block that is being mined."));
 
-            snapshot.getLocation().ifPresent(location -> {
-                World world = location.getExtent();
-                ParticleEffect particleEffect = ParticleEffect.builder()
-                        .type(ParticleTypes.BREAK_BLOCK)
-                        .option(ParticleOptions.BLOCK_STATE, snapshot.getExtendedState())
-                        .build();
-                Vector3d particlePosition = location.getBlockPosition().toDouble();
+        CustomItemLibrary.getInstance().getService().getCustomBlock(location)
+            .filter(SimpleCustomBlock.class::isInstance)
+            .map(SimpleCustomBlock.class::cast)
+            .ifPresent(customBlock -> {
+                SimpleCustomBlockDefinition definition = customBlock.getDefinition();
+                BlockType harvestingType = definition.getHarvestingType();
+                double hardness = definition.getHardness();
+                MiningManager.MiningDuration duration = MiningManager.computeDuration(player, harvestingType, hardness);
 
-                world.spawnParticles(particleEffect, particlePosition);
-                location.setBlockType(BlockTypes.AIR, event.getCause());
-                event.setCancelled(true);
+                if (event.getDuration() >= duration.getBreakDuration()) {
+                    CustomBlockBreakEvent customEvent = CustomBlockBreakEvent.of(customBlock, event.getCause());
+
+                    Sponge.getEventManager().post(customEvent);
+
+                    if(customEvent.isCancelled())
+                        return;
+
+                    if(duration.isCorrectToolUsed()) {
+                        // TODO: Drop items
+                        player.sendMessage(Text.of("Dropped"));
+                    }
+
+                    World world = location.getExtent();
+                    ParticleEffect particleEffect = ParticleEffect.builder()
+                            .type(ParticleTypes.BREAK_BLOCK)
+                            .option(ParticleOptions.BLOCK_STATE, definition.getBreakEffectState())
+                            .build();
+                    Vector3d particlePosition = location.getBlockPosition().toDouble();
+
+                    world.spawnParticles(particleEffect, particlePosition);
+                    location.setBlockType(BlockTypes.AIR, event.getCause());
+                    event.setCancelled(true);
+                }
             });
-        }
     }
 
     public static SimpleCustomBlockRegistry getInstance() {

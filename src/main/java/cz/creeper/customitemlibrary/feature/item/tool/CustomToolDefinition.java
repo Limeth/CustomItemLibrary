@@ -54,7 +54,7 @@ public final class CustomToolDefinition extends AbstractCustomItemDefinition<Cus
     private final ImmutableSet<String> assets;
 
     private CustomToolDefinition(PluginContainer pluginContainer, String typeId, String defaultModel,
-                                Iterable<String> models, ItemStackSnapshot itemStackSnapshot, Iterable<String> assets) {
+                                Iterable<String> models, @NonNull ItemStackSnapshot itemStackSnapshot, Iterable<String> assets) {
         super(pluginContainer, typeId, defaultModel, models);
 
         this.itemStackSnapshot = itemStackSnapshot;

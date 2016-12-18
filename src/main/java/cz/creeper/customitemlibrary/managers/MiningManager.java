@@ -3,22 +3,40 @@ package cz.creeper.customitemlibrary.managers;
 import com.google.common.collect.Maps;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
 import cz.creeper.customitemlibrary.event.MiningProgressEvent;
+import cz.creeper.customitemlibrary.util.Wrapper;
 import lombok.AllArgsConstructor;
 import lombok.ToString;
+import lombok.Value;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
+import org.spongepowered.api.block.BlockType;
+import org.spongepowered.api.data.key.Keys;
+import org.spongepowered.api.data.property.item.EfficiencyProperty;
+import org.spongepowered.api.data.property.item.HarvestingProperty;
+import org.spongepowered.api.data.type.HandTypes;
+import org.spongepowered.api.effect.potion.PotionEffectType;
+import org.spongepowered.api.effect.potion.PotionEffectTypes;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.Order;
+import org.spongepowered.api.event.block.ChangeBlockEvent;
 import org.spongepowered.api.event.block.InteractBlockEvent;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.filter.cause.First;
+import org.spongepowered.api.item.Enchantment;
+import org.spongepowered.api.item.Enchantments;
+import org.spongepowered.api.item.inventory.ItemStack;
 
+import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 public class MiningManager {
+    public static final int BREAK_DELAY_TICKS = 5;
     private final Map<UUID, Mining> playerToMining = Maps.newHashMap();
+    private final Map<UUID, Integer> playerToBlockBreak = Maps.newHashMap();
 
     public MiningManager start() {
         Sponge.getEventManager().registerListeners(CustomItemLibrary.getInstance(), this);
@@ -39,17 +57,37 @@ public class MiningManager {
         int durationTicks;
 
         // BlockSnapshot.NONE signifies, that the mouse button is being held on the clicked block
-        if(mining != null && BlockSnapshot.NONE.equals(snapshot)) {
-            durationTicks = currentTick - mining.tickStarted;
+        if(BlockSnapshot.NONE.equals(snapshot)) {
+            if(mining == null) {
+                return;
+            }
         } else {
-            mining = new Mining(currentTick, snapshot);
-            durationTicks = 0;
+            Integer blockBreakTick = playerToBlockBreak.get(playerId);
+            int delay;
+
+            if(blockBreakTick != null) {
+                int blockBreakDiff = currentTick - blockBreakTick;
+                delay = blockBreakDiff < BREAK_DELAY_TICKS ? BREAK_DELAY_TICKS - blockBreakDiff : 0;
+            } else {
+                delay = 0;
+            }
+
+            mining = new Mining(currentTick + delay, snapshot);
+
+            System.out.println(delay);
 
             playerToMining.put(playerId, mining);
         }
 
+        durationTicks = currentTick - mining.tickStarted;
+
+        System.out.println(durationTicks);
+
+        if(durationTicks < 0)
+            durationTicks = 0;
+
         MiningProgressEvent miningEvent = new MiningProgressEvent(player, mining.snapshot, durationTicks,
-                Cause.source(CustomItemLibrary.getInstance().getPluginContainer()).build(), false);
+                Cause.source(CustomItemLibrary.getInstance().getPluginContainer()).notifier(player).build(), false);
 
         Sponge.getEventManager().post(miningEvent);
 
@@ -58,10 +96,84 @@ public class MiningManager {
         }
     }
 
+    @Listener(order = Order.POST)
+    public void onChangeBlockBreak(ChangeBlockEvent.Break event, @First Player player) {
+        UUID playerId = player.getUniqueId();
+        int currentTick = Sponge.getServer().getRunningTimeTicks();
+
+        playerToBlockBreak.put(playerId, currentTick);
+    }
+
     @AllArgsConstructor
     @ToString
     private static class Mining {
         private final int tickStarted;
         private BlockSnapshot snapshot;
+    }
+
+    public static MiningDuration computeDuration(Player player, BlockType harvestingType, double hardness) {
+        Optional<ItemStack> itemInHand = player.getItemInHand(HandTypes.MAIN_HAND);
+        Set<BlockType> harvestingTypes = itemInHand.flatMap(itemStack -> itemStack.getProperty(HarvestingProperty.class))
+                .map(HarvestingProperty::getValue)
+                .orElseGet(Collections::emptySet);
+        boolean correctToolUsed = harvestingTypes.contains(harvestingType);
+        // java, plz.
+        final Wrapper<Double> breakDuration = Wrapper.of(hardness);
+
+        if(correctToolUsed) {
+            breakDuration.setValue(breakDuration.getValue() * 1.5);
+
+            itemInHand.ifPresent(itemStack -> {
+                final Wrapper<Double> totalEfficiency = Wrapper.of(1.0);
+
+                itemStack.getProperty(EfficiencyProperty.class)
+                        .map(EfficiencyProperty::getValue)
+                        .ifPresent(efficiency ->
+                                totalEfficiency.setValue(totalEfficiency.getValue() * efficiency)
+                        );
+
+                itemStack.get(Keys.ITEM_ENCHANTMENTS)
+                        .ifPresent(itemEnchantments -> {
+                            itemEnchantments.forEach(itemEnchantment -> {
+                                Enchantment type = itemEnchantment.getEnchantment();
+                                int level = itemEnchantment.getLevel();
+                                System.out.println("level: " + level);
+
+                                if(type == Enchantments.EFFICIENCY) {
+                                    totalEfficiency.setValue(totalEfficiency.getValue()
+                                            + level * level + 1);
+                                }
+                            });
+                        });
+
+                breakDuration.setValue(breakDuration.getValue() / totalEfficiency.getValue());
+            });
+        } else {
+            breakDuration.setValue(breakDuration.getValue() * 5);
+        }
+
+        player.get(Keys.POTION_EFFECTS).ifPresent(potionEffects -> {
+            potionEffects.forEach(potionEffect -> {
+                PotionEffectType type = potionEffect.getType();
+                int amplifier = potionEffect.getAmplifier();
+                System.out.println("amplifier: " + amplifier);
+
+                if(type == PotionEffectTypes.MINING_FATIGUE) {
+                    breakDuration.setValue(breakDuration.getValue()
+                            * (1 - Math.pow(0.3, amplifier)));
+                } else if(type == PotionEffectTypes.HASTE) {
+                    breakDuration.setValue(breakDuration.getValue()
+                            * (1.2 * amplifier));
+                }
+            });
+        });
+
+        return new MiningDuration(correctToolUsed, breakDuration.getValue());
+    }
+
+    @Value
+    public static class MiningDuration {
+        private boolean correctToolUsed;
+        private double breakDuration;
     }
 }

@@ -1,6 +1,7 @@
 package cz.creeper.customitemlibrary;
 
 import com.flowpowered.math.vector.Vector3i;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import cz.creeper.customitemlibrary.data.CustomFeatureData;
 import cz.creeper.customitemlibrary.data.CustomItemLibraryKeys;
@@ -77,6 +78,9 @@ public class CustomItemServiceImpl implements CustomItemService {
     @SuppressWarnings("unchecked")
     @Override
     public <I extends CustomFeature<T>, T extends CustomFeatureDefinition<I>> void register(T definition) {
+        Preconditions.checkArgument(!"minecraft".equals(definition.getPluginContainer().getId()),
+                "The plugin id must not be 'minecraft'.");
+
         Optional<CustomFeatureRegistry<I, T>> registry = registryMap.get(definition);
 
         if(!registry.isPresent())
