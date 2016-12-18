@@ -1,6 +1,7 @@
 package cz.creeper.customitemlibrary.feature.item.material;
 
 import com.google.common.base.Preconditions;
+import cz.creeper.customitemlibrary.CustomItemLibrary;
 import cz.creeper.customitemlibrary.event.CustomItemCreationEvent;
 import cz.creeper.customitemlibrary.feature.item.AbstractCustomItemDefinition;
 import cz.creeper.customitemlibrary.feature.item.tool.CustomToolDefinition;
@@ -35,25 +36,38 @@ import java.util.Optional;
  */
 @EqualsAndHashCode(callSuper = true)
 @ToString
+@Getter
 public class CustomMaterialDefinition extends AbstractCustomItemDefinition<CustomMaterial> {
-    @Getter
     @NonNull
     private final ItemStackSnapshot itemStackSnapshot;
 
-    public CustomMaterialDefinition(PluginContainer pluginContainer, String typeId, String defaultModel, Iterable<String> models, @NonNull ItemStackSnapshot itemStackSnapshot) {
+    @NonNull
+    private final PlaceProvider placeProvider;
+
+    public CustomMaterialDefinition(PluginContainer pluginContainer, String typeId,
+                                    @NonNull PlaceProvider placeProvider, String defaultModel, Iterable<String> models,
+                                    @NonNull ItemStackSnapshot itemStackSnapshot) {
         super(pluginContainer, typeId, defaultModel, models);
 
         this.itemStackSnapshot = itemStackSnapshot;
+        this.placeProvider = placeProvider;
     }
 
     @Builder
-    public static CustomMaterialDefinition create(Object plugin, String typeId, ItemStackSnapshot itemStackSnapshot, String defaultModel, @Singular Collection<String> additionalModels) {
+    public static CustomMaterialDefinition create(Object plugin, String typeId, ItemStackSnapshot itemStackSnapshot,
+                                                  PlaceProvider placeProvider, String defaultModel,
+                                                  @Singular Collection<String> additionalModels) {
         PluginContainer pluginContainer = Sponge.getPluginManager().fromInstance(plugin)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid plugin instance."));
         Preconditions.checkArgument(itemStackSnapshot.getCount() == 1, "The ItemStack count must be equal to 1.");
         Preconditions.checkArgument(itemStackSnapshot.getType() == ItemTypes.SKULL, "The ItemStack must be a skull.");
 
-        return new CustomMaterialDefinition(pluginContainer, typeId, defaultModel, additionalModels, itemStackSnapshot);
+        if(placeProvider == null)
+            placeProvider = CustomItemLibrary.getInstance().getService().getBlockDefinition(plugin, typeId)
+                    .map(PlaceProvider::of)
+                    .orElseGet(PlaceProvider::cancel);
+
+        return new CustomMaterialDefinition(pluginContainer, typeId, placeProvider, defaultModel, additionalModels, itemStackSnapshot);
     }
 
     @Override

@@ -3,6 +3,9 @@ package cz.creeper.customitemlibrary.feature.block;
 import cz.creeper.customitemlibrary.feature.AbstractCustomFeatureDefinition;
 import cz.creeper.customitemlibrary.util.Block;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NonNull;
+import org.spongepowered.api.effect.sound.SoundType;
 import org.spongepowered.api.plugin.PluginContainer;
 
 import java.util.Optional;
@@ -10,9 +13,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @EqualsAndHashCode(callSuper = true)
+@Getter
 public abstract class AbstractCustomBlockDefinition<T extends CustomBlock<? extends AbstractCustomBlockDefinition<T>>> extends AbstractCustomFeatureDefinition<T> implements CustomBlockDefinition<T> {
-    public AbstractCustomBlockDefinition(PluginContainer pluginContainer, String typeId, String defaultModel, Iterable<String> models) {
+    private final SoundType soundPlace;
+
+    public AbstractCustomBlockDefinition(PluginContainer pluginContainer, String typeId, String defaultModel, Iterable<String> models, @NonNull SoundType soundPlace) {
         super(pluginContainer, typeId, defaultModel, models);
+
+        this.soundPlace = soundPlace;
     }
 
     protected abstract Optional<T> wrapBarrierIfPossible(Block block);

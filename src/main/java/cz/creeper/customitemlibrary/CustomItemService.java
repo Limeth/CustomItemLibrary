@@ -113,7 +113,7 @@ public interface CustomItemService {
      * @param itemStack The ItemStack to wrap
      * @return The wrapped ItemStack, if it is a registered custom item.
      */
-    default Optional<? extends CustomItem> getItem(ItemStack itemStack) {
+    default Optional<? extends CustomItem<?>> getItem(ItemStack itemStack) {
         return getItemDefinition(itemStack)
                 .flatMap((CustomItemDefinition<? extends CustomItem> definition) -> definition.wrapIfPossible(itemStack));
     }
@@ -122,7 +122,7 @@ public interface CustomItemService {
      * @param location The block to wrap
      * @return The wrapped block, if it is a registered custom block.
      */
-    default Optional<? extends CustomBlock> getBlock(Location<World> location) {
+    default Optional<? extends CustomBlock<?>> getBlock(Location<World> location) {
         return getBlock(Block.of(location));
     }
 
@@ -130,7 +130,7 @@ public interface CustomItemService {
      * @param block The block to wrap
      * @return The wrapped block, if it is a registered custom block.
      */
-    default Optional<? extends CustomBlock> getBlock(Block block) {
+    default Optional<? extends CustomBlock<?>> getBlock(Block block) {
         return getBlockDefinition(block)
                 .flatMap((CustomBlockDefinition<? extends CustomBlock> definition) -> definition.wrapIfPossible(block));
     }
