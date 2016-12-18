@@ -74,14 +74,10 @@ public class MiningManager {
 
             mining = new Mining(currentTick + delay, snapshot);
 
-            System.out.println(delay);
-
             playerToMining.put(playerId, mining);
         }
 
         durationTicks = currentTick - mining.tickStarted;
-
-        System.out.println(durationTicks);
 
         if(durationTicks < 0)
             durationTicks = 0;
@@ -137,7 +133,6 @@ public class MiningManager {
                             itemEnchantments.forEach(itemEnchantment -> {
                                 Enchantment type = itemEnchantment.getEnchantment();
                                 int level = itemEnchantment.getLevel();
-                                System.out.println("level: " + level);
 
                                 if(type == Enchantments.EFFICIENCY) {
                                     totalEfficiency.setValue(totalEfficiency.getValue()
@@ -156,7 +151,6 @@ public class MiningManager {
             potionEffects.forEach(potionEffect -> {
                 PotionEffectType type = potionEffect.getType();
                 int amplifier = potionEffect.getAmplifier();
-                System.out.println("amplifier: " + amplifier);
 
                 if(type == PotionEffectTypes.MINING_FATIGUE) {
                     breakDuration.setValue(breakDuration.getValue()

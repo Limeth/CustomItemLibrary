@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableList;
 import cz.creeper.customitemlibrary.feature.block.CustomBlock;
 import cz.creeper.customitemlibrary.feature.block.CustomBlockDefinition;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.block.BlockTypes;
@@ -29,7 +30,9 @@ public class CustomBlockBreakEvent extends AbstractEvent implements ChangeBlockE
     @Setter
     private boolean cancelled;
 
-    public CustomBlockBreakEvent(CustomBlock<? extends CustomBlockDefinition> customBlock, List<Transaction<BlockSnapshot>> transactions, World targetWorld, Cause cause, boolean cancelled) {
+    public CustomBlockBreakEvent(@NonNull CustomBlock<? extends CustomBlockDefinition> customBlock,
+            @NonNull List<Transaction<BlockSnapshot>> transactions, @NonNull World targetWorld, @NonNull Cause cause,
+            boolean cancelled) {
         this.customBlock = customBlock;
         this.transactions = ImmutableList.copyOf(transactions);
         this.targetWorld = targetWorld;
