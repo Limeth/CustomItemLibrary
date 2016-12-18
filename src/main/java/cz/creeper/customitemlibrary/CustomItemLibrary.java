@@ -7,8 +7,6 @@ import cz.creeper.customitemlibrary.data.ImmutableCustomFeatureData;
 import cz.creeper.customitemlibrary.data.ImmutableRepresentedCustomItemSnapshotData;
 import cz.creeper.customitemlibrary.data.RepresentedCustomItemSnapshotData;
 import cz.creeper.customitemlibrary.data.RepresentedCustomItemSnapshotManipulatorBuilder;
-import cz.creeper.customitemlibrary.feature.CustomFeature;
-import cz.creeper.customitemlibrary.feature.CustomFeatureDefinition;
 import cz.creeper.customitemlibrary.feature.block.CustomBlock;
 import cz.creeper.customitemlibrary.feature.block.CustomBlockDefinition;
 import cz.creeper.customitemlibrary.feature.item.CustomItem;
@@ -140,7 +138,7 @@ public class CustomItemLibrary {
                 .permission("customitemlibrary.command.customitemlibrary.give")
                 .arguments(
                         GenericArguments.player(Text.of("Target")),
-                        GenericArguments.choices(Text.of("Item"), () -> service.getDefinitions().stream()
+                        GenericArguments.choices(Text.of("Item"), () -> service.getItemDefinitions().stream()
                                         .map(definition -> Identifier.toString(definition.getPluginContainer().getId(),
                                                 definition.getTypeId())).collect(Collectors.toSet()),
                                 Function.identity(), true),
@@ -160,22 +158,16 @@ public class CustomItemLibrary {
                     Player target = (Player) rawTarget;
                     String customFeatureId = args.<String>getOne("Item")
                             .orElseThrow(() -> new IllegalStateException("The item should have been specified."));
-                    Optional<CustomFeatureDefinition<? extends CustomFeature>> rawDefinition;
+                    Optional<CustomItemDefinition<? extends CustomItem>> rawDefinition;
 
                     if(!Identifier.isParseable(customFeatureId)
-                            || !(rawDefinition = service.getDefinition(Identifier.getNamespaceFromIdString(customFeatureId),
+                            || !(rawDefinition = service.getItemDefinition(Identifier.getNamespaceFromIdString(customFeatureId),
                             Identifier.getValueFromIdString(customFeatureId))).isPresent()) {
                         src.sendMessage(Text.of(TextColors.RED, "Invalid feature id: " + customFeatureId));
                         return CommandResult.empty();
                     }
 
-                    if(!(rawDefinition.get() instanceof CustomItemDefinition)) {
-                        src.sendMessage(Text.of(TextColors.RED, "The requested id is assigned to a"
-                                + " feature which is not an item that could be given: " + customFeatureId));
-                        return CommandResult.empty();
-                    }
-
-                    CustomItemDefinition<? extends CustomItem> definition = (CustomItemDefinition<? extends CustomItem>) rawDefinition.get();
+                    CustomItemDefinition<? extends CustomItem> definition = rawDefinition.get();
 
                     int quantity = args.<Integer>getOne("Quantity").orElse(1);
 
@@ -212,7 +204,7 @@ public class CustomItemLibrary {
                 .description(Text.of("Changes the block the player is looking at."))
                 .permission("customitemlibrary.command.customitemlibrary.setblock")
                 .arguments(
-                        GenericArguments.choices(Text.of("Block"), () -> service.getDefinitions().stream()
+                        GenericArguments.choices(Text.of("Block"), () -> service.getBlockDefinitions().stream()
                                         .map(definition -> Identifier.toString(definition.getPluginContainer().getId(),
                                                 definition.getTypeId())).collect(Collectors.toSet()),
                                 Function.identity(), true)
@@ -229,17 +221,12 @@ public class CustomItemLibrary {
                     Player player = (Player) src;
                     String customFeatureId = args.<String>getOne("Block")
                             .orElseThrow(() -> new IllegalStateException("The block should have been specified."));
-                    Optional<CustomFeatureDefinition<? extends CustomFeature>> rawDefinition;
+                    Optional<CustomBlockDefinition<? extends CustomBlock>> rawDefinition;
 
                     if(!Identifier.isParseable(customFeatureId)
-                            || !(rawDefinition = service.getDefinition(Identifier.getNamespaceFromIdString(customFeatureId),
+                            || !(rawDefinition = service.getBlockDefinition(Identifier.getNamespaceFromIdString(customFeatureId),
                                     Identifier.getValueFromIdString(customFeatureId))).isPresent()) {
                         src.sendMessage(Text.of(TextColors.RED, "Invalid feature id: " + customFeatureId));
-                        return CommandResult.empty();
-                    }
-
-                    if(!(rawDefinition.get() instanceof CustomBlockDefinition)) {
-                        src.sendMessage(Text.of(TextColors.RED, "The requested id is not assigned to a custom block definition: " + customFeatureId));
                         return CommandResult.empty();
                     }
 
@@ -251,7 +238,7 @@ public class CustomItemLibrary {
                     }
 
                     Block block = Block.of(ray.next().getLocation());
-                    CustomBlockDefinition<? extends CustomBlock> definition = (CustomBlockDefinition<? extends CustomBlock>) rawDefinition.get();
+                    CustomBlockDefinition<? extends CustomBlock> definition = rawDefinition.get();
                     CustomBlock customBlock = definition.placeBlock(block, Cause.builder()
                             .named(NamedCause.source(getPluginContainer()))
                             .build());

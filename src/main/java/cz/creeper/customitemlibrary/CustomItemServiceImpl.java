@@ -14,6 +14,8 @@ import cz.creeper.customitemlibrary.feature.block.CustomBlock;
 import cz.creeper.customitemlibrary.feature.block.CustomBlockDefinition;
 import cz.creeper.customitemlibrary.feature.block.simple.SimpleCustomBlockDefinition;
 import cz.creeper.customitemlibrary.feature.block.simple.SimpleCustomBlockRegistry;
+import cz.creeper.customitemlibrary.feature.item.CustomItem;
+import cz.creeper.customitemlibrary.feature.item.CustomItemDefinition;
 import cz.creeper.customitemlibrary.feature.item.material.CustomMaterialDefinition;
 import cz.creeper.customitemlibrary.feature.item.material.CustomMaterialRegistry;
 import cz.creeper.customitemlibrary.feature.item.tool.CustomToolDefinition;
@@ -59,7 +61,8 @@ public class CustomItemServiceImpl implements CustomItemService {
     public static final String DIRECTORY_NAME_RESOURCEPACK = "resourcepack";
     public static final String FILE_NAME_PACK = "pack.mcmeta";
     private final CustomFeatureRegistryMap registryMap = new CustomFeatureRegistryMap();
-    private final Map<String, Map<String, CustomFeatureDefinition<? extends CustomFeature>>> pluginIdsToTypeIdsToDefinitions = Maps.newHashMap();
+    private final Map<String, Map<String, CustomItemDefinition<? extends CustomItem>>> pluginIdsToTypeIdsToItemDefinitions = Maps.newHashMap();
+    private final Map<String, Map<String, CustomBlockDefinition<? extends CustomBlock>>> pluginIdsToTypeIdsToBlockDefinitions = Maps.newHashMap();
     private final Map<Block, Optional<UUID>> blockToArmorStand = Maps.newHashMap();
 
     public CustomItemServiceImpl() {
@@ -86,13 +89,25 @@ public class CustomItemServiceImpl implements CustomItemService {
         if(!registry.isPresent())
             throw new IllegalArgumentException("Invalid definition type.");
 
-        val typeIdsToDefinitions = getTypeIdsToDefinitions(definition.getPluginContainer());
+        if(definition instanceof CustomItemDefinition) {
+            val typeIdsToDefinitions = getTypeIdsToItemDefinitions(definition.getPluginContainer());
 
-        if(typeIdsToDefinitions.containsKey(definition.getTypeId()))
-            throw new IllegalStateException("A custom feature definition with ID \"" + definition.getTypeId() + "\" is already registered!");
+            if (typeIdsToDefinitions.containsKey(definition.getTypeId()))
+                throw new IllegalStateException("A custom feature definition with ID \"" + definition.getTypeId() + "\" is already registered!");
+
+            typeIdsToDefinitions.put(definition.getTypeId(), (CustomItemDefinition<? extends CustomItem>) definition);
+        } else if(definition instanceof CustomBlockDefinition) {
+            val typeIdsToDefinitions = getTypeIdsToBlockDefinitions(definition.getPluginContainer());
+
+            if (typeIdsToDefinitions.containsKey(definition.getTypeId()))
+                throw new IllegalStateException("A custom feature definition with ID \"" + definition.getTypeId() + "\" is already registered!");
+
+            typeIdsToDefinitions.put(definition.getTypeId(), (CustomBlockDefinition<? extends CustomBlock>) definition);
+        } else {
+            throw new IllegalArgumentException("Invalid custom definition type. It must extend either CustomItemDefinition or CustomBlockDefinition.");
+        }
 
         registry.get().register(definition);
-        typeIdsToDefinitions.put(definition.getTypeId(), definition);
     }
 
     @Override
@@ -144,19 +159,26 @@ public class CustomItemServiceImpl implements CustomItemService {
     }
 
     @Override
-    public Set<CustomFeatureDefinition<? extends CustomFeature>> getDefinitions() {
-        return pluginIdsToTypeIdsToDefinitions.values().stream()
+    public Set<CustomItemDefinition<? extends CustomItem>> getItemDefinitions() {
+        return pluginIdsToTypeIdsToItemDefinitions.values().stream()
                 .flatMap(typeIdsToDefinitions -> typeIdsToDefinitions.values().stream())
                 .collect(Collectors.toSet());
     }
 
     @Override
-    public Optional<CustomBlockDefinition<? extends CustomBlock>> getDefinition(Block block) {
+    public Set<CustomBlockDefinition<? extends CustomBlock>> getBlockDefinitions() {
+        return pluginIdsToTypeIdsToBlockDefinitions.values().stream()
+                .flatMap(typeIdsToDefinitions -> typeIdsToDefinitions.values().stream())
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Optional<CustomBlockDefinition<? extends CustomBlock>> getBlockDefinition(Block block) {
         return getArmorStandAt(block).flatMap(armorStand -> {
             String pluginId = armorStand.get(CustomItemLibraryKeys.CUSTOM_FEATURE_PLUGIN_ID).get();
             String typeId = armorStand.get(CustomItemLibraryKeys.CUSTOM_FEATURE_TYPE_ID).get();
 
-            return getDefinition(pluginId, typeId)
+            return getBlockDefinition(pluginId, typeId)
                     .filter(CustomBlockDefinition.class::isInstance)
                     .map(CustomBlockDefinition.class::cast);
         });
@@ -207,8 +229,8 @@ public class CustomItemServiceImpl implements CustomItemService {
     }
 
     @Override
-    public Optional<CustomFeatureDefinition<? extends CustomFeature>> getDefinition(String pluginId, String typeId) {
-        Map<String, CustomFeatureDefinition<? extends CustomFeature>> typeIdsToDefinitions = pluginIdsToTypeIdsToDefinitions.get(pluginId);
+    public Optional<CustomItemDefinition<? extends CustomItem>> getItemDefinition(String pluginId, String typeId) {
+        Map<String, CustomItemDefinition<? extends CustomItem>> typeIdsToDefinitions = pluginIdsToTypeIdsToItemDefinitions.get(pluginId);
 
         if(typeIdsToDefinitions == null)
             return Optional.empty();
@@ -216,12 +238,30 @@ public class CustomItemServiceImpl implements CustomItemService {
         return Optional.ofNullable(typeIdsToDefinitions.get(typeId));
     }
 
-    private Map<String, CustomFeatureDefinition<? extends CustomFeature>> getTypeIdsToDefinitions(PluginContainer pluginContainer) {
-        return getTypeIdsToDefinitions(pluginContainer.getId());
+    @Override
+    public Optional<CustomBlockDefinition<? extends CustomBlock>> getBlockDefinition(String pluginId, String typeId) {
+        Map<String, CustomBlockDefinition<? extends CustomBlock>> typeIdsToDefinitions = pluginIdsToTypeIdsToBlockDefinitions.get(pluginId);
+
+        if(typeIdsToDefinitions == null)
+            return Optional.empty();
+
+        return Optional.ofNullable(typeIdsToDefinitions.get(typeId));
     }
 
-    private Map<String, CustomFeatureDefinition<? extends CustomFeature>> getTypeIdsToDefinitions(String pluginId) {
-        return pluginIdsToTypeIdsToDefinitions.computeIfAbsent(pluginId, k -> Maps.newHashMap());
+    private Map<String, CustomItemDefinition<? extends CustomItem>> getTypeIdsToItemDefinitions(PluginContainer pluginContainer) {
+        return getTypeIdsToItemDefinitions(pluginContainer.getId());
+    }
+
+    private Map<String, CustomItemDefinition<? extends CustomItem>> getTypeIdsToItemDefinitions(String pluginId) {
+        return pluginIdsToTypeIdsToItemDefinitions.computeIfAbsent(pluginId, k -> Maps.newHashMap());
+    }
+
+    private Map<String, CustomBlockDefinition<? extends CustomBlock>> getTypeIdsToBlockDefinitions(PluginContainer pluginContainer) {
+        return getTypeIdsToBlockDefinitions(pluginContainer.getId());
+    }
+
+    private Map<String, CustomBlockDefinition<? extends CustomBlock>> getTypeIdsToBlockDefinitions(String pluginId) {
+        return pluginIdsToTypeIdsToBlockDefinitions.computeIfAbsent(pluginId, k -> Maps.newHashMap());
     }
 
     public void copyAsset(CustomFeatureDefinition<? extends CustomFeature> definition, String assetPath) {

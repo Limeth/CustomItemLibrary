@@ -99,7 +99,7 @@ public class CustomMaterialRegistry implements CustomFeatureRegistry<CustomMater
         CustomItemService service = CustomItemLibrary.getInstance().getService();
 
         player.getItemInHand(event.getHandType())
-                .flatMap(service::getCustomItem)
+                .flatMap(service::getItem)
                 .ifPresent(customItem -> event.setCancelled(true));
     }
 

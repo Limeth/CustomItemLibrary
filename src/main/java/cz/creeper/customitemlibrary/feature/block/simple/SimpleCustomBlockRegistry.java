@@ -103,7 +103,7 @@ public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCu
         Location<World> location = snapshot.getLocation()
                 .orElseThrow(() -> new IllegalStateException("Could not access the location of the block that is being mined."));
 
-        CustomItemLibrary.getInstance().getService().getCustomBlock(location)
+        CustomItemLibrary.getInstance().getService().getBlock(location)
             .filter(SimpleCustomBlock.class::isInstance)
             .map(SimpleCustomBlock.class::cast)
             .ifPresent(customBlock -> {
