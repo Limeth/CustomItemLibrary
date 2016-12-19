@@ -13,7 +13,14 @@ import java.util.UUID;
 public interface CustomBlock<T extends CustomBlockDefinition<? extends CustomBlock<T>>> extends CustomFeature<T> {
     BlockType BLOCK_TYPE_CUSTOM = BlockTypes.BARRIER;
 
+    /**
+     * @return The wrapped {@link Block}
+     */
     Block getBlock();
+
+    /**
+     * @return The {@link UUID} of the wrapped {@link ArmorStand}
+     */
     UUID getArmorStandId();
 
     @Override
