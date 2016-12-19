@@ -183,6 +183,8 @@ public class CustomItemLibrary {
                             .named(NamedCause.source(src))
                             .build());
 
+                    item.getDataHolder().setQuantity(quantity);
+
                     val result = target.getInventory().offer(item.getDataHolder());
 
                     result.getRejectedItems().forEach(rejectedSnapshot -> {
