@@ -10,6 +10,7 @@ import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.effect.sound.SoundType;
 import org.spongepowered.api.entity.EntityTypes;
 import org.spongepowered.api.entity.living.ArmorStand;
+import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
@@ -21,6 +22,12 @@ public interface CustomBlockDefinition<T extends CustomBlock<? extends CustomBlo
 
     SoundType getSoundPlace();
     T customizeBlock(Block block, ArmorStand armorStand, Cause cause);
+
+    /**
+     * @return {@code true}, if the model should be rotated towards the player when
+     *         this {@link CustomBlock} is placed, {@code false} otherwise
+     */
+    boolean isRotateHorizontally();
 
     default T placeBlock(Block block, Cause cause) {
         Location<World> location = block.getLocation()
@@ -34,13 +41,28 @@ public interface CustomBlockDefinition<T extends CustomBlock<? extends CustomBlo
 
         Vector3d armorStandPosition = block.getPosition().toDouble().add(Vector3d.ONE.mul(0.5));
         ArmorStand armorStand = (ArmorStand) world.createEntity(EntityTypes.ARMOR_STAND, armorStandPosition);
+        Vector3d rotation = Vector3d.ZERO;
+
+        if(isRotateHorizontally()) {
+            Optional<Player> player = cause.first(Player.class);
+
+            if(player.isPresent()) {
+                Vector3d headRotation = player.get().getHeadRotation();
+                double angle = Math.floorMod(180 + (int) Math.floor(headRotation.getY()), 360);
+                angle += 45;
+                angle = Math.floorMod((int) Math.floor(angle), 360);
+                angle = (int) (angle / 90);
+                angle = angle * 90;
+                rotation = Vector3d.from(0, angle, 0);
+            }
+        }
 
         armorStand.offer(Keys.INVISIBLE, true);
         armorStand.offer(Keys.ARMOR_STAND_MARKER, true);
         armorStand.offer(Keys.HAS_GRAVITY, false);
         armorStand.offer(Keys.PERSISTS, true);
         armorStand.offer(createDefaultCustomFeatureData());
-        armorStand.setRotation(Vector3d.ZERO);
+        armorStand.setRotation(rotation);
         armorStand.setHeadRotation(Vector3d.ZERO);
 
         world.spawnEntity(armorStand, cause);
