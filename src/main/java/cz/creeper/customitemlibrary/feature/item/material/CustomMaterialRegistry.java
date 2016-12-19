@@ -20,6 +20,8 @@ import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.block.BlockState;
 import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.data.Transaction;
+import org.spongepowered.api.data.key.Keys;
+import org.spongepowered.api.data.property.block.ReplaceableProperty;
 import org.spongepowered.api.data.type.HandType;
 import org.spongepowered.api.effect.sound.SoundCategories;
 import org.spongepowered.api.effect.sound.SoundType;
@@ -35,6 +37,7 @@ import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.util.Direction;
+import org.spongepowered.api.util.Tristate;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
@@ -131,44 +134,55 @@ public class CustomMaterialRegistry implements CustomFeatureRegistry<CustomMater
                     Direction targetSide = event.getTargetSide();
                     Location<World> targetLocation = targetBlock.getLocation()
                             .orElseThrow(() -> new IllegalStateException("Could not access the location of the clicked block."));
-                    Location<World> placeLocation = targetLocation.getRelative(targetSide);
-                    BlockState placeState = placeLocation.getBlock();
+                    BlockState targetState = targetLocation.getBlock();
+                    boolean targetReplaceable = targetState.getType().getProperty(ReplaceableProperty.class).map(ReplaceableProperty::getValue).orElse(false);
+                    Location<World> placeLocation;
 
-                    if(placeState.getType() == BlockTypes.AIR) {
-                        Cause placeCause = Cause.source(CustomItemLibrary.getInstance().getPluginContainer())
-                                .notifier(player)
-                                .addAll(event.getCause().getNamedCauses().entrySet().stream()
-                                        .filter(entry -> !entry.getKey().equals(NamedCause.SOURCE)
-                                                            && !entry.getKey().equals(NamedCause.NOTIFIER))
-                                        .map(entry -> NamedCause.of(entry.getKey(), entry.getValue()))
-                                        .collect(Collectors.toList()))
-                                .build();
+                    if(targetReplaceable) {
+                        placeLocation = targetLocation;
+                    } else {
+                        placeLocation = targetLocation.getRelative(targetSide);
+                        BlockState placeState = placeLocation.getBlock();
+                        boolean placeReplaceable = placeState.getType().getProperty(ReplaceableProperty.class).map(ReplaceableProperty::getValue).orElse(false);
 
-                        placeProvider.provideBlock(customMaterial, player, placeLocation, placeCause)
-                                .ifPresent(blockSnapshot -> {
-                                    World world = placeLocation.getExtent();
-                                    BlockSnapshot original = world.createSnapshot(placeLocation.getBlockPosition());
-                                    Transaction<BlockSnapshot> transaction = new Transaction<>(original, blockSnapshot);
-                                    CustomBlockPlaceEvent placeEvent = new CustomBlockPlaceEvent(Collections.singletonList(transaction), world, placeCause, false);
-                                    boolean cancelled = Sponge.getEventManager().post(placeEvent);
-
-                                    if(!cancelled) {
-                                        ItemStack itemInHand = customMaterial.getDataHolder();
-
-                                        itemInHand.setQuantity(itemInHand.getQuantity() - 1);
-                                        placeProvider.afterBlockPlace(customMaterial, player, placeLocation, placeCause);
-                                        player.setItemInHand(event.getHandType(), itemInHand);
-
-                                        Optional<? extends CustomBlock<?>> placedCustomBlock = CustomItemLibrary.getInstance().getService().getBlock(placeLocation);
-                                        Vector3d soundPosition = placeLocation.getPosition().add(Vector3d.ONE.mul(0.5));
-                                        SoundType placeSound = placedCustomBlock.map(customBlock -> customBlock.getDefinition().getSoundPlace())
-                                                .orElseGet(() -> placeState.getType().getSoundGroup().getPlaceSound());
-
-                                        // TODO: plays some sort of dog breathing sound, get rid of that
-                                        world.playSound(placeSound, SoundCategories.BLOCK, soundPosition, 1, 1);
-                                    }
-                                });
+                        if(!placeReplaceable)
+                            return;
                     }
+
+                    Cause placeCause = Cause.source(CustomItemLibrary.getInstance().getPluginContainer())
+                            .notifier(player)
+                            .addAll(event.getCause().getNamedCauses().entrySet().stream()
+                                    .filter(entry -> !entry.getKey().equals(NamedCause.SOURCE)
+                                                        && !entry.getKey().equals(NamedCause.NOTIFIER))
+                                    .map(entry -> NamedCause.of(entry.getKey(), entry.getValue()))
+                                    .collect(Collectors.toList()))
+                            .build();
+
+                    placeProvider.provideBlock(customMaterial, player, placeLocation, placeCause)
+                            .ifPresent(blockSnapshot -> {
+                                World world = placeLocation.getExtent();
+                                BlockSnapshot original = world.createSnapshot(placeLocation.getBlockPosition());
+                                Transaction<BlockSnapshot> transaction = new Transaction<>(original, blockSnapshot);
+                                CustomBlockPlaceEvent placeEvent = new CustomBlockPlaceEvent(Collections.singletonList(transaction), world, placeCause, false);
+                                boolean cancelled = Sponge.getEventManager().post(placeEvent);
+
+                                if(!cancelled) {
+                                    ItemStack itemInHand = customMaterial.getDataHolder();
+
+                                    itemInHand.setQuantity(itemInHand.getQuantity() - 1);
+                                    placeProvider.afterBlockPlace(customMaterial, player, placeLocation, placeCause);
+                                    player.setItemInHand(event.getHandType(), itemInHand);
+
+                                    Optional<? extends CustomBlock<?>> placedCustomBlock = CustomItemLibrary.getInstance().getService().getBlock(placeLocation);
+                                    Vector3d soundPosition = placeLocation.getPosition().add(Vector3d.ONE.mul(0.5));
+                                    BlockState placeState = placeLocation.getBlock();
+                                    SoundType placeSound = placedCustomBlock.map(customBlock -> customBlock.getDefinition().getSoundPlace())
+                                            .orElseGet(() -> placeState.getType().getSoundGroup().getPlaceSound());
+
+                                    // TODO: plays some sort of dog breathing sound, get rid of that
+                                    world.playSound(placeSound, SoundCategories.BLOCK, soundPosition, 1, 1);
+                                }
+                            });
                 });
     }
 
