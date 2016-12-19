@@ -1,8 +1,10 @@
 package cz.creeper.customitemlibrary.feature.item.material;
 
+import cz.creeper.customitemlibrary.CustomItemLibrary;
 import cz.creeper.customitemlibrary.feature.block.CustomBlock;
 import cz.creeper.customitemlibrary.feature.block.CustomBlockDefinition;
 import cz.creeper.customitemlibrary.util.Block;
+import lombok.NonNull;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.cause.Cause;
@@ -21,12 +23,29 @@ public interface PlaceProvider {
 
     void afterBlockPlace(CustomMaterial material, Player player, Location<World> location, Cause cause);
 
+    static PlaceProvider of(@NonNull Object plugin, @NonNull String blockId) {
+        return new PlaceProvider() {
+            @Nonnull
+            @Override
+            public Optional<BlockSnapshot> provideBlock(CustomMaterial material, Player player, Location<World> location, Cause cause) {
+                return CustomItemLibrary.getInstance().getService().getBlockDefinition(plugin, blockId)
+                        .map(k -> CustomBlock.BLOCK_TYPE_CUSTOM.getDefaultState().snapshotFor(location));
+            }
+
+            @Override
+            public void afterBlockPlace(CustomMaterial material, Player player, Location<World> location, Cause cause) {
+                CustomItemLibrary.getInstance().getService().getBlockDefinition(plugin, blockId)
+                        .ifPresent(block -> block.placeBlock(Block.of(location), cause));
+            }
+        };
+    }
+
     /**
      * Places a {@link CustomBlock}.
      *
      * @param block The {@link CustomBlock} to place
      */
-    static PlaceProvider of(final CustomBlockDefinition<? extends CustomBlock> block) {
+    static PlaceProvider of(@NonNull final CustomBlockDefinition<? extends CustomBlock> block) {
         return new PlaceProvider() {
             @Nonnull
             @Override
