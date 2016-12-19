@@ -53,7 +53,7 @@ public class DurabilityRegistry {
                 registeredDurability = getAvailableDurability(itemType);
             }
 
-            DurabilityIdentifier durabilityId = new DurabilityIdentifier(itemType, registeredDurability, true);
+            DurabilityIdentifier durabilityId = new DurabilityIdentifier(itemType, registeredDurability);
 
             durabilityIdToDirectoryName.put(durabilityId, definition.getModelDirectoryName());
             durabilityIdToModelId.put(durabilityId, modelId);
@@ -215,7 +215,7 @@ public class DurabilityRegistry {
                 modelPredicate.addProperty("damage", damage);
 
                 JsonObject modelJson = new JsonObject();
-                DurabilityIdentifier durabilityId = new DurabilityIdentifier(itemType, durability, true);
+                DurabilityIdentifier durabilityId = new DurabilityIdentifier(itemType, durability);
                 String modelDirectory = durabilityIdToDirectoryName.get(durabilityId);
                 modelJson.add("predicate", modelPredicate);
                 modelJson.addProperty("model", getFileIdentifier(pluginId, modelDirectory, model));
