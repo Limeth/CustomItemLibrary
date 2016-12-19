@@ -109,10 +109,10 @@ public class MiningManager {
 
     public static MiningDuration computeDuration(Player player, BlockType harvestingType, double hardness) {
         Optional<ItemStack> itemInHand = player.getItemInHand(HandTypes.MAIN_HAND);
-        Set<BlockType> harvestingTypes = itemInHand.flatMap(itemStack -> itemStack.getProperty(HarvestingProperty.class))
+        boolean correctToolUsed = itemInHand.flatMap(itemStack -> itemStack.getProperty(HarvestingProperty.class))
                 .map(HarvestingProperty::getValue)
-                .orElseGet(Collections::emptySet);
-        boolean correctToolUsed = harvestingTypes.contains(harvestingType);
+                .map(harvestingTypes -> harvestingTypes.contains(harvestingType))
+                .orElse(true);
         // java, plz.
         final Wrapper<Double> breakDuration = Wrapper.of(hardness);
 
