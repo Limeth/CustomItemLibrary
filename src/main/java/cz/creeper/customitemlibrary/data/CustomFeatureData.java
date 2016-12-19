@@ -1,12 +1,10 @@
 package cz.creeper.customitemlibrary.data;
 
-import cz.creeper.customitemlibrary.feature.item.CustomItem;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
-import org.apache.commons.lang3.NotImplementedException;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.DataContainer;
 import org.spongepowered.api.data.DataHolder;
@@ -89,7 +87,16 @@ public class CustomFeatureData extends AbstractData<CustomFeatureData, Immutable
     @Override
     @Nonnull
     public Optional<CustomFeatureData> fill(@Nonnull DataHolder dataHolder, @Nonnull MergeFunction mergeFunction) {
-        throw new NotImplementedException("NYI");  // TODO
+        CustomFeatureData data = new CustomFeatureData();
+
+        dataHolder.get(CustomItemLibraryKeys.CUSTOM_FEATURE_PLUGIN_ID)
+                .ifPresent(pluginId -> data.customFeaturePluginId = pluginId);
+        dataHolder.get(CustomItemLibraryKeys.CUSTOM_FEATURE_TYPE_ID)
+                .ifPresent(typeId -> data.customFeatureTypeId = typeId);
+        dataHolder.get(CustomItemLibraryKeys.CUSTOM_FEATURE_MODEL)
+                .ifPresent(model -> data.customFeatureModel = model);
+
+        return Optional.of(data);
     }
 
     @Override

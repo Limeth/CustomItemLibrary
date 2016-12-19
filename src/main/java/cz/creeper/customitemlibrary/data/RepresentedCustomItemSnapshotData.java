@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
-import org.apache.commons.lang3.NotImplementedException;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.DataContainer;
 import org.spongepowered.api.data.DataHolder;
@@ -51,7 +50,12 @@ public class RepresentedCustomItemSnapshotData extends AbstractData<RepresentedC
     @Override
     @Nonnull
     public Optional<RepresentedCustomItemSnapshotData> fill(@Nonnull DataHolder dataHolder, @Nonnull MergeFunction mergeFunction) {
-        throw new NotImplementedException("NYI");  // TODO
+        RepresentedCustomItemSnapshotData data = new RepresentedCustomItemSnapshotData();
+
+        dataHolder.get(CustomItemLibraryKeys.REPRESENTED_CUSTOM_ITEM_SNAPSHOT)
+                .ifPresent(itemStackSnapshot -> data.representedCustomItemSnapshot = itemStackSnapshot);
+
+        return Optional.of(data);
     }
 
     @Override
