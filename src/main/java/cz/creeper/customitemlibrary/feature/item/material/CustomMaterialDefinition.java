@@ -63,9 +63,7 @@ public class CustomMaterialDefinition extends AbstractCustomItemDefinition<Custo
         Preconditions.checkArgument(itemStackSnapshot.getType() == ItemTypes.SKULL, "The ItemStack must be a skull.");
 
         if(placeProvider == null)
-            placeProvider = CustomItemLibrary.getInstance().getService().getBlockDefinition(plugin, typeId)
-                    .map(PlaceProvider::of)
-                    .orElseGet(PlaceProvider::cancel);
+            placeProvider = PlaceProvider.of(plugin, typeId);
 
         return new CustomMaterialDefinition(pluginContainer, typeId, placeProvider, defaultModel, additionalModels, itemStackSnapshot);
     }
