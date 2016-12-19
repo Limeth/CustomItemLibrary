@@ -30,10 +30,10 @@ import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.config.DefaultConfig;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
+import org.spongepowered.api.event.Order;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.NamedCause;
 import org.spongepowered.api.event.game.state.GameConstructionEvent;
-import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.event.game.state.GameLoadCompleteEvent;
 import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
@@ -92,8 +92,8 @@ public class CustomItemLibrary {
         Sponge.getDataManager().register(RepresentedCustomItemSnapshotData.class, ImmutableRepresentedCustomItemSnapshotData.class, new RepresentedCustomItemSnapshotManipulatorBuilder());
     }
 
-    @Listener
-    public void onGameInitialization(GameInitializationEvent event) {
+    @Listener(order = Order.AFTER_PRE)
+    public void onGamePostInitializationAfterPre(GamePostInitializationEvent event) {
         logger.info("Loading CustomItemLibrary...");
         setupManagers();
         setupService();
@@ -102,7 +102,7 @@ public class CustomItemLibrary {
     }
 
     @Listener
-    public void onGamePostInitialization(GamePostInitializationEvent event) {
+    public void onGamePostInitializationDefault(GamePostInitializationEvent event) {
         // During this phase, plugins using this library should register their custom item definitions.
     }
 
