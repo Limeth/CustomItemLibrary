@@ -27,13 +27,15 @@ import org.spongepowered.api.item.Enchantment;
 import org.spongepowered.api.item.Enchantments;
 import org.spongepowered.api.item.inventory.ItemStack;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Handles mining progress on the server-side.
+ */
 public class MiningManager {
+    // A duration when the player can't mine other blocks after they broke one.
     public static final int BREAK_DELAY_TICKS = 5;
     private final Map<UUID, Mining> playerToMining = Maps.newHashMap();
     private final Map<UUID, Integer> playerToBlockBreak = Maps.newHashMap();
@@ -109,6 +111,7 @@ public class MiningManager {
 
     public static MiningDuration computeDuration(Player player, BlockType harvestingType, double hardness) {
         Optional<ItemStack> itemInHand = player.getItemInHand(HandTypes.MAIN_HAND);
+        // TODO: possibly generalize
         boolean correctToolUsed = itemInHand.flatMap(itemStack -> itemStack.getProperty(HarvestingProperty.class))
                 .map(HarvestingProperty::getValue)
                 .map(harvestingTypes -> harvestingTypes.contains(harvestingType))

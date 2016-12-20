@@ -59,9 +59,10 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
     private SimpleCustomBlockDefinition(PluginContainer pluginContainer, String typeId,
                                         @NonNull BlockType harvestingType, double hardness,
                                         @NonNull BlockState breakEffectState, @NonNull DropProvider dropProvider,
-                                        String defaultModel, Iterable<String> models, Iterable<String> additionalAssets,
-                                        SoundType soundPlace, boolean rotateHorizontally) {
-        super(pluginContainer, typeId, defaultModel, models, soundPlace, rotateHorizontally);
+                                        String defaultModel, Iterable<String> additionalModels,
+                                        Iterable<String> additionalAssets, SoundType soundPlace,
+                                        boolean rotateHorizontally) {
+        super(pluginContainer, typeId, defaultModel, additionalModels, soundPlace, rotateHorizontally);
 
         this.assets = ImmutableSet.<String>builder()
                 .addAll(getModels().stream()
@@ -80,7 +81,7 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
     public static SimpleCustomBlockDefinition create(Object plugin, String typeId, BlockType harvestingType,
                                                      Double hardness, BlockState breakEffectState,
                                                      DropProvider dropProvider, String defaultModel,
-                                                     @Singular Iterable<String> models,
+                                                     @Singular Iterable<String> additionalModels,
                                                      @Singular Iterable<String> additionalAssets,
                                                      SoundType soundPlace, boolean rotateHorizontally) {
         PluginContainer pluginContainer = Sponge.getPluginManager().fromInstance(plugin)
@@ -110,7 +111,7 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
         if(soundPlace == null)
             soundPlace = harvestingType.getSoundGroup().getPlaceSound();
 
-        return new SimpleCustomBlockDefinition(pluginContainer, typeId, harvestingType, hardness, breakEffectState, dropProvider, defaultModel, models, additionalAssets, soundPlace, rotateHorizontally);
+        return new SimpleCustomBlockDefinition(pluginContainer, typeId, harvestingType, hardness, breakEffectState, dropProvider, defaultModel, additionalModels, additionalAssets, soundPlace, rotateHorizontally);
     }
 
     @Override

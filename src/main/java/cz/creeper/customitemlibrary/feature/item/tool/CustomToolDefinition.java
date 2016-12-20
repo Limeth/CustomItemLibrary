@@ -31,10 +31,10 @@ import java.util.stream.Collectors;
  * Defines a custom feature.
  * This class is immutable and only a single instance should be created for each custom feature type.
  *
- * The feature is represented as remodelled shears, where a specific durability value
- * signifies a specific model of the {@link CustomToolDefinition}.
+ * The feature is represented as a remodelled damageable tool (eg. shears/sword), where a specific durability value
+ * represents a specific model of the {@link CustomToolDefinition}.
  *
- * Note: Shears cannot be stacked together.
+ * Note: Custom tools cannot be stacked together.
  */
 @EqualsAndHashCode(callSuper = true)
 @ToString
@@ -54,7 +54,7 @@ public final class CustomToolDefinition extends AbstractCustomItemDefinition<Cus
     private final ImmutableSet<String> assets;
 
     private CustomToolDefinition(PluginContainer pluginContainer, String typeId, String defaultModel,
-                                Iterable<String> models, @NonNull ItemStackSnapshot itemStackSnapshot, Iterable<String> assets) {
+                                Iterable<String> models, @NonNull ItemStackSnapshot itemStackSnapshot, Iterable<String> additionalAssets) {
         super(pluginContainer, typeId, defaultModel, models);
 
         this.itemStackSnapshot = itemStackSnapshot;
@@ -62,24 +62,26 @@ public final class CustomToolDefinition extends AbstractCustomItemDefinition<Cus
                 .addAll(getModels().stream()
                         .map(CustomToolDefinition::getModelPath)
                         .collect(Collectors.toSet()))
-                .addAll(Util.removeNull(assets).collect(Collectors.toSet()))
+                .addAll(Util.removeNull(additionalAssets).collect(Collectors.toSet()))
                 .build();
     }
 
     @Builder
-    public static CustomToolDefinition create(Object plugin, String typeId, @NonNull ItemStackSnapshot itemStackSnapshot, String defaultModel, @Singular Collection<String> additionalModels, @Singular Collection<String> assets) {
+    public static CustomToolDefinition create(Object plugin, String typeId,
+                                              @NonNull ItemStackSnapshot itemStackSnapshot, String defaultModel,
+                                              @Singular Collection<String> additionalModels,
+                                              @Singular Collection<String> additionalAssets) {
         PluginContainer pluginContainer = Sponge.getPluginManager().fromInstance(plugin)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid plugin instance."));
         Preconditions.checkArgument(itemStackSnapshot.getCount() == 1, "The ItemStack count must be equal to 1.");
         Preconditions.checkArgument(getNumberOfUses(itemStackSnapshot.createStack()).isPresent(), "Invalid feature type, the feature must have a durability.");
 
-        return new CustomToolDefinition(pluginContainer, typeId, defaultModel, additionalModels, itemStackSnapshot, assets);
+        return new CustomToolDefinition(pluginContainer, typeId, defaultModel, additionalModels, itemStackSnapshot, additionalAssets);
     }
 
     @Override
     public CustomTool createItem(Cause cause) {
         PluginContainer plugin = getPluginContainer();
-        CustomToolRegistry registry = CustomToolRegistry.getInstance();
         ItemStack itemStack = itemStackSnapshot.createStack();
         ItemType itemType = itemStack.getItem();
         int durability = DurabilityRegistry.getInstance().getDurability(itemType, plugin, getDefaultModel())

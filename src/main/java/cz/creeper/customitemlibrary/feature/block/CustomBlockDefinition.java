@@ -17,18 +17,48 @@ import org.spongepowered.api.world.World;
 
 import java.util.Optional;
 
+/**
+ * An immutable definition of a custom block type.
+ * Place these blocks using the {@link #placeBlock(Block, Cause)} method
+ * and provide a {@link Cause} with a {@link Player}, if you want to set them as the owner.
+ */
 public interface CustomBlockDefinition<T extends CustomBlock<? extends CustomBlockDefinition<T>>> extends CustomFeatureDefinition<T>, DefinesDurabilityModels {
     String MODEL_DIRECTORY_NAME = "blocks";
 
+    /**
+     * TODO: Resolve and document the existence of this field in {@link CustomFeatureDefinition#simpleBlockBuilder()}.
+     * @deprecated Experimental, maybe there will be a different way of selecting the sound.
+     * @return The sound that is played when the block is placed.
+     */
+    @SuppressWarnings("DeprecatedIsStillUsed")
+    @Deprecated
     SoundType getSoundPlace();
+
+    /**
+     * Apply additional customizations to the placed block and wrap it.
+     *
+     * @param block Where to place the block
+     * @param armorStand The created armor stand
+     * @param cause The {@link Cause} that was used as a parameter when calling {@link #placeBlock(Block, Cause)}
+     * @return The wrapped block
+     */
     T customizeBlock(Block block, ArmorStand armorStand, Cause cause);
 
     /**
+     * Make sure to provide a {@link Cause} with a {@link Player}, when calling {@link #placeBlock(Block, Cause)}.
+     *
      * @return {@code true}, if the model should be rotated towards the player when
      *         this {@link CustomBlock} is placed, {@code false} otherwise
      */
     boolean isRotateHorizontally();
 
+    /**
+     * Constructs a custom block and places it in the world.
+     *
+     * @param block The block location
+     * @param cause The cause
+     * @return The wrapped block
+     */
     default T placeBlock(Block block, Cause cause) {
         Location<World> location = block.getLocation()
                 .orElseThrow(() -> new IllegalStateException("Could not access the location of the provided block."));
@@ -75,12 +105,12 @@ public interface CustomBlockDefinition<T extends CustomBlock<? extends CustomBlo
     }
 
     /**
-     * Wraps the {@link Location} in a helper class extending {@link CustomItem},
-     * if the {@link Location} is representing an actual custom feature
+     * Wraps the {@link Block} in a helper class extending {@link CustomItem},
+     * if the {@link Block} is representing an actual custom block
      * created by the {@link CustomBlockDefinition#placeBlock(Block, Cause)} method.
      *
      * @param block The block to wrap
-     * @return The wrapped {@link Block}, if the feature actually represents this definition
+     * @return The wrapped {@link Block}, if the block actually is a custom block
      */
     Optional<T> wrapIfPossible(Block block);
 

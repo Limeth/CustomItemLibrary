@@ -7,10 +7,10 @@ import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import javax.annotation.Nonnull;
 import java.util.List;
 
-/**
- * Returns the list of items to be dropped, when a proper tool is used on a {@link SimpleCustomBlock}.
- */
 public interface DropProvider {
+    /**
+     * @return the list of items to be dropped, when a proper tool is used on a {@link SimpleCustomBlock}.
+     */
     @Nonnull
     List<ItemStackSnapshot> provideDrops(SimpleCustomBlock block, Player player, Cause cause);
 }
