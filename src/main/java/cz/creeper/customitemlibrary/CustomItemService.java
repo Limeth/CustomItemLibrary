@@ -19,7 +19,8 @@ import java.util.Set;
 
 public interface CustomItemService {
     /**
-     * Registers a CustomItemDefinition.
+     * Registers a {@link CustomFeatureDefinition}.
+     * To construct a {@link CustomFeatureDefinition}, use the static methods on {@link CustomFeatureDefinition}.
      *
      * @param definition The definition to register
      */

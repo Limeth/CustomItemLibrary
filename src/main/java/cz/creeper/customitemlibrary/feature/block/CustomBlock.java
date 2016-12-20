@@ -6,10 +6,15 @@ import org.spongepowered.api.block.BlockType;
 import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.living.ArmorStand;
+import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.world.extent.Extent;
 
 import java.util.UUID;
 
+/**
+ * A wrapped block created by the {@link CustomBlockDefinition#placeBlock(Block, Cause)} method.
+ * Allows for changing the model using {@link #setModel(String)} and {@link #getModel()}.
+ */
 public interface CustomBlock<T extends CustomBlockDefinition<? extends CustomBlock<T>>> extends CustomFeature<T> {
     BlockType BLOCK_TYPE_CUSTOM = BlockTypes.BARRIER;
 
