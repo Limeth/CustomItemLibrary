@@ -6,8 +6,8 @@ import cz.creeper.customitemlibrary.feature.CustomFeatureDefinition;
 import cz.creeper.customitemlibrary.feature.item.CustomItem;
 import cz.creeper.customitemlibrary.feature.item.DefinesDurabilityModels;
 import cz.creeper.customitemlibrary.util.Block;
+import org.spongepowered.api.block.BlockState;
 import org.spongepowered.api.data.key.Keys;
-import org.spongepowered.api.effect.sound.SoundType;
 import org.spongepowered.api.entity.EntityTypes;
 import org.spongepowered.api.entity.living.ArmorStand;
 import org.spongepowered.api.entity.living.player.Player;
@@ -26,13 +26,10 @@ public interface CustomBlockDefinition<T extends CustomBlock<? extends CustomBlo
     String MODEL_DIRECTORY_NAME = "blocks";
 
     /**
-     * TODO: Resolve and document the existence of this field in {@link CustomFeatureDefinition#simpleBlockBuilder()}.
-     * @deprecated Experimental, maybe there will be a different way of selecting the sound.
-     * @return The sound that is played when the block is placed.
+     * @return The {@link BlockState} used to figure out which particle effect texture to use
+     *         and which sound to use when the block is broken/placed
      */
-    @SuppressWarnings("DeprecatedIsStillUsed")
-    @Deprecated
-    SoundType getSoundPlace();
+    BlockState getEffectState();
 
     /**
      * Apply additional customizations to the placed block and wrap it.
@@ -95,6 +92,7 @@ public interface CustomBlockDefinition<T extends CustomBlock<? extends CustomBlo
         armorStand.setRotation(rotation);
         armorStand.setHeadRotation(Vector3d.ZERO);
 
+        // TODO: Causes a sound to be played, figure out a way to get rid of it
         world.spawnEntity(armorStand, cause);
 
         T result = customizeBlock(block, armorStand, cause);

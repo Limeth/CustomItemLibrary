@@ -9,6 +9,7 @@ import cz.creeper.customitemlibrary.CustomItemService;
 import cz.creeper.customitemlibrary.event.CustomBlockPlaceEvent;
 import cz.creeper.customitemlibrary.feature.CustomFeatureRegistry;
 import cz.creeper.customitemlibrary.feature.block.CustomBlock;
+import cz.creeper.customitemlibrary.feature.block.CustomBlockDefinition;
 import cz.creeper.mineskinsponge.MineskinService;
 import cz.creeper.mineskinsponge.SkinRecord;
 import lombok.AccessLevel;
@@ -17,12 +18,13 @@ import org.spongepowered.api.Sponge;
 import org.spongepowered.api.asset.Asset;
 import org.spongepowered.api.asset.AssetManager;
 import org.spongepowered.api.block.BlockSnapshot;
+import org.spongepowered.api.block.BlockSoundGroup;
 import org.spongepowered.api.block.BlockState;
+import org.spongepowered.api.block.BlockType;
 import org.spongepowered.api.data.Transaction;
 import org.spongepowered.api.data.property.block.ReplaceableProperty;
 import org.spongepowered.api.data.type.HandType;
 import org.spongepowered.api.effect.sound.SoundCategories;
-import org.spongepowered.api.effect.sound.SoundType;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.Order;
@@ -173,11 +175,14 @@ public class CustomMaterialRegistry implements CustomFeatureRegistry<CustomMater
                                     Optional<? extends CustomBlock<?>> placedCustomBlock = CustomItemLibrary.getInstance().getService().getBlock(placeLocation);
                                     Vector3d soundPosition = placeLocation.getPosition().add(Vector3d.ONE.mul(0.5));
                                     BlockState placeState = placeLocation.getBlock();
-                                    SoundType placeSound = placedCustomBlock.map(customBlock -> customBlock.getDefinition().getSoundPlace())
-                                            .orElseGet(() -> placeState.getType().getSoundGroup().getPlaceSound());
+                                    BlockState effectState = placedCustomBlock.map(CustomBlock::getDefinition)
+                                            .map(CustomBlockDefinition::getEffectState)
+                                            .orElse(placeState);
+                                    BlockType effectType = effectState.getType();
+                                    BlockSoundGroup effectSoundGroup = effectType.getSoundGroup();
 
-                                    // TODO: plays some sort of dog breathing sound, get rid of that
-                                    world.playSound(placeSound, SoundCategories.BLOCK, soundPosition, 1, 1);
+                                    world.playSound(effectSoundGroup.getPlaceSound(), SoundCategories.BLOCK,
+                                            soundPosition, effectSoundGroup.getVolume(), effectSoundGroup.getPitch());
                                 }
                             });
                 });

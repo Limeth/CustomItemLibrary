@@ -5,7 +5,7 @@ import cz.creeper.customitemlibrary.util.Block;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
-import org.spongepowered.api.effect.sound.SoundType;
+import org.spongepowered.api.block.BlockState;
 import org.spongepowered.api.plugin.PluginContainer;
 
 import java.util.Optional;
@@ -15,13 +15,14 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 public abstract class AbstractCustomBlockDefinition<T extends CustomBlock<? extends AbstractCustomBlockDefinition<T>>> extends AbstractCustomFeatureDefinition<T> implements CustomBlockDefinition<T> {
-    private final SoundType soundPlace;
+    @NonNull
+    private final BlockState effectState;
     private final boolean rotateHorizontally;
 
-    public AbstractCustomBlockDefinition(PluginContainer pluginContainer, String typeId, String defaultModel, Iterable<String> models, @NonNull SoundType soundPlace, boolean rotateHorizontally) {
+    public AbstractCustomBlockDefinition(PluginContainer pluginContainer, String typeId, String defaultModel, Iterable<String> models, BlockState effectState, boolean rotateHorizontally) {
         super(pluginContainer, typeId, defaultModel, models);
 
-        this.soundPlace = soundPlace;
+        this.effectState = effectState;
         this.rotateHorizontally = rotateHorizontally;
     }
 
