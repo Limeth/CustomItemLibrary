@@ -169,8 +169,8 @@ public interface CustomFeatureDefinition<T extends CustomFeature<? extends Custo
      *           {@code harvestingType(BlockType)} method if no value is provided
      *     </li>
      *     <li>
-     *         {@code breakEffectState(BlockState)}
-     *         - The state used to create the particle and sound effect when the block is broken;
+     *         {@code effectState(BlockState)}
+     *         - The state used to create the particle and sound effect when the block is broken or placed;
      *           uses the default block state of the {@link BlockType} from the {@code harvestingType(BlockType)} method
      *           if no value is provided
      *     </li>

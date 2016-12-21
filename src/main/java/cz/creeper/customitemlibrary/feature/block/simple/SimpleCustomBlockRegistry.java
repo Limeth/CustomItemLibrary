@@ -165,7 +165,7 @@ public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCu
                     World world = location.getExtent();
                     ParticleEffect particleEffect = ParticleEffect.builder()
                             .type(ParticleTypes.BREAK_BLOCK)
-                            .option(ParticleOptions.BLOCK_STATE, definition.getBreakEffectState())
+                            .option(ParticleOptions.BLOCK_STATE, definition.getEffectState())
                             .build();
                     Vector3d particlePosition = location.getBlockPosition().toDouble();
 

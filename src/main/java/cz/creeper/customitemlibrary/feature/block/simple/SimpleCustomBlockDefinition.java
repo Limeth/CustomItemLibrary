@@ -17,7 +17,6 @@ import org.spongepowered.api.block.BlockState;
 import org.spongepowered.api.block.BlockType;
 import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.data.property.block.HardnessProperty;
-import org.spongepowered.api.effect.sound.SoundType;
 import org.spongepowered.api.entity.living.ArmorStand;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.item.inventory.ItemStack;
@@ -45,12 +44,6 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
     private final double hardness;
 
     /**
-     * The {@link BlockState} used to figure out which particle effect texture to use.
-     */
-    @NonNull
-    private final BlockState breakEffectState;
-
-    /**
      * A list of items dropped when the block is broken.
      */
     @NonNull
@@ -58,11 +51,10 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
 
     private SimpleCustomBlockDefinition(PluginContainer pluginContainer, String typeId,
                                         @NonNull BlockType harvestingType, double hardness,
-                                        @NonNull BlockState breakEffectState, @NonNull DropProvider dropProvider,
+                                        @NonNull BlockState effectState, @NonNull DropProvider dropProvider,
                                         String defaultModel, Iterable<String> additionalModels,
-                                        Iterable<String> additionalAssets, SoundType soundPlace,
-                                        boolean rotateHorizontally) {
-        super(pluginContainer, typeId, defaultModel, additionalModels, soundPlace, rotateHorizontally);
+                                        Iterable<String> additionalAssets, boolean rotateHorizontally) {
+        super(pluginContainer, typeId, defaultModel, additionalModels, effectState, rotateHorizontally);
 
         this.assets = ImmutableSet.<String>builder()
                 .addAll(getModels().stream()
@@ -73,17 +65,16 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
                 .build();
         this.harvestingType = harvestingType;
         this.hardness = hardness;
-        this.breakEffectState = breakEffectState;
         this.dropProvider = dropProvider;
     }
 
     @Builder
     public static SimpleCustomBlockDefinition create(Object plugin, String typeId, BlockType harvestingType,
-                                                     Double hardness, BlockState breakEffectState,
+                                                     Double hardness, BlockState effectState,
                                                      DropProvider dropProvider, String defaultModel,
                                                      @Singular Iterable<String> additionalModels,
                                                      @Singular Iterable<String> additionalAssets,
-                                                     SoundType soundPlace, boolean rotateHorizontally) {
+                                                     boolean rotateHorizontally) {
         PluginContainer pluginContainer = Sponge.getPluginManager().fromInstance(plugin)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid plugin instance."));
         if(harvestingType == null)
@@ -97,8 +88,8 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
         Preconditions.checkNotNull(hardness);
         Preconditions.checkArgument(hardness >= 0, "The hardness must be non-negative.");
 
-        if(breakEffectState == null)
-            breakEffectState = harvestingType.getDefaultState();
+        if(effectState == null)
+            effectState = harvestingType.getDefaultState();
 
         if(dropProvider == null)
             dropProvider = (a, b, cause) -> CustomItemLibrary.getInstance().getService().getItemDefinition(plugin, typeId)
@@ -108,10 +99,7 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
                     .map(Collections::singletonList)
                     .orElseGet(Collections::emptyList);
 
-        if(soundPlace == null)
-            soundPlace = harvestingType.getSoundGroup().getPlaceSound();
-
-        return new SimpleCustomBlockDefinition(pluginContainer, typeId, harvestingType, hardness, breakEffectState, dropProvider, defaultModel, additionalModels, additionalAssets, soundPlace, rotateHorizontally);
+        return new SimpleCustomBlockDefinition(pluginContainer, typeId, harvestingType, hardness, effectState, dropProvider, defaultModel, additionalModels, additionalAssets, rotateHorizontally);
     }
 
     @Override
