@@ -12,6 +12,7 @@ import org.spongepowered.api.entity.EntityTypes;
 import org.spongepowered.api.entity.living.ArmorStand;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.cause.Cause;
+import org.spongepowered.api.world.BlockChangeFlag;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
@@ -64,7 +65,7 @@ public interface CustomBlockDefinition<T extends CustomBlock<? extends CustomBlo
         // Remove the previous custom block
         CustomItemLibrary.getInstance().getService().removeArmorStandsAt(block);
 
-        location.setBlockType(CustomBlock.BLOCK_TYPE_CUSTOM, cause);
+        location.setBlockType(CustomBlock.BLOCK_TYPE_CUSTOM, BlockChangeFlag.ALL, cause);
 
         Vector3d armorStandPosition = block.getPosition().toDouble().add(Vector3d.ONE.mul(0.5));
         ArmorStand armorStand = (ArmorStand) world.createEntity(EntityTypes.ARMOR_STAND, armorStandPosition);

@@ -35,6 +35,7 @@ import org.spongepowered.api.event.cause.entity.spawn.EntitySpawnCause;
 import org.spongepowered.api.event.cause.entity.spawn.SpawnTypes;
 import org.spongepowered.api.event.filter.cause.First;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
+import org.spongepowered.api.world.BlockChangeFlag;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
@@ -170,7 +171,7 @@ public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCu
                     Vector3d particlePosition = location.getBlockPosition().toDouble();
 
                     world.spawnParticles(particleEffect, particlePosition);
-                    location.setBlockType(BlockTypes.AIR, cause);
+                    location.setBlockType(BlockTypes.AIR, BlockChangeFlag.ALL, cause);
                     event.setCancelled(true);
                 }
             });

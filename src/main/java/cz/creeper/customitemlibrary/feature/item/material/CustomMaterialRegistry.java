@@ -1,6 +1,7 @@
 package cz.creeper.customitemlibrary.feature.item.material;
 
 import com.flowpowered.math.vector.Vector3d;
+import com.flowpowered.math.vector.Vector3i;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;
@@ -25,6 +26,7 @@ import org.spongepowered.api.data.Transaction;
 import org.spongepowered.api.data.property.block.ReplaceableProperty;
 import org.spongepowered.api.data.type.HandType;
 import org.spongepowered.api.effect.sound.SoundCategories;
+import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.Order;
@@ -36,6 +38,7 @@ import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.plugin.PluginContainer;
+import org.spongepowered.api.util.AABB;
 import org.spongepowered.api.util.Direction;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
@@ -44,6 +47,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -134,6 +138,8 @@ public class CustomMaterialRegistry implements CustomFeatureRegistry<CustomMater
                     Location<World> targetLocation = targetBlock.getLocation()
                             .orElseThrow(() -> new IllegalStateException("Could not access the location of the clicked block."));
                     BlockState targetState = targetLocation.getBlock();
+
+                    // Figure out where the block would be placed
                     boolean targetReplaceable = targetState.getType().getProperty(ReplaceableProperty.class).map(ReplaceableProperty::getValue).orElse(false);
                     Location<World> placeLocation;
 
@@ -148,6 +154,18 @@ public class CustomMaterialRegistry implements CustomFeatureRegistry<CustomMater
                             return;
                     }
 
+                    // Check if there are any entities blocking the placement
+                    World world = placeLocation.getExtent();
+                    Vector3i placePosition = placeLocation.getBlockPosition();
+                    Vector3i placePositionMax = placePosition.add(Vector3i.ONE);
+                    AABB aabb = new AABB(placePosition, placePositionMax);
+
+                    // TODO: Add a predicate to filter out entities such as arrows or items
+                    Set<Entity> blockingEntities = world.getIntersectingEntities(aabb);
+
+                    if(!blockingEntities.isEmpty())
+                        return;
+
                     Cause placeCause = Cause.source(CustomItemLibrary.getInstance().getPluginContainer())
                             .notifier(player)
                             .addAll(event.getCause().getNamedCauses().entrySet().stream()
@@ -159,7 +177,6 @@ public class CustomMaterialRegistry implements CustomFeatureRegistry<CustomMater
 
                     placeProvider.provideBlock(customMaterial, player, placeLocation, placeCause)
                             .ifPresent(blockSnapshot -> {
-                                World world = placeLocation.getExtent();
                                 BlockSnapshot original = world.createSnapshot(placeLocation.getBlockPosition());
                                 Transaction<BlockSnapshot> transaction = new Transaction<>(original, blockSnapshot);
                                 CustomBlockPlaceEvent placeEvent = new CustomBlockPlaceEvent(Collections.singletonList(transaction), world, placeCause, false);
