@@ -84,6 +84,7 @@ public interface CustomBlockDefinition<T extends CustomBlock<? extends CustomBlo
             }
         }
 
+        armorStand.offer(Keys.IS_SILENT, true);
         armorStand.offer(Keys.INVISIBLE, true);
         armorStand.offer(Keys.ARMOR_STAND_MARKER, true);
         armorStand.offer(Keys.HAS_GRAVITY, false);
@@ -92,7 +93,6 @@ public interface CustomBlockDefinition<T extends CustomBlock<? extends CustomBlo
         armorStand.setRotation(rotation);
         armorStand.setHeadRotation(Vector3d.ZERO);
 
-        // TODO: Causes a sound to be played, figure out a way to get rid of it
         world.spawnEntity(armorStand, cause);
 
         T result = customizeBlock(block, armorStand, cause);
