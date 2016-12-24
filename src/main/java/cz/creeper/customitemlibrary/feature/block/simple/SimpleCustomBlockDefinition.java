@@ -14,7 +14,6 @@ import lombok.NonNull;
 import lombok.Singular;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockState;
-import org.spongepowered.api.block.BlockType;
 import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.data.property.block.HardnessProperty;
 import org.spongepowered.api.entity.living.ArmorStand;
@@ -33,10 +32,11 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
     private final ImmutableSet<String> assets;
 
     /**
-     * The block type this block imitates. Determines, whether items are dropped.
+     * Determines whether the tool used to break the block
+     * should be used to destroy blocks of this {@link SimpleCustomBlockDefinition}.
      */
     @NonNull
-    private final BlockType harvestingType;
+    private final CorrectToolPredicate correctToolPredicate;
 
     /**
      * The duration this block takes to break.
@@ -50,7 +50,7 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
     private final DropProvider dropProvider;
 
     private SimpleCustomBlockDefinition(PluginContainer pluginContainer, String typeId,
-                                        @NonNull BlockType harvestingType, double hardness,
+                                        @NonNull CorrectToolPredicate correctToolPredicate, double hardness,
                                         @NonNull BlockState effectState, @NonNull DropProvider dropProvider,
                                         String defaultModel, Iterable<String> additionalModels,
                                         Iterable<String> additionalAssets, boolean rotateHorizontally) {
@@ -63,13 +63,14 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
                 .addAll(Util.removeNull(additionalAssets)
                         .collect(Collectors.toSet()))
                 .build();
-        this.harvestingType = harvestingType;
+        this.correctToolPredicate = correctToolPredicate;
         this.hardness = hardness;
         this.dropProvider = dropProvider;
     }
 
     @Builder
-    public static SimpleCustomBlockDefinition create(Object plugin, String typeId, BlockType harvestingType,
+    public static SimpleCustomBlockDefinition create(Object plugin, String typeId,
+                                                     CorrectToolPredicate correctToolPredicate,
                                                      Double hardness, BlockState effectState,
                                                      DropProvider dropProvider, String defaultModel,
                                                      @Singular Iterable<String> additionalModels,
@@ -77,19 +78,19 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
                                                      boolean rotateHorizontally) {
         PluginContainer pluginContainer = Sponge.getPluginManager().fromInstance(plugin)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid plugin instance."));
-        if(harvestingType == null)
-            harvestingType = BlockTypes.STONE;
+        if(effectState == null)
+            effectState = BlockTypes.STONE.getDefaultState();
+
+        if(correctToolPredicate == null)
+            correctToolPredicate = CorrectToolPredicate.of(effectState.getType());
 
         if(hardness == null)
-            hardness = harvestingType.getDefaultState()
+            hardness = effectState
                     .getProperty(HardnessProperty.class)
                     .orElseThrow(() -> new IllegalStateException("Could not access the HardnessProperty of the specified harvestingType. Define the hardness manually."))
                     .getValue();
         Preconditions.checkNotNull(hardness);
         Preconditions.checkArgument(hardness >= 0, "The hardness must be non-negative.");
-
-        if(effectState == null)
-            effectState = harvestingType.getDefaultState();
 
         if(dropProvider == null)
             dropProvider = (a, b, cause) -> CustomItemLibrary.getInstance().getService().getItemDefinition(plugin, typeId)
@@ -99,7 +100,7 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
                     .map(Collections::singletonList)
                     .orElseGet(Collections::emptyList);
 
-        return new SimpleCustomBlockDefinition(pluginContainer, typeId, harvestingType, hardness, effectState, dropProvider, defaultModel, additionalModels, additionalAssets, rotateHorizontally);
+        return new SimpleCustomBlockDefinition(pluginContainer, typeId, correctToolPredicate, hardness, effectState, dropProvider, defaultModel, additionalModels, additionalAssets, rotateHorizontally);
     }
 
     @Override
