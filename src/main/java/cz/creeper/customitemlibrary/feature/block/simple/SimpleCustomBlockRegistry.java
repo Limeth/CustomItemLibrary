@@ -127,6 +127,28 @@ public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCu
                         return;
 
                     if(correctToolUsed) {
+                        itemInHand.ifPresent(itemStack -> {
+                            itemStack.get(Keys.ITEM_DURABILITY).ifPresent(durability -> {
+                                int newDurability = durability - 1;
+
+                                if(newDurability >= 0) {
+                                    itemStack.offer(Keys.ITEM_DURABILITY, newDurability);
+                                    player.setItemInHand(HandTypes.MAIN_HAND, itemStack);
+                                } else {
+                                    ParticleEffect crackEffect = ParticleEffect.builder()
+                                            .type(ParticleTypes.ITEM_CRACK)
+                                            .option(ParticleOptions.ITEM_STACK_SNAPSHOT, itemStack.createSnapshot())
+                                            .build();
+                                    Location<World> playerLocation = player.getLocation();
+                                    World world = playerLocation.getExtent();
+                                    Vector3d crackPosition = playerLocation.getPosition().add(Vector3d.UNIT_Y.mul(1.62));
+
+                                    world.spawnParticles(crackEffect, crackPosition);
+                                    player.setItemInHand(HandTypes.MAIN_HAND, null);
+                                }
+                            });
+                        });
+
                         List<ItemStackSnapshot> drops = definition.getDropProvider()
                                 .provideDrops(customBlock, player, cause);
 
