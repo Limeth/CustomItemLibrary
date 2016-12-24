@@ -159,25 +159,26 @@ public interface CustomFeatureDefinition<T extends CustomFeature<? extends Custo
      * <h2>Optional fields:</h2>
      * <ol>
      *     <li>
-     *         {@code harvestingType(BlockType)}
-     *         - The {@link BlockType} to determine whether a correct tool has been used to break the block to decide
-     *           whether drops appear; {@link BlockTypes#STONE} by default
+     *         {@code correctToolPredicate(CorrectToolPredicate)}
+     *         - Determines whether the tool used to break the block
+     *           should be used to destroy blocks of this {@link SimpleCustomBlockDefinition};
+     *           this affects whether the block drops items when broken
+     *           provided by the {@code dropProvider(DropProvider)}
      *     </li>
      *     <li>
      *         {@code hardness(Double)}
      *         - Determines how long a block takes to be broken; uses the hardness of the {@link BlockType} from the
-     *           {@code harvestingType(BlockType)} method if no value is provided
+     *           {@code effectState(BlockState)} method if no value is provided
      *     </li>
      *     <li>
      *         {@code effectState(BlockState)}
      *         - The state used to create the particle and sound effect when the block is broken or placed;
-     *           uses the default block state of the {@link BlockType} from the {@code harvestingType(BlockType)} method
-     *           if no value is provided
+     *           the default value is the default state of {@link BlockTypes#STONE}
      *     </li>
      *     <li>
      *         {@code dropProvider(DropProvider)}
      *         - Determines which {@link ItemStackSnapshot}s to drop when the block is broken with the proper tool as
-     *           defined with the {@code harvestingType(BlockType)} method
+     *           defined with the {@code correctToolPredicate(CorrectToolPredicate)} method
      *     </li>
      *     <li>
      *         {@code rotateHorizontally(boolean)}

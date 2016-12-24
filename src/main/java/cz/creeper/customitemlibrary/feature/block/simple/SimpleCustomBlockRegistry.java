@@ -19,9 +19,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
-import org.spongepowered.api.block.BlockType;
 import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.data.key.Keys;
+import org.spongepowered.api.data.type.HandTypes;
 import org.spongepowered.api.effect.particle.ParticleEffect;
 import org.spongepowered.api.effect.particle.ParticleOptions;
 import org.spongepowered.api.effect.particle.ParticleTypes;
@@ -34,6 +34,7 @@ import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.entity.spawn.EntitySpawnCause;
 import org.spongepowered.api.event.cause.entity.spawn.SpawnTypes;
 import org.spongepowered.api.event.filter.cause.First;
+import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.world.BlockChangeFlag;
 import org.spongepowered.api.world.Location;
@@ -46,6 +47,7 @@ import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 
@@ -109,11 +111,13 @@ public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCu
             .map(SimpleCustomBlock.class::cast)
             .ifPresent(customBlock -> {
                 SimpleCustomBlockDefinition definition = customBlock.getDefinition();
-                BlockType harvestingType = definition.getHarvestingType();
                 double hardness = definition.getHardness();
-                MiningManager.MiningDuration duration = MiningManager.computeDuration(player, harvestingType, hardness);
+                Optional<ItemStack> itemInHand = player.getItemInHand(HandTypes.MAIN_HAND);
+                boolean correctToolUsed = definition.getCorrectToolPredicate().isCorrectTool(itemInHand.orElse(null));
+                double requiredDuration = MiningManager.computeDuration(player, itemInHand.orElse(null),
+                                                                        correctToolUsed, hardness);
 
-                if (event.getDuration() >= duration.getBreakDuration()) {
+                if (event.getDuration() >= requiredDuration) {
                     Cause cause = event.getCause();
                     CustomBlockBreakEvent customEvent = CustomBlockBreakEvent.of(customBlock, cause);
 
@@ -122,7 +126,7 @@ public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCu
                     if(customEvent.isCancelled())
                         return;
 
-                    if(duration.isCorrectToolUsed()) {
+                    if(correctToolUsed) {
                         List<ItemStackSnapshot> drops = definition.getDropProvider()
                                 .provideDrops(customBlock, player, cause);
 
@@ -161,6 +165,8 @@ public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCu
                                 });
                             }
                         }
+
+
                     }
 
                     World world = location.getExtent();

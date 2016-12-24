@@ -6,14 +6,10 @@ import cz.creeper.customitemlibrary.event.MiningProgressEvent;
 import cz.creeper.customitemlibrary.util.Wrapper;
 import lombok.AllArgsConstructor;
 import lombok.ToString;
-import lombok.Value;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
-import org.spongepowered.api.block.BlockType;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.data.property.item.EfficiencyProperty;
-import org.spongepowered.api.data.property.item.HarvestingProperty;
-import org.spongepowered.api.data.type.HandTypes;
 import org.spongepowered.api.effect.potion.PotionEffectType;
 import org.spongepowered.api.effect.potion.PotionEffectTypes;
 import org.spongepowered.api.entity.living.player.Player;
@@ -109,13 +105,8 @@ public class MiningManager {
         private BlockSnapshot snapshot;
     }
 
-    public static MiningDuration computeDuration(Player player, BlockType harvestingType, double hardness) {
-        Optional<ItemStack> itemInHand = player.getItemInHand(HandTypes.MAIN_HAND);
-        // TODO: possibly generalize
-        boolean correctToolUsed = itemInHand.flatMap(itemStack -> itemStack.getProperty(HarvestingProperty.class))
-                .map(HarvestingProperty::getValue)
-                .map(harvestingTypes -> harvestingTypes.contains(harvestingType))
-                .orElse(true);
+    public static double computeDuration(Player player, ItemStack itemInHandOrNull, boolean correctToolUsed, double hardness) {
+        Optional<ItemStack> itemInHand = Optional.ofNullable(itemInHandOrNull);
         // java, plz.
         final Wrapper<Double> breakDuration = Wrapper.of(hardness);
 
@@ -132,17 +123,16 @@ public class MiningManager {
                         );
 
                 itemStack.get(Keys.ITEM_ENCHANTMENTS)
-                        .ifPresent(itemEnchantments -> {
-                            itemEnchantments.forEach(itemEnchantment -> {
-                                Enchantment type = itemEnchantment.getEnchantment();
-                                int level = itemEnchantment.getLevel();
+                        .ifPresent(itemEnchantments ->
+                                itemEnchantments.forEach(itemEnchantment -> {
+                            Enchantment type = itemEnchantment.getEnchantment();
+                            int level = itemEnchantment.getLevel();
 
-                                if(type == Enchantments.EFFICIENCY) {
-                                    totalEfficiency.setValue(totalEfficiency.getValue()
-                                            + level * level + 1);
-                                }
-                            });
-                        });
+                            if(type == Enchantments.EFFICIENCY) {
+                                totalEfficiency.setValue(totalEfficiency.getValue()
+                                        + level * level + 1);
+                            }
+                        }));
 
                 breakDuration.setValue(breakDuration.getValue() / totalEfficiency.getValue());
             });
@@ -150,27 +140,20 @@ public class MiningManager {
             breakDuration.setValue(breakDuration.getValue() * 5);
         }
 
-        player.get(Keys.POTION_EFFECTS).ifPresent(potionEffects -> {
-            potionEffects.forEach(potionEffect -> {
-                PotionEffectType type = potionEffect.getType();
-                int amplifier = potionEffect.getAmplifier();
+        player.get(Keys.POTION_EFFECTS)
+                .ifPresent(potionEffects -> potionEffects.forEach(potionEffect -> {
+            PotionEffectType type = potionEffect.getType();
+            int amplifier = potionEffect.getAmplifier();
 
-                if(type == PotionEffectTypes.MINING_FATIGUE) {
-                    breakDuration.setValue(breakDuration.getValue()
-                            * (1 - Math.pow(0.3, amplifier)));
-                } else if(type == PotionEffectTypes.HASTE) {
-                    breakDuration.setValue(breakDuration.getValue()
-                            * (1.2 * amplifier));
-                }
-            });
-        });
+            if(type == PotionEffectTypes.MINING_FATIGUE) {
+                breakDuration.setValue(breakDuration.getValue()
+                        * (1 - Math.pow(0.3, amplifier)));
+            } else if(type == PotionEffectTypes.HASTE) {
+                breakDuration.setValue(breakDuration.getValue()
+                        * (1.2 * amplifier));
+            }
+        }));
 
-        return new MiningDuration(correctToolUsed, breakDuration.getValue());
-    }
-
-    @Value
-    public static class MiningDuration {
-        private boolean correctToolUsed;
-        private double breakDuration;
+        return breakDuration.getValue();
     }
 }
