@@ -17,12 +17,14 @@ import java.util.stream.Collectors;
 public abstract class AbstractCustomBlockDefinition<T extends CustomBlock<? extends AbstractCustomBlockDefinition<T>>> extends AbstractCustomFeatureDefinition<T> implements CustomBlockDefinition<T> {
     private final SoundType soundPlace;
     private final boolean rotateHorizontally;
+    private final boolean generateDamageIndicatorModels;
 
-    public AbstractCustomBlockDefinition(PluginContainer pluginContainer, String typeId, String defaultModel, Iterable<String> models, @NonNull SoundType soundPlace, boolean rotateHorizontally) {
+    public AbstractCustomBlockDefinition(PluginContainer pluginContainer, String typeId, String defaultModel, Iterable<String> models, @NonNull SoundType soundPlace, boolean rotateHorizontally, boolean generateDamageIndicatorModels) {
         super(pluginContainer, typeId, defaultModel, models);
 
         this.soundPlace = soundPlace;
         this.rotateHorizontally = rotateHorizontally;
+        this.generateDamageIndicatorModels = generateDamageIndicatorModels;
     }
 
     protected abstract Optional<T> wrapBarrierIfPossible(Block block);

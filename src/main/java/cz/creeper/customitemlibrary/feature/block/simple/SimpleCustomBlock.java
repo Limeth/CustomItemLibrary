@@ -5,7 +5,6 @@ import cz.creeper.customitemlibrary.feature.block.AbstractCustomBlock;
 import cz.creeper.customitemlibrary.util.Block;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.entity.living.ArmorStand;
 import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.item.ItemTypes;
@@ -29,16 +28,7 @@ public class SimpleCustomBlock extends AbstractCustomBlock<SimpleCustomBlockDefi
     }
 
     public ItemStack createHelmet(String model) {
-        PluginContainer pluginContainer = getDefinition().getPluginContainer();
-        int durability = DurabilityRegistry.getInstance().getDurability(HELMET_ITEM_TYPE, pluginContainer, model)
-                .orElseThrow(() -> new IllegalStateException("The model should have been registered by now, is the definition actually being registered?"));
-
-        ItemStack itemStack = ItemStack.of(HELMET_ITEM_TYPE, 1);
-
-        itemStack.offer(Keys.UNBREAKABLE, true);
-        itemStack.offer(Keys.ITEM_DURABILITY, durability);
-
-        return itemStack;
+        return DurabilityRegistry.createItemUnsafe(HELMET_ITEM_TYPE, getDefinition().getPluginContainer(), model);
     }
 
     @Override

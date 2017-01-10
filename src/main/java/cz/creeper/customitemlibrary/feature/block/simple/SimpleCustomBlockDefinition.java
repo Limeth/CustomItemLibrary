@@ -61,8 +61,8 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
                                         @NonNull BlockState breakEffectState, @NonNull DropProvider dropProvider,
                                         String defaultModel, Iterable<String> additionalModels,
                                         Iterable<String> additionalAssets, SoundType soundPlace,
-                                        boolean rotateHorizontally) {
-        super(pluginContainer, typeId, defaultModel, additionalModels, soundPlace, rotateHorizontally);
+                                        boolean rotateHorizontally, boolean generateDamageIndicatorModels) {
+        super(pluginContainer, typeId, defaultModel, additionalModels, soundPlace, rotateHorizontally, generateDamageIndicatorModels);
 
         this.assets = ImmutableSet.<String>builder()
                 .addAll(getModels().stream()
@@ -83,7 +83,8 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
                                                      DropProvider dropProvider, String defaultModel,
                                                      @Singular Iterable<String> additionalModels,
                                                      @Singular Iterable<String> additionalAssets,
-                                                     SoundType soundPlace, boolean rotateHorizontally) {
+                                                     SoundType soundPlace, boolean rotateHorizontally,
+                                                     boolean generateDamageIndicatorModels) {
         PluginContainer pluginContainer = Sponge.getPluginManager().fromInstance(plugin)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid plugin instance."));
         if(harvestingType == null)
@@ -111,7 +112,7 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
         if(soundPlace == null)
             soundPlace = harvestingType.getSoundGroup().getPlaceSound();
 
-        return new SimpleCustomBlockDefinition(pluginContainer, typeId, harvestingType, hardness, breakEffectState, dropProvider, defaultModel, additionalModels, additionalAssets, soundPlace, rotateHorizontally);
+        return new SimpleCustomBlockDefinition(pluginContainer, typeId, harvestingType, hardness, breakEffectState, dropProvider, defaultModel, additionalModels, additionalAssets, soundPlace, rotateHorizontally, generateDamageIndicatorModels);
     }
 
     @Override

@@ -2,6 +2,7 @@ package cz.creeper.customitemlibrary.feature.block;
 
 import com.flowpowered.math.vector.Vector3d;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
+import cz.creeper.customitemlibrary.data.CustomBlockData;
 import cz.creeper.customitemlibrary.feature.CustomFeatureDefinition;
 import cz.creeper.customitemlibrary.feature.item.CustomItem;
 import cz.creeper.customitemlibrary.feature.item.DefinesDurabilityModels;
@@ -53,6 +54,15 @@ public interface CustomBlockDefinition<T extends CustomBlock<? extends CustomBlo
     boolean isRotateHorizontally();
 
     /**
+     * Generates custom, precise models for damage indication.
+     * This improves the quality, but takes up space. 10 damage indication
+     * models are generated for every model of this custom block.
+     *
+     * If set to {@code false}, uses the default cuboid damage indicator.
+     */
+    boolean isGenerateDamageIndicatorModels();
+
+    /**
      * Constructs a custom block and places it in the world.
      *
      * @param block The block location
@@ -69,8 +79,7 @@ public interface CustomBlockDefinition<T extends CustomBlock<? extends CustomBlo
 
         location.setBlockType(CustomBlock.BLOCK_TYPE_CUSTOM, cause);
 
-        Vector3d armorStandPosition = block.getPosition().toDouble().add(Vector3d.ONE.mul(0.5));
-        ArmorStand armorStand = (ArmorStand) world.createEntity(EntityTypes.ARMOR_STAND, armorStandPosition);
+        ArmorStand armorStand = createDummyArmorStand(block);
         Vector3d rotation = Vector3d.ZERO;
 
         if(isRotateHorizontally()) {
@@ -87,13 +96,9 @@ public interface CustomBlockDefinition<T extends CustomBlock<? extends CustomBlo
             }
         }
 
-        armorStand.offer(Keys.INVISIBLE, true);
-        armorStand.offer(Keys.ARMOR_STAND_MARKER, true);
-        armorStand.offer(Keys.HAS_GRAVITY, false);
-        armorStand.offer(Keys.PERSISTS, true);
         armorStand.offer(createDefaultCustomFeatureData());
+        armorStand.offer(new CustomBlockData());
         armorStand.setRotation(rotation);
-        armorStand.setHeadRotation(Vector3d.ZERO);
 
         world.spawnEntity(armorStand, cause);
 
@@ -102,6 +107,21 @@ public interface CustomBlockDefinition<T extends CustomBlock<? extends CustomBlo
         result.setModel(getDefaultModel());
 
         return result;
+    }
+
+    static ArmorStand createDummyArmorStand(Block block) {
+        World world = block.getExtent()
+                .orElseThrow(() -> new IllegalStateException("Could not access the world this block resides in."));
+        Vector3d armorStandPosition = block.getPosition().toDouble().add(Vector3d.ONE.mul(0.5));
+        ArmorStand armorStand = (ArmorStand) world.createEntity(EntityTypes.ARMOR_STAND, armorStandPosition);
+
+        armorStand.offer(Keys.INVISIBLE, true);
+        armorStand.offer(Keys.ARMOR_STAND_MARKER, true);
+        armorStand.offer(Keys.HAS_GRAVITY, false);
+        armorStand.offer(Keys.PERSISTS, true);
+        armorStand.setHeadRotation(Vector3d.ZERO);
+
+        return armorStand;
     }
 
     /**

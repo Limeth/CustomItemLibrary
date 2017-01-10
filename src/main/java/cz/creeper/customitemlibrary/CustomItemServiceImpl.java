@@ -295,7 +295,7 @@ public class CustomItemServiceImpl implements CustomItemService {
                     SeekableByteChannel output = Files.newByteChannel(outputFile, StandardOpenOption.WRITE)
             ) {
                 //noinspection unchecked
-                registry.writeAsset(definition, assetPath, input, output);
+                registry.writeAsset(definition, assetPath, input, output, outputFile);
             }
         } catch (IOException e) {
             e.printStackTrace();
