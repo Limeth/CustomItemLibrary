@@ -38,13 +38,8 @@ import org.spongepowered.api.util.Identifiable;
 import org.spongepowered.api.world.Chunk;
 
 import java.io.IOException;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
@@ -149,9 +144,8 @@ public class CustomItemServiceImpl implements CustomItemService {
             e.printStackTrace();
         }
 
-        getDefinitions().forEach(definition ->
-            definition.getAssets().forEach(asset -> copyAsset(definition, asset))
-        );
+        getDefinitions().forEach(customFeatureDefinition ->
+                customFeatureDefinition.generateResourcePackFiles(directory));
 
         DurabilityRegistry.getInstance().generateResourcePack(directory);
 
@@ -264,44 +258,8 @@ public class CustomItemServiceImpl implements CustomItemService {
         return pluginIdsToTypeIdsToBlockDefinitions.computeIfAbsent(pluginId, k -> Maps.newHashMap());
     }
 
-    public void copyAsset(CustomFeatureDefinition<? extends CustomFeature> definition, String assetPath) {
-        PluginContainer plugin = definition.getPluginContainer();
-        String filePath = CustomToolDefinition.getAssetPrefix(plugin) + assetPath;
-        Optional<Asset> optionalAsset = Sponge.getAssetManager().getAsset(plugin, assetPath);
-
-        if (!optionalAsset.isPresent()) {
-            CustomItemLibrary.getInstance().getLogger()
-                    .warn("Could not locate an asset for plugin '"
-                            + plugin.getName() + "' with path '" + filePath + "'.");
-            return;
-        }
-
-        Asset asset = optionalAsset.get();
-        Path outputFile = CustomItemServiceImpl.getDirectoryResourcePack()
-                .resolve(Paths.get(filePath));
-
-        try {
-            Files.createDirectories(outputFile.getParent());
-
-            if (Files.exists(outputFile))
-                Files.delete(outputFile);
-
-            Files.createFile(outputFile);
-
-            CustomFeatureRegistry registry = (CustomFeatureRegistry) registryMap.get(definition.getClass()).get();
-
-            try (
-                    ReadableByteChannel input = Channels.newChannel(asset.getUrl().openStream());
-                    SeekableByteChannel output = Files.newByteChannel(outputFile, StandardOpenOption.WRITE)
-            ) {
-                //noinspection unchecked
-                registry.writeAsset(definition, assetPath, input, output, outputFile);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            CustomItemLibrary.getInstance().getLogger()
-                    .warn("Could not copy a file from assets (" + filePath + "): " + e.getLocalizedMessage());
-        }
+    public <I extends CustomFeature<T>, T extends CustomFeatureDefinition<I>> Optional<CustomFeatureRegistry<I, T>> getRegistry(T definition) {
+        return registryMap.get(definition);
     }
 
     @Listener(order = Order.BEFORE_POST)

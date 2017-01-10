@@ -119,7 +119,9 @@ public interface CustomBlockDefinition<T extends CustomBlock<? extends CustomBlo
         armorStand.offer(Keys.ARMOR_STAND_MARKER, true);
         armorStand.offer(Keys.HAS_GRAVITY, false);
         armorStand.offer(Keys.PERSISTS, true);
+        armorStand.offer(Keys.IS_SILENT, true);
         armorStand.setHeadRotation(Vector3d.ZERO);
+        armorStand.setRotation(Vector3d.ZERO);
 
         return armorStand;
     }

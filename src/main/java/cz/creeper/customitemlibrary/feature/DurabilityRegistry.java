@@ -216,10 +216,12 @@ public class DurabilityRegistry {
             ItemType itemType = entry.getKey();
             BiMap<Integer, Identifier> durabilityToModelId = entry.getValue();
             JsonArray modelOverrides = new JsonArray();
+            List<Integer> durabilities = Lists.newArrayList(durabilityToModelId.keySet());
 
-            for (Map.Entry<Integer, Identifier> pair : durabilityToModelId.entrySet()) {
-                int durability = pair.getKey();
-                Identifier modelId = pair.getValue();
+            Collections.sort(durabilities, Collections.reverseOrder());
+
+            for (int durability : durabilities) {
+                Identifier modelId = durabilityToModelId.get(durability);
                 String pluginId = modelId.getNamespace();
                 String model = modelId.getValue();
 
