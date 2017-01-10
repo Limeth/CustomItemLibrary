@@ -1,12 +1,18 @@
 package cz.creeper.customitemlibrary;
 
 import com.google.inject.Inject;
+import cz.creeper.customitemlibrary.data.CustomBlockData;
+import cz.creeper.customitemlibrary.data.CustomBlockManipulatorBuilder;
 import cz.creeper.customitemlibrary.data.CustomFeatureData;
 import cz.creeper.customitemlibrary.data.CustomFeatureManipulatorBuilder;
+import cz.creeper.customitemlibrary.data.ImmutableCustomBlockData;
 import cz.creeper.customitemlibrary.data.ImmutableCustomFeatureData;
-import cz.creeper.customitemlibrary.data.ImmutableRepresentedCustomItemSnapshotData;
+import cz.creeper.customitemlibrary.data
+        .ImmutableRepresentedCustomItemSnapshotData;
 import cz.creeper.customitemlibrary.data.RepresentedCustomItemSnapshotData;
-import cz.creeper.customitemlibrary.data.RepresentedCustomItemSnapshotManipulatorBuilder;
+import cz.creeper.customitemlibrary.data
+        .RepresentedCustomItemSnapshotManipulatorBuilder;
+import cz.creeper.customitemlibrary.feature.CustomFeatureDefinition;
 import cz.creeper.customitemlibrary.feature.block.CustomBlock;
 import cz.creeper.customitemlibrary.feature.block.CustomBlockDefinition;
 import cz.creeper.customitemlibrary.feature.item.CustomItem;
@@ -21,6 +27,7 @@ import ninja.leaping.configurate.ConfigurationOptions;
 import ninja.leaping.configurate.objectmapping.GuiceObjectMapperFactory;
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
+import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.command.CommandManager;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -38,6 +45,8 @@ import org.spongepowered.api.event.game.state.GameLoadCompleteEvent;
 import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.event.game.state.GameStoppedEvent;
+import org.spongepowered.api.item.ItemTypes;
+import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.Dependency;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
@@ -89,6 +98,7 @@ public class CustomItemLibrary {
     @Listener
     public void onGamePreInitialization(GamePreInitializationEvent event) {
         Sponge.getDataManager().register(CustomFeatureData.class, ImmutableCustomFeatureData.class, new CustomFeatureManipulatorBuilder());
+        Sponge.getDataManager().register(CustomBlockData.class, ImmutableCustomBlockData.class, new CustomBlockManipulatorBuilder());
         Sponge.getDataManager().register(RepresentedCustomItemSnapshotData.class, ImmutableRepresentedCustomItemSnapshotData.class, new RepresentedCustomItemSnapshotManipulatorBuilder());
     }
 
@@ -104,6 +114,25 @@ public class CustomItemLibrary {
     @Listener
     public void onGamePostInitializationDefault(GamePostInitializationEvent event) {
         // During this phase, plugins using this library should register their custom item definitions.
+        service.register(
+                CustomFeatureDefinition.itemMaterialBuilder()
+                .plugin(this)
+                .typeId("odd")
+                .defaultModel("odd")
+                .itemStackSnapshot(ItemStack.of(ItemTypes.SKULL, 1).createSnapshot())
+                .build()
+        );
+
+        service.register(
+                CustomFeatureDefinition.simpleBlockBuilder()
+                .plugin(this)
+                .typeId("odd")
+                .defaultModel("odd")
+                .additionalAsset("textures/blocks/odd.png")
+                .harvestingType(BlockTypes.COBBLESTONE)
+                .soundPlace(BlockTypes.BARRIER.getSoundGroup().getPlaceSound())
+                .build()
+        );
     }
 
     @Listener

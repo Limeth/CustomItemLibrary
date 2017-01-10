@@ -42,9 +42,25 @@ public class DurabilityRegistry {
     private final Map<ItemType, BiMap<Integer, Identifier>> typeToDurabilityToModelId = Maps.newHashMap();
 
     public <T extends CustomFeatureDefinition<? extends CustomFeature> & DefinesDurabilityModels> void register(ItemType itemType, T definition) {
-        definition.getModels().forEach(model -> {
+        register(itemType, definition.getPluginContainer(), definition.getModels(), definition.getModelDirectoryName());
+    }
+
+    public static ItemStack createItemUnsafe(ItemType itemType, PluginContainer pluginContainer, String model) {
+        int durability = DurabilityRegistry.getInstance().getDurability(itemType, pluginContainer, model)
+                .orElseThrow(() -> new IllegalStateException("The model should have been registered by now, is the definition actually being registered?"));
+
+        ItemStack itemStack = ItemStack.of(itemType, 1);
+
+        itemStack.offer(Keys.UNBREAKABLE, true);
+        itemStack.offer(Keys.ITEM_DURABILITY, durability);
+
+        return itemStack;
+    }
+
+    public void register(ItemType itemType, PluginContainer pluginContainer, Iterable<String> models, String modelDirectoryName) {
+        models.forEach(model -> {
             BiMap<Integer, Identifier> durabilityToModelId = typeToDurabilityToModelId.computeIfAbsent(itemType, k -> HashBiMap.create());
-            Identifier modelId = new Identifier(definition.getPluginContainer().getId(), model);
+            Identifier modelId = new Identifier(pluginContainer.getId(), model);
 
             // Is the model already registered? If so, skip.
             Integer registeredDurability = durabilityToModelId.inverse().get(modelId);
@@ -55,7 +71,7 @@ public class DurabilityRegistry {
 
             DurabilityIdentifier durabilityId = new DurabilityIdentifier(itemType, registeredDurability);
 
-            durabilityIdToDirectoryName.put(durabilityId, definition.getModelDirectoryName());
+            durabilityIdToDirectoryName.put(durabilityId, modelDirectoryName);
             durabilityIdToModelId.put(durabilityId, modelId);
             durabilityToModelId.put(registeredDurability, modelId);
         });

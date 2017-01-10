@@ -18,12 +18,14 @@ public abstract class AbstractCustomBlockDefinition<T extends CustomBlock<? exte
     @NonNull
     private final BlockState effectState;
     private final boolean rotateHorizontally;
+    private final boolean generateDamageIndicatorModels;
 
-    public AbstractCustomBlockDefinition(PluginContainer pluginContainer, String typeId, String defaultModel, Iterable<String> models, BlockState effectState, boolean rotateHorizontally) {
+    public AbstractCustomBlockDefinition(PluginContainer pluginContainer, String typeId, String defaultModel, Iterable<String> models, BlockState effectState, boolean rotateHorizontally, boolean generateDamageIndicatorModels) {
         super(pluginContainer, typeId, defaultModel, models);
 
         this.effectState = effectState;
         this.rotateHorizontally = rotateHorizontally;
+        this.generateDamageIndicatorModels = generateDamageIndicatorModels;
     }
 
     protected abstract Optional<T> wrapBarrierIfPossible(Block block);

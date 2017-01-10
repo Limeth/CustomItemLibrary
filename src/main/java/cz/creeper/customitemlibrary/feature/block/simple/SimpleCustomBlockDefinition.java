@@ -16,6 +16,7 @@ import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockState;
 import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.data.property.block.HardnessProperty;
+import org.spongepowered.api.effect.sound.SoundType;
 import org.spongepowered.api.entity.living.ArmorStand;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.item.inventory.ItemStack;
@@ -53,8 +54,9 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
                                         @NonNull CorrectToolPredicate correctToolPredicate, double hardness,
                                         @NonNull BlockState effectState, @NonNull DropProvider dropProvider,
                                         String defaultModel, Iterable<String> additionalModels,
-                                        Iterable<String> additionalAssets, boolean rotateHorizontally) {
-        super(pluginContainer, typeId, defaultModel, additionalModels, effectState, rotateHorizontally);
+                                        Iterable<String> additionalAssets, boolean rotateHorizontally,
+                                        boolean generateDamageIndicatorModels) {
+        super(pluginContainer, typeId, defaultModel, additionalModels, effectState, rotateHorizontally, generateDamageIndicatorModels);
 
         this.assets = ImmutableSet.<String>builder()
                 .addAll(getModels().stream()
@@ -75,7 +77,8 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
                                                      DropProvider dropProvider, String defaultModel,
                                                      @Singular Iterable<String> additionalModels,
                                                      @Singular Iterable<String> additionalAssets,
-                                                     boolean rotateHorizontally) {
+                                                     boolean rotateHorizontally,
+                                                     boolean generateDamageIndicatorModels) {
         PluginContainer pluginContainer = Sponge.getPluginManager().fromInstance(plugin)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid plugin instance."));
         if(effectState == null)
@@ -100,7 +103,7 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
                     .map(Collections::singletonList)
                     .orElseGet(Collections::emptyList);
 
-        return new SimpleCustomBlockDefinition(pluginContainer, typeId, correctToolPredicate, hardness, effectState, dropProvider, defaultModel, additionalModels, additionalAssets, rotateHorizontally);
+        return new SimpleCustomBlockDefinition(pluginContainer, typeId, correctToolPredicate, hardness, effectState, dropProvider, defaultModel, additionalModels, additionalAssets, rotateHorizontally, generateDamageIndicatorModels);
     }
 
     @Override

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.nio.file.Path;
 
 public interface CustomFeatureRegistry<I extends CustomFeature<T>, T extends CustomFeatureDefinition<I>> {
     /**
@@ -22,8 +23,11 @@ public interface CustomFeatureRegistry<I extends CustomFeature<T>, T extends Cus
      * @param asset The asset to modify
      * @param input The data that would be written to the file
      * @param output Where to write the data to
+     * @param outputFile The file to write the data to
      */
-    default void writeAsset(T definition, String asset, ReadableByteChannel input, WritableByteChannel output) throws IOException {
+    default void writeAsset(T definition, String asset,
+            ReadableByteChannel input, WritableByteChannel output,
+            Path outputFile) throws IOException {
         ByteBuffer buffer = ByteBuffer.allocateDirect(2048);
 
         while(input.read(buffer) != -1) {
