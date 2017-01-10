@@ -172,6 +172,10 @@ public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCu
 
             armorStand = CustomBlockDefinition.createDummyArmorStand(block.getBlock());
 
+            extent.spawnEntity(armorStand, Cause.source(EntitySpawnCause.builder()
+                    .entity(armorStand)
+                    .type(SpawnTypes.PLUGIN).build())
+                    .build());
             customBlockData.set(CustomItemLibraryKeys.CUSTOM_BLOCK_DAMAGE_INDICATOR_ARMOR_STAND_ID, armorStand.getUniqueId());
         }
 
