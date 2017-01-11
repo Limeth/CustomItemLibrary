@@ -127,6 +127,8 @@ public class CustomItemServiceImpl implements CustomItemService {
 
     public Path generateResourcePack() {
         Path directory = getDirectoryResourcePack();
+
+        // Copy over the pack.mcmeta file
         Path packFile = directory.resolve(FILE_NAME_PACK);
 
         try {
@@ -146,6 +148,9 @@ public class CustomItemServiceImpl implements CustomItemService {
 
         getDefinitions().forEach(customFeatureDefinition ->
                 customFeatureDefinition.generateResourcePackFiles(directory));
+
+        registryMap.values().forEach(registry ->
+                registry.generateResourcePackFiles(directory));
 
         DurabilityRegistry.getInstance().generateResourcePack(directory);
 

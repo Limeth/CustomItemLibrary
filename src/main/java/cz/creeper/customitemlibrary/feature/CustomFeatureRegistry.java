@@ -20,6 +20,15 @@ public interface CustomFeatureRegistry<I extends CustomFeature<T>, T extends Cus
     default void prepare() {}
 
     /**
+     * Generates resourcepack files.
+     * This should not call {@link CustomFeatureDefinition#generateResourcePackFiles(Path)}
+     * as that method is called separately.
+     *
+     * @param resourcePackDirectory The resourcepack directory
+     */
+    default void generateResourcePackFiles(Path resourcePackDirectory) {}
+
+    /**
      * @param asset The asset to modify
      * @param input The data that would be written to the file
      * @param output Where to write the data to

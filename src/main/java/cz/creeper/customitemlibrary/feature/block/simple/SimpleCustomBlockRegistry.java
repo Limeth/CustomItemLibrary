@@ -53,7 +53,9 @@ import java.io.Writer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -76,6 +78,21 @@ public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCu
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     @Override
+    public void prepare() {
+        // Register the default cubic damage indicator models
+        for(int stage = 0; stage < 10; stage++) {
+            String model = getDamageIndicatorModel(null, stage);
+
+            DurabilityRegistry.getInstance().register(
+                    DAMAGE_INDICATOR_ITEM_TYPE,
+                    CustomItemLibrary.getInstance().getPluginContainer(),
+                    Collections.singleton(model),
+                    CustomBlockDefinition.MODEL_DIRECTORY_NAME
+            );
+        }
+    }
+
+    @Override
     public void register(SimpleCustomBlockDefinition definition) {
         DurabilityRegistry durabilityRegistry = DurabilityRegistry.getInstance();
 
@@ -88,6 +105,66 @@ public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCu
                     .collect(Collectors.toList());
 
             durabilityRegistry.register(DAMAGE_INDICATOR_ITEM_TYPE, definition.getPluginContainer(), damageIndicatorModels, definition.getModelDirectoryName());
+        }
+    }
+
+    @Override
+    public void generateResourcePackFiles(Path resourcePackDirectory) {
+        Path blocksDirectory = resourcePackDirectory.resolve("assets")
+                .resolve(CustomItemLibrary.getInstance().getPluginContainer().getId())
+                .resolve("models").resolve("blocks");
+
+        if(!Files.isDirectory(blocksDirectory)) {
+            try {
+                Files.createDirectories(blocksDirectory);
+            } catch (IOException e) {
+                CustomItemLibrary.getInstance().getLogger().error("Could not create the blocks directory.", e);
+            }
+        }
+
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+        for(int stage = 0; stage < 10; stage++) {
+            Path modelFile = blocksDirectory.resolve(getDamageIndicatorModel(null, stage) + ".json");
+            JsonObject root = new JsonObject();
+            JsonObject textures = new JsonObject();
+
+            textures.add("0", new JsonPrimitive("minecraft:blocks/destroy_stage_" + stage));
+            root.add("textures", textures);
+
+            JsonArray elements = new JsonArray();
+            JsonObject cube = new JsonObject();
+            JsonArray from = new JsonArray();
+            JsonArray to = new JsonArray();
+
+            for(int i = 0; i < 3; i++) {
+                from.add(new JsonPrimitive(0 - SimpleCustomBlockDefinition.MODEL_OFFSET_DAMAGE_INDICATOR));
+                to.add(new JsonPrimitive(16 + SimpleCustomBlockDefinition.MODEL_OFFSET_DAMAGE_INDICATOR));
+            }
+
+            cube.add("from", from);
+            cube.add("to", to);
+
+            JsonObject faces = new JsonObject();
+
+            Stream.of("north", "east", "south", "west", "up", "down").forEachOrdered(face -> {
+                JsonObject texture = new JsonObject();
+
+                texture.add("texture", new JsonPrimitive("#0"));
+                faces.add(face, texture);
+            });
+
+            cube.add("faces", faces);
+            elements.add(cube);
+            root.add("elements", elements);
+
+            alignBlockModel(root);
+
+            try(Writer writer = Files.newBufferedWriter(modelFile)) {
+                gson.toJson(root, writer);
+            } catch (IOException e) {
+                CustomItemLibrary.getInstance().getLogger().error("Could not create model file: " + modelFile, e);
+            }
         }
     }
 
