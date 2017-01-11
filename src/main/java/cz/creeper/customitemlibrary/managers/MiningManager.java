@@ -94,7 +94,7 @@ public class MiningManager {
             if(durationTicks < 0)
                 durationTicks = 0;
 
-            MiningStopEvent stopEvent = new MiningStopEvent(Optional.of(player), mining.snapshot, durationTicks,
+            MiningStopEvent stopEvent = new MiningStopEvent(playerId, mining.snapshot, durationTicks,
                     Cause.source(CustomItemLibrary.getInstance().getPluginContainer()).notifier(player).build(), MiningStopEvent.Reason.STARTED_MINING_OTHER_BLOCK);
 
             Sponge.getEventManager().post(stopEvent);
@@ -151,7 +151,7 @@ public class MiningManager {
                     if (cancelled) {
                         playerToMining.remove(playerId);
 
-                        MiningStopEvent stopEvent = new MiningStopEvent(player, mining.snapshot, durationTicks,
+                        MiningStopEvent stopEvent = new MiningStopEvent(playerId, mining.snapshot, durationTicks,
                                 Cause.source(CustomItemLibrary.getInstance().getPluginContainer()).notifier(player).build(), MiningStopEvent.Reason.MINING_PROGRESS_EVENT_CANCELLED);
 
                         Sponge.getEventManager().post(stopEvent);
@@ -161,7 +161,7 @@ public class MiningManager {
                 }
             }
 
-            MiningStopEvent stopEvent = new MiningStopEvent(player, mining.snapshot, durationTicks,
+            MiningStopEvent stopEvent = new MiningStopEvent(playerId, mining.snapshot, durationTicks,
                     Cause.source(CustomItemLibrary.getInstance().getPluginContainer()).notifier(player).build(), MiningStopEvent.Reason.BUTTON_RELEASED);
 
             Sponge.getEventManager().post(stopEvent);
