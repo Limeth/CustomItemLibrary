@@ -1,3 +1,11 @@
+# Custom entries:
+src/main/resources/assets/customitemlibrary/models
+src/main/resources/assets/customitemlibrary/textures
+
+#
+# DEFAULT .GITIGNROE FOLLOWS
+#
+
 # JAVA
 *.class
 
