@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<SimpleCustomBlock> {
-    public static final double MODEL_OFFSET_DAMAGE_INDICATOR = 0.0001;
+    public static final double MODEL_OFFSET_DAMAGE_INDICATOR = 0.0005;
 
     @NonNull
     private final ImmutableSet<String> assets;
