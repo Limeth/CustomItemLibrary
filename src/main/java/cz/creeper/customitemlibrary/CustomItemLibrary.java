@@ -131,7 +131,6 @@ public class CustomItemLibrary {
                 .additionalAsset("textures/blocks/odd.png")
                 .harvestingType(BlockTypes.COBBLESTONE)
                 .soundPlace(BlockTypes.BARRIER.getSoundGroup().getPlaceSound())
-                .generateDamageIndicatorModels(true)
                 .build()
         );
     }
