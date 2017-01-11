@@ -67,10 +67,6 @@ public class MiningManager {
         BlockSnapshot snapshot = event.getTargetBlock();
         Mining mining = playerToMining.get(playerId);
 
-        System.out.println("Current tick: " + currentTick);
-        System.out.println(mining);
-        System.out.println(snapshot);
-
         // BlockSnapshot.NONE signifies, that the mouse button is being held on the clicked block
         if(BlockSnapshot.NONE.equals(snapshot) && mining != null) {
             mining.tickUpdated = currentTick;
