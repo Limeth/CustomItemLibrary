@@ -3,6 +3,7 @@ package cz.creeper.customitemlibrary.event;
 import com.google.common.collect.ImmutableList;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.data.Transaction;
 import org.spongepowered.api.event.block.ChangeBlockEvent;
@@ -12,6 +13,7 @@ import org.spongepowered.api.world.World;
 
 import java.util.List;
 
+@ToString
 @Getter
 public class CustomBlockPlaceEvent extends AbstractEvent implements ChangeBlockEvent.Place {
     private final List<Transaction<BlockSnapshot>> transactions;

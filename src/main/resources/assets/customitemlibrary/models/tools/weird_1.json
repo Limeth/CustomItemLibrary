@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "customitemlibrary:tools/weird_1"
+  }
+}
