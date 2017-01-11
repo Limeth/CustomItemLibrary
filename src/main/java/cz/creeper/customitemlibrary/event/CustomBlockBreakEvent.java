@@ -8,6 +8,7 @@ import cz.creeper.customitemlibrary.feature.block.CustomBlockDefinition;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
+import lombok.ToString;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.data.Transaction;
@@ -20,6 +21,7 @@ import org.spongepowered.api.world.World;
 import java.util.Collections;
 import java.util.List;
 
+@ToString
 @Getter
 public class CustomBlockBreakEvent extends AbstractEvent implements ChangeBlockEvent.Break {
     private final CustomBlock<? extends CustomBlockDefinition> customBlock;

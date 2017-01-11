@@ -14,6 +14,7 @@ import cz.creeper.customitemlibrary.data.CustomItemLibraryKeys;
 import cz.creeper.customitemlibrary.event.CustomBlockBreakEvent;
 import cz.creeper.customitemlibrary.event.CustomBlockBreakItemDropEvent;
 import cz.creeper.customitemlibrary.event.MiningProgressEvent;
+import cz.creeper.customitemlibrary.event.MiningStopEvent;
 import cz.creeper.customitemlibrary.feature.CustomFeatureRegistry;
 import cz.creeper.customitemlibrary.feature.DurabilityRegistry;
 import cz.creeper.customitemlibrary.feature.block.CustomBlockDefinition;
@@ -38,7 +39,6 @@ import org.spongepowered.api.event.Order;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.entity.spawn.EntitySpawnCause;
 import org.spongepowered.api.event.cause.entity.spawn.SpawnTypes;
-import org.spongepowered.api.event.filter.cause.First;
 import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
@@ -185,7 +185,8 @@ public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCu
     }
 
     @Listener(order = Order.BEFORE_POST)
-    public void onMiningProgress(MiningProgressEvent event, @First Player player) {
+    public void onMiningProgress(MiningProgressEvent event) {
+        Player player = event.getPlayer();
         BlockSnapshot snapshot = event.getSnapshot();
         Location<World> location = snapshot.getLocation()
                 .orElseThrow(() -> new IllegalStateException("Could not access the location of the block that is being mined."));
@@ -237,6 +238,19 @@ public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCu
                     damageIndicatorArmorStand.setHelmet(damageIndicatorItemStack);
                 }
             });
+    }
+
+    @Listener(order = Order.BEFORE_POST)
+    public void onMiningStop(MiningStopEvent event) {
+        BlockSnapshot snapshot = event.getSnapshot();
+        Location<World> location = snapshot.getLocation()
+                .orElseThrow(() -> new IllegalStateException("Could not access the location of the block that is being mined."));
+
+        CustomItemLibrary.getInstance().getService().getBlock(location)
+                .filter(SimpleCustomBlock.class::isInstance)
+                .map(SimpleCustomBlock.class::cast)
+                .flatMap(SimpleCustomBlockRegistry::getDamageIndicatorArmorStand)
+                .ifPresent(Entity::remove);
     }
 
     private static void spawnDrops(BlockSnapshot snapshot, SimpleCustomBlock customBlock, Player player, Cause cause) {

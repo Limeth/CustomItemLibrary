@@ -4,6 +4,7 @@ import cz.creeper.customitemlibrary.util.Util;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
+import lombok.ToString;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.EntitySnapshot;
 import org.spongepowered.api.entity.Item;
@@ -12,10 +13,12 @@ import org.spongepowered.api.event.impl.AbstractEvent;
 import org.spongepowered.api.event.item.inventory.DropItemEvent;
 import org.spongepowered.api.world.World;
 
-import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nonnull;
+
+@ToString
 @Getter
 public class CustomBlockBreakItemDropEvent extends AbstractEvent implements DropItemEvent.Destruct {
     private final List<Entity> entities;

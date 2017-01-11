@@ -3,24 +3,24 @@ package cz.creeper.customitemlibrary.event;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.Setter;
 import lombok.ToString;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.event.Cancellable;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.impl.AbstractEvent;
 
+import java.util.Optional;
+
 /**
- * Called when a block is being mined.
+ * Called when the player has stopped mining a block.
  */
 @ToString
 @AllArgsConstructor
 @Getter
-public class MiningProgressEvent extends AbstractEvent implements Cancellable {
+public class MiningStopEvent extends AbstractEvent {
     @NonNull
-    private final Player player;
+    private final Optional<Player> player;
 
     @NonNull
     private final BlockSnapshot snapshot;
@@ -30,13 +30,16 @@ public class MiningProgressEvent extends AbstractEvent implements Cancellable {
     @NonNull
     private final Cause cause;
 
-    @Setter
-    private boolean cancelled;
+    private Reason miningProgressEventCancelled;
 
     /**
      * @return The duration in seconds
      */
     public double getDuration() {
         return ((double) durationTicks) / Sponge.getServer().getTicksPerSecond();
+    }
+
+    public enum Reason {
+        MINING_PROGRESS_EVENT_CANCELLED, STARTED_MINING_OTHER_BLOCK, BUTTON_RELEASED
     }
 }
