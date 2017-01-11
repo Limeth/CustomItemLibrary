@@ -9,7 +9,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
-import cz.creeper.customitemlibrary.feature.CustomFeatureDefinition;
+import cz.creeper.customitemlibrary.feature.CustomFeatureRegistry;
 import cz.creeper.customitemlibrary.feature.block.AbstractCustomBlockDefinition;
 import cz.creeper.customitemlibrary.feature.item.CustomItem;
 import cz.creeper.customitemlibrary.util.Block;
@@ -142,7 +142,7 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
 
             getModels().forEach(model -> {
                 String assetPath = SimpleCustomBlockDefinition.getModelPath(model);
-                String filePath = CustomFeatureDefinition.getFilePath(pluginContainer, assetPath);
+                String filePath = CustomFeatureRegistry.getFilePath(pluginContainer, assetPath);
                 Path inputFile = resourcePackDirectory.resolve(filePath);
 
                 for(int stage = 0; stage < 10; stage++) {

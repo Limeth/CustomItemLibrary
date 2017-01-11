@@ -1,7 +1,6 @@
 package cz.creeper.customitemlibrary.feature;
 
 import com.google.common.collect.ImmutableSet;
-import cz.creeper.customitemlibrary.CustomItemLibrary;
 import cz.creeper.customitemlibrary.data.CustomFeatureData;
 import cz.creeper.customitemlibrary.feature.block.CustomBlock;
 import cz.creeper.customitemlibrary.feature.block.simple.SimpleCustomBlockDefinition;
@@ -9,23 +8,13 @@ import cz.creeper.customitemlibrary.feature.item.CustomItemDefinition;
 import cz.creeper.customitemlibrary.feature.item.material.CustomMaterialDefinition;
 import cz.creeper.customitemlibrary.feature.item.material.PlaceProvider;
 import cz.creeper.customitemlibrary.feature.item.tool.CustomToolDefinition;
-import org.spongepowered.api.Sponge;
-import org.spongepowered.api.asset.Asset;
 import org.spongepowered.api.block.BlockType;
 import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.data.DataHolder;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.plugin.PluginContainer;
 
-import java.io.IOException;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.SeekableByteChannel;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.Optional;
 import java.util.Set;
 
 public interface CustomFeatureDefinition<T extends CustomFeature<? extends CustomFeatureDefinition<T>>> extends DefinesModels {
@@ -73,55 +62,7 @@ public interface CustomFeatureDefinition<T extends CustomFeature<? extends Custo
      * @param resourcePackDirectory The resourcepack directory
      */
     default void generateResourcePackFiles(Path resourcePackDirectory) {
-        getAssets().forEach(asset -> copyAsset(this, asset, resourcePackDirectory));
-    }
-
-    static String getFilePath(PluginContainer plugin, String assetPath) {
-        return CustomToolDefinition.getAssetPrefix(plugin) + assetPath;
-    }
-
-    static void copyAsset(CustomFeatureDefinition definition, String assetPath, Path resourcePackDirectory) {
-        PluginContainer plugin = definition.getPluginContainer();
-        String filePath = getFilePath(plugin, assetPath);
-        Optional<Asset> optionalAsset = Sponge
-                .getAssetManager().getAsset(plugin, assetPath);
-
-        if (!optionalAsset.isPresent()) {
-            CustomItemLibrary.getInstance().getLogger()
-                    .warn("Could not locate an asset for plugin '"
-                            + plugin.getName() + "' with path '" + filePath + "'.");
-            return;
-        }
-
-        Asset asset = optionalAsset.get();
-        Path outputFile = resourcePackDirectory.resolve(Paths.get(filePath));
-
-        try {
-            Files.createDirectories(outputFile.getParent());
-
-            if (Files.exists(outputFile))
-                Files.delete(outputFile);
-
-            Files.createFile(outputFile);
-
-            //noinspection unchecked
-            CustomFeatureRegistry registry = (CustomFeatureRegistry) CustomItemLibrary.getInstance()
-                            .getService().getRegistry(definition).get();
-
-            try (
-                    ReadableByteChannel input = Channels
-                            .newChannel(asset.getUrl().openStream());
-                    SeekableByteChannel output = Files.newByteChannel
-                            (outputFile, StandardOpenOption.WRITE)
-            ) {
-                //noinspection unchecked
-                registry.writeAsset(definition, assetPath, input, output, outputFile);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            CustomItemLibrary.getInstance().getLogger()
-                    .warn("Could not copy a file from assets (" + filePath + "): " + e.getLocalizedMessage());
-        }
+        getAssets().forEach(asset -> CustomFeatureRegistry.copyAsset(this, asset, resourcePackDirectory));
     }
 
     /**
