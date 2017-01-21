@@ -14,6 +14,10 @@ import cz.creeper.customitemlibrary.feature.block.CustomBlock;
 import cz.creeper.customitemlibrary.feature.block.CustomBlockDefinition;
 import cz.creeper.customitemlibrary.feature.block.simple.SimpleCustomBlockDefinition;
 import cz.creeper.customitemlibrary.feature.block.simple.SimpleCustomBlockRegistry;
+import cz.creeper.customitemlibrary.feature.inventory.CustomInventory;
+import cz.creeper.customitemlibrary.feature.inventory.CustomInventoryDefinition;
+import cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinition;
+import cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryRegistry;
 import cz.creeper.customitemlibrary.feature.item.CustomItem;
 import cz.creeper.customitemlibrary.feature.item.CustomItemDefinition;
 import cz.creeper.customitemlibrary.feature.item.material.CustomMaterialDefinition;
@@ -58,12 +62,14 @@ public class CustomItemServiceImpl implements CustomItemService {
     private final CustomFeatureRegistryMap registryMap = new CustomFeatureRegistryMap();
     private final Map<String, Map<String, CustomItemDefinition<? extends CustomItem>>> pluginIdsToTypeIdsToItemDefinitions = Maps.newHashMap();
     private final Map<String, Map<String, CustomBlockDefinition<? extends CustomBlock>>> pluginIdsToTypeIdsToBlockDefinitions = Maps.newHashMap();
+    private final Map<String, Map<String, CustomInventoryDefinition<? extends CustomInventory>>> pluginIdsToTypeIdsToInventoryDefinitions = Maps.newHashMap();
     private final Map<Block, Optional<UUID>> blockToArmorStand = Maps.newHashMap();
 
     public CustomItemServiceImpl() {
         registryMap.put(CustomToolDefinition.class, CustomToolRegistry.getInstance());
         registryMap.put(CustomMaterialDefinition.class, CustomMaterialRegistry.getInstance());
         registryMap.put(SimpleCustomBlockDefinition.class, SimpleCustomBlockRegistry.getInstance());
+        registryMap.put(SimpleCustomInventoryDefinition.class, SimpleCustomInventoryRegistry.getInstance());
 
         registryMap.values().forEach(registry -> Sponge.getEventManager().registerListeners(
                 CustomItemLibrary.getInstance(),
@@ -98,6 +104,13 @@ public class CustomItemServiceImpl implements CustomItemService {
                 throw new IllegalStateException("A custom feature definition with ID \"" + definition.getTypeId() + "\" is already registered!");
 
             typeIdsToDefinitions.put(definition.getTypeId(), (CustomBlockDefinition<? extends CustomBlock>) definition);
+        } else if(definition instanceof CustomInventoryDefinition) {
+            val typeIdsToDefinitions = getTypeIdsToInventoryDefinitions(definition.getPluginContainer());
+
+            if (typeIdsToDefinitions.containsKey(definition.getTypeId()))
+                throw new IllegalStateException("A custom feature definition with ID \"" + definition.getTypeId() + "\" is already registered!");
+
+            typeIdsToDefinitions.put(definition.getTypeId(), (CustomInventoryDefinition<? extends CustomBlock>) definition);
         } else {
             throw new IllegalArgumentException("Invalid custom definition type. It must extend either CustomItemDefinition or CustomBlockDefinition.");
         }
@@ -261,6 +274,14 @@ public class CustomItemServiceImpl implements CustomItemService {
 
     private Map<String, CustomBlockDefinition<? extends CustomBlock>> getTypeIdsToBlockDefinitions(String pluginId) {
         return pluginIdsToTypeIdsToBlockDefinitions.computeIfAbsent(pluginId, k -> Maps.newHashMap());
+    }
+
+    private Map<String, CustomInventoryDefinition<? extends CustomInventory>> getTypeIdsToInventoryDefinitions(PluginContainer pluginContainer) {
+        return getTypeIdsToInventoryDefinitions(pluginContainer.getId());
+    }
+
+    private Map<String, CustomInventoryDefinition<? extends CustomInventory>> getTypeIdsToInventoryDefinitions(String pluginId) {
+        return pluginIdsToTypeIdsToInventoryDefinitions.computeIfAbsent(pluginId, k -> Maps.newHashMap());
     }
 
     public <I extends CustomFeature<T>, T extends CustomFeatureDefinition<I>> Optional<CustomFeatureRegistry<I, T>> getRegistry(T definition) {

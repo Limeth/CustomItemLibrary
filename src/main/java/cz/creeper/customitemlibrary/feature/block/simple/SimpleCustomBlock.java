@@ -28,7 +28,7 @@ public class SimpleCustomBlock extends AbstractCustomBlock<SimpleCustomBlockDefi
     }
 
     public ItemStack createHelmet(String model) {
-        return DurabilityRegistry.createItemUnsafe(HELMET_ITEM_TYPE, getDefinition().getPluginContainer(), model);
+        return DurabilityRegistry.getInstance().createItemUnsafe(HELMET_ITEM_TYPE, getDefinition().getPluginContainer(), model);
     }
 
     @Override

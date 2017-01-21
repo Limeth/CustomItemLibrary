@@ -3,13 +3,13 @@ package cz.creeper.customitemlibrary.feature.item;
 import cz.creeper.customitemlibrary.data.CustomFeatureData;
 import cz.creeper.customitemlibrary.data.CustomItemLibraryKeys;
 import cz.creeper.customitemlibrary.data.RepresentedCustomItemSnapshotData;
-import cz.creeper.customitemlibrary.feature.CustomFeature;
+import cz.creeper.customitemlibrary.feature.CustomModelledFeature;
 import org.spongepowered.api.item.inventory.ItemStack;
 
 /**
  * A wrapper class for {@link ItemStack}s created by the CustomItemLibrary
  */
-public interface CustomItem<T extends CustomItemDefinition<? extends CustomItem<T>>> extends CustomFeature<T> {
+public interface CustomItem<T extends CustomItemDefinition<? extends CustomItem<T>>> extends CustomModelledFeature<T> {
     ItemStack getDataHolder();
 
     default CustomFeatureData createCustomItemData() {

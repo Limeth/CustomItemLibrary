@@ -5,7 +5,7 @@ import com.google.common.collect.ImmutableSet;
 import cz.creeper.customitemlibrary.event.CustomItemCreationEvent;
 import cz.creeper.customitemlibrary.feature.DurabilityRegistry;
 import cz.creeper.customitemlibrary.feature.item.AbstractCustomItemDefinition;
-import cz.creeper.customitemlibrary.feature.item.DefinesDurabilityModels;
+import cz.creeper.customitemlibrary.feature.DefinesDurabilityModels;
 import cz.creeper.customitemlibrary.util.Util;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;

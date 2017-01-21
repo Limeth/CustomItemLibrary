@@ -113,7 +113,7 @@ public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCu
     public void generateResourcePackFiles(Path resourcePackDirectory) {
         Path blocksDirectory = resourcePackDirectory.resolve("assets")
                 .resolve(CustomItemLibrary.getInstance().getPluginContainer().getId())
-                .resolve("models").resolve("blocks");
+                .resolve("models").resolve(CustomBlockDefinition.MODEL_DIRECTORY_NAME);
 
         if(!Files.isDirectory(blocksDirectory)) {
             try {
@@ -122,8 +122,6 @@ public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCu
                 CustomItemLibrary.getInstance().getLogger().error("Could not create the blocks directory.", e);
             }
         }
-
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
         for(int stage = 0; stage < 10; stage++) {
             Path modelFile = blocksDirectory.resolve(getDamageIndicatorModel(null, stage) + ".json");
@@ -162,7 +160,7 @@ public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCu
             alignBlockModel(root);
 
             try(Writer writer = Files.newBufferedWriter(modelFile)) {
-                gson.toJson(root, writer);
+                getGson().toJson(root, writer);
             } catch (IOException e) {
                 CustomItemLibrary.getInstance().getLogger().error("Could not create model file: " + modelFile, e);
             }
@@ -310,7 +308,8 @@ public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCu
                     String currentModel = definition.isGenerateDamageIndicatorModels() ? customBlock.getModel() : null;
                     double progress = event.getDuration() / requiredDuration;
                     String damageIndicatorModel = getDamageIndicatorModel(currentModel, progress);
-                    ItemStack damageIndicatorItemStack = DurabilityRegistry.createItemUnsafe(DAMAGE_INDICATOR_ITEM_TYPE, definition.getPluginContainer(), damageIndicatorModel);
+                    ItemStack damageIndicatorItemStack = DurabilityRegistry.getInstance()
+                            .createItemUnsafe(DAMAGE_INDICATOR_ITEM_TYPE, definition.getPluginContainer(), damageIndicatorModel);
 
                     damageIndicatorArmorStand.setHelmet(damageIndicatorItemStack);
                 }

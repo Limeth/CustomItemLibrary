@@ -10,8 +10,10 @@ import cz.creeper.customitemlibrary.data.ImmutableCustomFeatureData;
 import cz.creeper.customitemlibrary.data.ImmutableRepresentedCustomItemSnapshotData;
 import cz.creeper.customitemlibrary.data.RepresentedCustomItemSnapshotData;
 import cz.creeper.customitemlibrary.data.RepresentedCustomItemSnapshotManipulatorBuilder;
+import cz.creeper.customitemlibrary.feature.CustomFeatureDefinition;
 import cz.creeper.customitemlibrary.feature.block.CustomBlock;
 import cz.creeper.customitemlibrary.feature.block.CustomBlockDefinition;
+import cz.creeper.customitemlibrary.feature.inventory.CustomInventoryDefinition;
 import cz.creeper.customitemlibrary.feature.item.CustomItem;
 import cz.creeper.customitemlibrary.feature.item.CustomItemDefinition;
 import cz.creeper.customitemlibrary.managers.MiningManager;
@@ -36,11 +38,15 @@ import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.Order;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.NamedCause;
+import org.spongepowered.api.event.filter.cause.First;
 import org.spongepowered.api.event.game.state.GameConstructionEvent;
 import org.spongepowered.api.event.game.state.GameLoadCompleteEvent;
 import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.event.game.state.GameStoppedEvent;
+import org.spongepowered.api.event.item.inventory.AffectSlotEvent;
+import org.spongepowered.api.event.item.inventory.ClickInventoryEvent;
+import org.spongepowered.api.event.item.inventory.InteractItemEvent;
 import org.spongepowered.api.plugin.Dependency;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
@@ -105,9 +111,35 @@ public class CustomItemLibrary {
         logger.info("CustomItemLibrary loaded.");
     }
 
+    private static CustomInventoryDefinition CID;
+
     @Listener
     public void onGamePostInitializationDefault(GamePostInitializationEvent event) {
         // During this phase, plugins using this library should register their custom item definitions.
+
+        service.register(CID = CustomFeatureDefinition.simpleInventoryBuilder()
+                .plugin(this)
+                .typeId("CID")
+                .height(3)
+                .background(this, "bg", "alloy_furnace")
+                .build());
+    }
+
+    @Listener
+    public void onInteractItem(InteractItemEvent event, @First Player player) {
+        CID.open(player, event.getCause());
+    }
+
+    @Listener
+    public void onAffectSlot(AffectSlotEvent event) {
+        if(!(event instanceof ClickInventoryEvent)) {
+            //event.setCancelled(true);
+            return;
+        }
+
+        ClickInventoryEvent clickEvent = (ClickInventoryEvent) event;
+
+        System.out.println(event);
     }
 
     @Listener

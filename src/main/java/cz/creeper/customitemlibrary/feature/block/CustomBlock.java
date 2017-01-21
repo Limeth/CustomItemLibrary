@@ -1,6 +1,6 @@
 package cz.creeper.customitemlibrary.feature.block;
 
-import cz.creeper.customitemlibrary.feature.CustomFeature;
+import cz.creeper.customitemlibrary.feature.CustomModelledFeature;
 import cz.creeper.customitemlibrary.util.Block;
 import org.spongepowered.api.block.BlockType;
 import org.spongepowered.api.block.BlockTypes;
@@ -15,7 +15,7 @@ import java.util.UUID;
  * A wrapped block created by the {@link CustomBlockDefinition#placeBlock(Block, Cause)} method.
  * Allows for changing the model using {@link #setModel(String)} and {@link #getModel()}.
  */
-public interface CustomBlock<T extends CustomBlockDefinition<? extends CustomBlock<T>>> extends CustomFeature<T> {
+public interface CustomBlock<T extends CustomBlockDefinition<? extends CustomBlock<T>>> extends CustomModelledFeature<T> {
     BlockType BLOCK_TYPE_CUSTOM = BlockTypes.BARRIER;
 
     /**

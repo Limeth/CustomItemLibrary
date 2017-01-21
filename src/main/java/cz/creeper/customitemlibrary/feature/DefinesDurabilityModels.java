@@ -1,6 +1,4 @@
-package cz.creeper.customitemlibrary.feature.item;
-
-import cz.creeper.customitemlibrary.feature.DefinesModels;
+package cz.creeper.customitemlibrary.feature;
 
 public interface DefinesDurabilityModels extends DefinesModels {
     /**

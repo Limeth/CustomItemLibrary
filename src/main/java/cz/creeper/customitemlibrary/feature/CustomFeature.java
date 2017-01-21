@@ -7,7 +7,7 @@ import org.spongepowered.api.data.DataHolder;
 /**
  * A common interface for {@link CustomItem}s and {@link CustomBlock}s.
  */
-public interface CustomFeature<T extends CustomFeatureDefinition<? extends CustomFeature<T>>> extends HasModels {
+public interface CustomFeature<T extends CustomFeatureDefinition<? extends CustomFeature<T>>> {
     /**
      * @return The definition this {@link CustomFeature} was created with.
      */

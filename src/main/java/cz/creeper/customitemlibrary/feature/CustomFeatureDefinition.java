@@ -1,23 +1,23 @@
 package cz.creeper.customitemlibrary.feature;
 
 import com.google.common.collect.ImmutableSet;
-import cz.creeper.customitemlibrary.data.CustomFeatureData;
 import cz.creeper.customitemlibrary.feature.block.CustomBlock;
 import cz.creeper.customitemlibrary.feature.block.simple.SimpleCustomBlockDefinition;
+import cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinition;
+import cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinitionBuilder;
 import cz.creeper.customitemlibrary.feature.item.CustomItemDefinition;
 import cz.creeper.customitemlibrary.feature.item.material.CustomMaterialDefinition;
 import cz.creeper.customitemlibrary.feature.item.material.PlaceProvider;
 import cz.creeper.customitemlibrary.feature.item.tool.CustomToolDefinition;
 import org.spongepowered.api.block.BlockType;
 import org.spongepowered.api.block.BlockTypes;
-import org.spongepowered.api.data.DataHolder;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.plugin.PluginContainer;
 
 import java.nio.file.Path;
 import java.util.Set;
 
-public interface CustomFeatureDefinition<T extends CustomFeature<? extends CustomFeatureDefinition<T>>> extends DefinesModels {
+public interface CustomFeatureDefinition<T extends CustomFeature<? extends CustomFeatureDefinition<T>>> {
     /**
      * @return The owner plugin, which created this {@link CustomFeatureDefinition}
      */
@@ -46,14 +46,6 @@ public interface CustomFeatureDefinition<T extends CustomFeature<? extends Custo
      */
     default Set<String> getAssets() {
         return ImmutableSet.of();
-    }
-
-    /**
-     * @return A {@link CustomFeatureData} instance which identifies which {@link CustomFeatureDefinition}
-     * a {@link DataHolder} represents.
-     */
-    default CustomFeatureData createDefaultCustomFeatureData() {
-        return new CustomFeatureData(getPluginContainer().getId(), getTypeId(), getDefaultModel());
     }
 
     /**
@@ -206,5 +198,9 @@ public interface CustomFeatureDefinition<T extends CustomFeature<? extends Custo
      */
     static SimpleCustomBlockDefinition.SimpleCustomBlockDefinitionBuilder simpleBlockBuilder() {
         return SimpleCustomBlockDefinition.builder();
+    }
+
+    static SimpleCustomInventoryDefinitionBuilder simpleInventoryBuilder() {
+        return SimpleCustomInventoryDefinition.builder();
     }
 }

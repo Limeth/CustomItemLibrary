@@ -10,7 +10,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
 import cz.creeper.customitemlibrary.CustomItemServiceImpl;
-import cz.creeper.customitemlibrary.feature.item.DefinesDurabilityModels;
 import cz.creeper.customitemlibrary.feature.item.tool.CustomToolDefinition;
 import cz.creeper.customitemlibrary.util.Identifier;
 import ninja.leaping.configurate.ConfigurationNode;
@@ -45,8 +44,8 @@ public class DurabilityRegistry {
         register(itemType, definition.getPluginContainer(), definition.getModels(), definition.getModelDirectoryName());
     }
 
-    public static ItemStack createItemUnsafe(ItemType itemType, PluginContainer pluginContainer, String model) {
-        int durability = DurabilityRegistry.getInstance().getDurability(itemType, pluginContainer, model)
+    public ItemStack createItemUnsafe(ItemType itemType, PluginContainer pluginContainer, String model) {
+        int durability = getDurability(itemType, pluginContainer, model)
                 .orElseThrow(() -> new IllegalStateException("The model should have been registered by now, is the definition actually being registered?"));
 
         ItemStack itemStack = ItemStack.of(itemType, 1);

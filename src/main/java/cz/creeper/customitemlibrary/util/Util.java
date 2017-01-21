@@ -12,6 +12,9 @@ import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -42,5 +45,20 @@ public class Util {
 
         return StreamSupport.stream(iterable.spliterator(), true)
                 .filter(Objects::nonNull);
+    }
+
+    public String md5(byte[] input) {
+        MessageDigest md;
+
+        try {
+            md = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+
+        byte[] messageDigest = md.digest(input);
+        BigInteger number = new BigInteger(1, messageDigest);
+
+        return number.toString(16);
     }
 }

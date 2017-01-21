@@ -1,12 +1,12 @@
 package cz.creeper.customitemlibrary.feature.item;
 
-import cz.creeper.customitemlibrary.feature.CustomFeatureDefinition;
+import cz.creeper.customitemlibrary.feature.CustomModelledFeatureDefinition;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.item.inventory.ItemStack;
 
 import java.util.Optional;
 
-public interface CustomItemDefinition<T extends CustomItem<? extends CustomItemDefinition<T>>> extends CustomFeatureDefinition<T> {
+public interface CustomItemDefinition<T extends CustomItem<? extends CustomItemDefinition<T>>> extends CustomModelledFeatureDefinition<T> {
     /**
      * @return A {@link CustomItem} with default properties.
      */

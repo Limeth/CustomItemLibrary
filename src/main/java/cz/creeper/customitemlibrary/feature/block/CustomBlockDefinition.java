@@ -3,9 +3,9 @@ package cz.creeper.customitemlibrary.feature.block;
 import com.flowpowered.math.vector.Vector3d;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
 import cz.creeper.customitemlibrary.data.CustomBlockData;
-import cz.creeper.customitemlibrary.feature.CustomFeatureDefinition;
+import cz.creeper.customitemlibrary.feature.CustomModelledFeatureDefinition;
 import cz.creeper.customitemlibrary.feature.item.CustomItem;
-import cz.creeper.customitemlibrary.feature.item.DefinesDurabilityModels;
+import cz.creeper.customitemlibrary.feature.DefinesDurabilityModels;
 import cz.creeper.customitemlibrary.util.Block;
 import org.spongepowered.api.block.BlockState;
 import org.spongepowered.api.data.key.Keys;
@@ -24,7 +24,7 @@ import java.util.Optional;
  * Place these blocks using the {@link #placeBlock(Block, Cause)} method
  * and provide a {@link Cause} with a {@link Player}, if you want to set them as the owner.
  */
-public interface CustomBlockDefinition<T extends CustomBlock<? extends CustomBlockDefinition<T>>> extends CustomFeatureDefinition<T>, DefinesDurabilityModels {
+public interface CustomBlockDefinition<T extends CustomBlock<? extends CustomBlockDefinition<T>>> extends CustomModelledFeatureDefinition<T>, DefinesDurabilityModels {
     String MODEL_DIRECTORY_NAME = "blocks";
 
     /**

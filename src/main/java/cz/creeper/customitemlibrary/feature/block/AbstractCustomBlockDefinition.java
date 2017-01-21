@@ -1,6 +1,6 @@
 package cz.creeper.customitemlibrary.feature.block;
 
-import cz.creeper.customitemlibrary.feature.AbstractCustomFeatureDefinition;
+import cz.creeper.customitemlibrary.feature.AbstractCustomModelledFeatureDefinition;
 import cz.creeper.customitemlibrary.util.Block;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -14,14 +14,16 @@ import java.util.stream.Collectors;
 
 @EqualsAndHashCode(callSuper = true)
 @Getter
-public abstract class AbstractCustomBlockDefinition<T extends CustomBlock<? extends AbstractCustomBlockDefinition<T>>> extends AbstractCustomFeatureDefinition<T> implements CustomBlockDefinition<T> {
+public abstract class AbstractCustomBlockDefinition<T extends CustomBlock<? extends AbstractCustomBlockDefinition<T>>> extends AbstractCustomModelledFeatureDefinition<T> implements CustomBlockDefinition<T> {
     @NonNull
     private final BlockState effectState;
+
     private final boolean rotateHorizontally;
+
     private final boolean generateDamageIndicatorModels;
 
-    public AbstractCustomBlockDefinition(PluginContainer pluginContainer, String typeId, String defaultModel, Iterable<String> models, BlockState effectState, boolean rotateHorizontally, boolean generateDamageIndicatorModels) {
-        super(pluginContainer, typeId, defaultModel, models);
+    public AbstractCustomBlockDefinition(PluginContainer pluginContainer, String typeId, String defaultModel, Iterable<String> additionalModels, BlockState effectState, boolean rotateHorizontally, boolean generateDamageIndicatorModels) {
+        super(pluginContainer, typeId, defaultModel, additionalModels);
 
         this.effectState = effectState;
         this.rotateHorizontally = rotateHorizontally;
