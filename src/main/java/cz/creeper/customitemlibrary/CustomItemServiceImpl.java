@@ -185,6 +185,13 @@ public class CustomItemServiceImpl implements CustomItemService {
     }
 
     @Override
+    public Set<CustomInventoryDefinition<? extends CustomInventory>> getInventoryDefinitions() {
+        return pluginIdsToTypeIdsToInventoryDefinitions.values().stream()
+                .flatMap(typeIdsToDefinitions -> typeIdsToDefinitions.values().stream())
+                .collect(Collectors.toSet());
+    }
+
+    @Override
     public Optional<CustomBlockDefinition<? extends CustomBlock>> getBlockDefinition(Block block) {
         return getArmorStandAt(block).flatMap(armorStand -> {
             String pluginId = armorStand.get(CustomItemLibraryKeys.CUSTOM_FEATURE_PLUGIN_ID).get();
@@ -253,6 +260,16 @@ public class CustomItemServiceImpl implements CustomItemService {
     @Override
     public Optional<CustomBlockDefinition<? extends CustomBlock>> getBlockDefinition(String pluginId, String typeId) {
         Map<String, CustomBlockDefinition<? extends CustomBlock>> typeIdsToDefinitions = pluginIdsToTypeIdsToBlockDefinitions.get(pluginId);
+
+        if(typeIdsToDefinitions == null)
+            return Optional.empty();
+
+        return Optional.ofNullable(typeIdsToDefinitions.get(typeId));
+    }
+
+    @Override
+    public Optional<CustomInventoryDefinition<? extends CustomInventory>> getInventoryDefinition(String pluginId, String typeId) {
+        Map<String, CustomInventoryDefinition<? extends CustomInventory>> typeIdsToDefinitions = pluginIdsToTypeIdsToInventoryDefinitions.get(pluginId);
 
         if(typeIdsToDefinitions == null)
             return Optional.empty();

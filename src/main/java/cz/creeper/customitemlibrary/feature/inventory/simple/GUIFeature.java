@@ -20,7 +20,7 @@ public class GUIFeature {
     GUIModel model;
     Consumer<ItemStack> customizeItemStack;
 
-    @Builder
+    @Builder(toBuilder = true)
     private GUIFeature(@NonNull String id, @NonNull GUIModel model, Consumer<ItemStack> customizeItemStack) {
         this.id = id;
         this.model = model;

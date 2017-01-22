@@ -4,6 +4,7 @@ import static cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustom
 
 import com.flowpowered.math.vector.Vector2d;
 import com.flowpowered.math.vector.Vector2i;
+import com.flowpowered.math.vector.Vector3d;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -20,7 +21,7 @@ public class SimpleCustomInventoryDefinitionBuilder {
     private PluginContainer pluginContainer;
     private String typeId;
     private CustomSlot[][] highPrioritySlots;
-    private final List<LowPriorityGUIFeature> lowerPrioritySlots = Lists.newArrayList();
+    private final List<GUIFeatures> lowerPrioritySlots = Lists.newArrayList();
 
     public SimpleCustomInventoryDefinitionBuilder plugin(Object plugin) {
         this.pluginContainer = Sponge.getPluginManager().fromInstance(plugin)
@@ -44,60 +45,96 @@ public class SimpleCustomInventoryDefinitionBuilder {
             highPrioritySlots[y] = new CustomSlot[INVENTORY_SLOTS_WIDTH];
 
             for(int x = 0; x < highPrioritySlots[y].length; x++) {
-                highPrioritySlots[y][x] = CustomSlot.UNUSED_SLOT;
+                highPrioritySlots[y][x] = CustomSlot.unusedSlot(Vector2i.from(x, y));
             }
         }
 
         return this;
     }
 
-    public SimpleCustomInventoryDefinitionBuilder background(@NonNull Object plugin, @NonNull String featureId, @NonNull String defaultTexture, String... additionalTextures) {
+    public SimpleCustomInventoryDefinitionBuilder background(@NonNull String slotId, @NonNull String defaultTexture, String... additionalTextures) {
+        Preconditions.checkNotNull(pluginContainer, "The plugin must already be set.");
+        Preconditions.checkNotNull(highPrioritySlots, "The height must already be set.");
+
         if(additionalTextures == null)
             additionalTextures = new String[0];
 
-        GUIModel defaultModel = getBackgroundModel(plugin, defaultTexture);
-        List<GUIModel> additionalModelList = Arrays.stream(additionalTextures)
-                .map(additionalTexture -> getBackgroundModel(plugin, additionalTexture))
+        GUIFeature defaultFeature = getBackgroundFeature(defaultTexture);
+        List<GUIFeature> additionalFeatureList = Arrays.stream(additionalTextures)
+                .map(this::getBackgroundFeature)
                 .collect(Collectors.toList());
-        GUIModel[] additionalModels = additionalModelList.toArray(new GUIModel[additionalModelList.size()]);
+        GUIFeature[] additionalFeatures = additionalFeatureList.toArray(new GUIFeature[additionalFeatureList.size()]);
 
-        return model(featureId, defaultModel, additionalModels);
+        return feature(slotId, defaultFeature, additionalFeatures);
     }
 
-    private static GUIModel getBackgroundModel(Object plugin, String texture) {
-        return GUIModel.builder()
-                .plugin(plugin)
-                .textureName(texture)
-                .textureSize(Vector2d.from(176, 132))
+    private GUIFeature getBackgroundFeature(String texture) {
+        return GUIFeature.builder()
+                .id(texture)
+                .model(GUIModel.builder()
+                        .plugin(pluginContainer.getInstance()
+                                .orElseThrow(() -> new IllegalStateException("Could not access the plugin instance.")))
+                        .textureName(texture)
+                        .textureSize(Vector2d.from(getInventoryTextureWidth(), getInventoryTextureHeight(highPrioritySlots.length)))
+                        .textureOffset(Vector3d.from(0, 0, -100))
+                        .build())
                 .build();
     }
 
-    public SimpleCustomInventoryDefinitionBuilder model(@NonNull String id, @NonNull GUIModel defaultModel, GUIModel... additionalModels) {
+    public SimpleCustomInventoryDefinitionBuilder feature(@NonNull String slotId, @NonNull GUIFeature defaultFeature, GUIFeature... additionalFeatures) {
+        if(pluginContainer == null) {
+            pluginContainer = defaultFeature.getModel().getPluginContainer();
+        } else {
+            Preconditions.checkArgument(defaultFeature.getModel().getPluginContainer() == pluginContainer,
+                    "The plugin in the GUIModel is different from the plugin in this builder.");
+        }
 
-        lowerPrioritySlots.add(new LowPriorityGUIFeature(
-                id,
-                defaultModel,
-                ImmutableList.copyOf(additionalModels)
+        if(additionalFeatures != null) {
+            for(GUIFeature additionalFeature : additionalFeatures) {
+                Preconditions.checkArgument(additionalFeature.getModel().getPluginContainer() == pluginContainer,
+                        "The plugin in the GUIModel is different from the plugin in this builder.");
+            }
+        }
+
+        lowerPrioritySlots.add(new GUIFeatures(
+                slotId,
+                defaultFeature,
+                additionalFeatures != null ? ImmutableList.copyOf(additionalFeatures) : ImmutableList.of()
         ));
 
         return this;
     }
 
-    public SimpleCustomInventoryDefinitionBuilder slot(int x, int y, @NonNull GUIFeature defaultFeature, GUIFeature... additionalFeatures) {
+    public SimpleCustomInventoryDefinitionBuilder slot(String slotId, int x, int y, @NonNull GUIFeature defaultFeature, GUIFeature... additionalFeatures) {
+        return slot(slotId, Vector2i.from(x, y), defaultFeature, additionalFeatures);
+    }
+
+    public SimpleCustomInventoryDefinitionBuilder slot(String slotId, Vector2i position, @NonNull GUIFeature defaultFeature, GUIFeature... additionalFeatures) {
         Preconditions.checkNotNull(highPrioritySlots, "The height must be set first.");
 
-        highPrioritySlots[y][x] = new CustomSlot(defaultFeature, Arrays.asList(additionalFeatures));
+        if(pluginContainer == null) {
+            pluginContainer = defaultFeature.getModel().getPluginContainer();
+        } else {
+            Preconditions.checkArgument(defaultFeature.getModel().getPluginContainer() == pluginContainer,
+                    "The plugin in the GUIModel is different from the plugin in this builder.");
+        }
+
+        if(additionalFeatures != null) {
+            for(GUIFeature additionalFeature : additionalFeatures) {
+                Preconditions.checkArgument(additionalFeature.getModel().getPluginContainer() == pluginContainer,
+                        "The plugin in the GUIModel is different from the plugin in this builder.");
+            }
+        }
+
+        highPrioritySlots[position.getY()][position.getX()] =
+                new CustomSlot(position, slotId, defaultFeature, Arrays.asList(additionalFeatures));
 
         return this;
     }
 
-    public SimpleCustomInventoryDefinitionBuilder slot(Vector2i location, @NonNull GUIFeature defaultFeature, GUIFeature... additionalFeatures) {
-        return slot(location.getX(), location.getY(), defaultFeature, additionalFeatures);
-    }
-
     public SimpleCustomInventoryDefinition build() {
         CustomSlot[][] slots = new CustomSlot[highPrioritySlots.length][];
-        List<LowPriorityGUIFeature> currentLowPrioritySlots = Lists.newArrayList(lowerPrioritySlots);
+        List<GUIFeatures> currentLowPrioritySlots = Lists.newArrayList(lowerPrioritySlots);
 
         for(int y = 0; y < highPrioritySlots.length; y++) {
             slots[y] = new CustomSlot[highPrioritySlots[y].length];
@@ -106,19 +143,26 @@ public class SimpleCustomInventoryDefinitionBuilder {
                 CustomSlot slot = highPrioritySlots[y][x];
 
                 if(slot.isUnused() && currentLowPrioritySlots.size() > 0) {
-                    LowPriorityGUIFeature feature = currentLowPrioritySlots.remove(0);
-                    GUIFeature defaultFeature = GUIFeature.builder()
-                            .model(feature.defaultModel)
-                            .id(feature.defaultModel.getTextureName())
+                    GUIFeatures features = currentLowPrioritySlots.remove(0);
+                    Vector3d slotOffset = Vector3d.from(INVENTORY_TEXTURE_SLOT_SIZE + INVENTORY_TEXTURE_SLOT_GAP)
+                            .mul(x, y, 0).mul(-1);
+                    GUIFeature defaultFeature = features.defaultFeature.toBuilder()
+                            .model(features.defaultFeature.getModel().toBuilder(pluginContainer.getInstance()
+                                            .orElseThrow(() -> new IllegalStateException("Could not access the plugin instance.")))
+                                    .textureOffset(features.defaultFeature.getModel().getTextureOffset().add(slotOffset))
+                                    .build())
                             .build();
-                    Iterable<GUIFeature> additionalFeatures = feature.additionalModels.stream()
-                            .map(additionalModel -> GUIFeature.builder()
-                                    .model(additionalModel)
-                                    .id(additionalModel.getTextureName())
+                    Iterable<GUIFeature> additionalFeatures = features.additionalFeatures.stream()
+                            .map(additionalFeature -> additionalFeature.toBuilder()
+                                    .model(additionalFeature.getModel().toBuilder(pluginContainer.getInstance()
+                                                    .orElseThrow(() -> new IllegalStateException("Could not access the plugin instance.")))
+                                            .textureOffset(additionalFeature.getModel().getTextureOffset().add(slotOffset))
+                                            .build())
                                     .build())
                             .collect(Collectors.toList());
 
-                    slot = new CustomSlot(defaultFeature, additionalFeatures);
+                    Vector2i position = Vector2i.from(x, y);
+                    slot = new CustomSlot(position, features.slotId, defaultFeature, additionalFeatures);
                 }
 
                 slots[y][x] = slot;
@@ -131,8 +175,12 @@ public class SimpleCustomInventoryDefinitionBuilder {
         return new SimpleCustomInventoryDefinition(pluginContainer, typeId, slots);
     }
 
-    private static GUIModel translateAbsolute(GUIModel model, int x, int y) {
-        return model.toBuilder()
+    /**
+     * Translates the {@link GUIModel} to the first, upper left slot
+     */
+    private GUIModel translateAbsolute(GUIModel model, int x, int y) {
+        return model.toBuilder(pluginContainer.getInstance()
+                        .orElseThrow(() -> new IllegalStateException("Could not access the plugin instance.")))
                 .textureOffset(
                         model.getTextureOffset()
                         .sub(INVENTORY_TEXTURE_PADDING_LEFT, 0, INVENTORY_TEXTURE_PADDING_TOP)
@@ -143,9 +191,9 @@ public class SimpleCustomInventoryDefinitionBuilder {
     }
 
     @Value
-    private static class LowPriorityGUIFeature {
-        String id;
-        GUIModel defaultModel;
-        ImmutableList<GUIModel> additionalModels;
+    private static class GUIFeatures {
+        String slotId;
+        GUIFeature defaultFeature;
+        ImmutableList<GUIFeature> additionalFeatures;
     }
 }

@@ -15,6 +15,10 @@ public abstract class AbstractCustomModelledFeature<T extends CustomModelledFeat
         super(definition);
     }
 
+    protected abstract Optional<String> resolveCurrentModel();
+
+    protected abstract void applyModel(String model);
+
     @Override
     public final String getModel() {
         Optional<String> model = resolveCurrentModel();

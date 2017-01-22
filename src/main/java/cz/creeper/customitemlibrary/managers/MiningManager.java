@@ -80,6 +80,10 @@ public class MiningManager {
 
         snapshot = playerToCurrentlyTargetedBlock.get(playerId);
 
+        if(snapshot == null) {
+            return;
+        }
+
         if(mining != null) {
             int durationTicks = currentTick - mining.tickStarted;
 
@@ -141,7 +145,7 @@ public class MiningManager {
                     boolean cancelled = Sponge.getEventManager().post(miningEvent);
 
                     if (cancelled) {
-                        playerToMining.remove(playerId);
+                        iterator.remove();
 
                         MiningStopEvent stopEvent = new MiningStopEvent(playerId, mining.snapshot, durationTicks,
                                 Cause.source(CustomItemLibrary.getInstance().getPluginContainer()).notifier(player).build(), MiningStopEvent.Reason.MINING_PROGRESS_EVENT_CANCELLED);

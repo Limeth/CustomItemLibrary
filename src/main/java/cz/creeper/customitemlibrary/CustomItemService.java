@@ -6,6 +6,8 @@ import cz.creeper.customitemlibrary.feature.CustomFeature;
 import cz.creeper.customitemlibrary.feature.CustomFeatureDefinition;
 import cz.creeper.customitemlibrary.feature.block.CustomBlock;
 import cz.creeper.customitemlibrary.feature.block.CustomBlockDefinition;
+import cz.creeper.customitemlibrary.feature.inventory.CustomInventory;
+import cz.creeper.customitemlibrary.feature.inventory.CustomInventoryDefinition;
 import cz.creeper.customitemlibrary.feature.item.CustomItem;
 import cz.creeper.customitemlibrary.feature.item.CustomItemDefinition;
 import cz.creeper.customitemlibrary.util.Block;
@@ -34,6 +36,7 @@ public interface CustomItemService {
 
         result.addAll(getItemDefinitions());
         result.addAll(getBlockDefinitions());
+        result.addAll(getInventoryDefinitions());
 
         return result;
     }
@@ -47,6 +50,11 @@ public interface CustomItemService {
      * @return An unmodifiable set of all registered block definitions
      */
     Set<CustomBlockDefinition<? extends CustomBlock>> getBlockDefinitions();
+
+    /**
+     * @return An unmodifiable set of all registered inventory definitions
+     */
+    Set<CustomInventoryDefinition<? extends CustomInventory>> getInventoryDefinitions();
 
     /**
      * @param itemStack The {@link ItemStack} to get the definition of
@@ -109,6 +117,24 @@ public interface CustomItemService {
      * @return The definition, if one is registered.
      */
     Optional<CustomBlockDefinition<? extends CustomBlock>> getBlockDefinition(String pluginId, String typeId);
+
+    /**
+     * @param plugin The instance of the plugin that registered the {@link CustomInventoryDefinition}
+     * @param typeId The id to look for
+     * @return The definition, if one is registered.
+     */
+    default Optional<CustomInventoryDefinition<? extends CustomInventory>> getInventoryDefinition(Object plugin, String typeId) {
+        return getInventoryDefinition(Sponge.getPluginManager().fromInstance(plugin)
+                .orElseThrow(() -> new IllegalArgumentException("Could not find a PluginContainer with "
+                        + "plugin instance: " + plugin)).getId(), typeId);
+    }
+
+    /**
+     * @param pluginId The plugin that registered the {@link CustomInventoryDefinition}
+     * @param typeId The id to look for
+     * @return The definition, if one is registered.
+     */
+    Optional<CustomInventoryDefinition<? extends CustomInventory>> getInventoryDefinition(String pluginId, String typeId);
 
     /**
      * @param itemStack The ItemStack to wrap

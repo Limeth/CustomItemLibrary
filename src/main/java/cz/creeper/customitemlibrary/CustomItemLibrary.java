@@ -1,5 +1,8 @@
 package cz.creeper.customitemlibrary;
 
+import com.flowpowered.math.vector.Vector2d;
+import com.flowpowered.math.vector.Vector3d;
+import com.flowpowered.math.vector.Vector4d;
 import com.google.inject.Inject;
 import cz.creeper.customitemlibrary.data.CustomBlockData;
 import cz.creeper.customitemlibrary.data.CustomBlockManipulatorBuilder;
@@ -14,6 +17,8 @@ import cz.creeper.customitemlibrary.feature.CustomFeatureDefinition;
 import cz.creeper.customitemlibrary.feature.block.CustomBlock;
 import cz.creeper.customitemlibrary.feature.block.CustomBlockDefinition;
 import cz.creeper.customitemlibrary.feature.inventory.CustomInventoryDefinition;
+import cz.creeper.customitemlibrary.feature.inventory.simple.GUIFeature;
+import cz.creeper.customitemlibrary.feature.inventory.simple.GUIModel;
 import cz.creeper.customitemlibrary.feature.item.CustomItem;
 import cz.creeper.customitemlibrary.feature.item.CustomItemDefinition;
 import cz.creeper.customitemlibrary.managers.MiningManager;
@@ -117,17 +122,38 @@ public class CustomItemLibrary {
     public void onGamePostInitializationDefault(GamePostInitializationEvent event) {
         // During this phase, plugins using this library should register their custom item definitions.
 
+        GUIFeature[] features = new GUIFeature[13];
+
+        for(int stage = 0; stage < features.length; stage++) {
+            features[stage] = GUIFeature.builder()
+                    .id("stage_" + stage)
+                    .model(GUIModel.builder()
+                            .plugin(this)
+                            .textureName("furnace_indicator_fuel")
+                            .textureSize(Vector2d.from(13, 13))
+                            .textureOffset(Vector3d.from(44, 37 + stage, 0))
+                            .uvRegion(Vector4d.from(0, stage, 13, 13))
+                            .build())
+                    .build();
+        }
+
+        GUIFeature defaultFeature = features[0];
+        GUIFeature[] additionalFeatures = new GUIFeature[features.length - 1];
+
+        System.arraycopy(features, 1, additionalFeatures, 0, additionalFeatures.length);
+
         service.register(CID = CustomFeatureDefinition.simpleInventoryBuilder()
                 .plugin(this)
                 .typeId("CID")
                 .height(3)
-                .background(this, "bg", "alloy_furnace")
+                .background("background", "alloy_furnace")
+                .feature("indicator_fuel", defaultFeature, additionalFeatures)
                 .build());
     }
 
     @Listener
     public void onInteractItem(InteractItemEvent event, @First Player player) {
-        CID.open(player, event.getCause());
+        CID.open(player, player, event.getCause());
     }
 
     @Listener

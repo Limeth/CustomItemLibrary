@@ -11,9 +11,15 @@ import cz.creeper.customitemlibrary.feature.DurabilityRegistry;
 import lombok.AccessLevel;
 import lombok.Getter;
 
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Writer;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -78,7 +84,7 @@ public class SimpleCustomInventoryRegistry implements CustomFeatureRegistry<Simp
                 .distinct()
                 .forEach(guiModel -> {
                     Path modelFile = guiDirectory.resolve(guiModel.getModelName() + ".json");
-                    JsonObject root = new JsonObject();
+                    JsonObject root = guiModel.createModelJson();
 
                     try(Writer writer = Files.newBufferedWriter(modelFile)) {
                         getGson().toJson(root, writer);
@@ -88,6 +94,28 @@ public class SimpleCustomInventoryRegistry implements CustomFeatureRegistry<Simp
                 });
 
         generateEmptyTexture(resourcePackDirectory);
+    }
+
+    /**
+     * Keep the aspect ratio of textures
+     */
+    @Override
+    public void writeAsset(SimpleCustomInventoryDefinition definition, String asset, ReadableByteChannel input, WritableByteChannel output, Path outputFile) throws IOException {
+        if(!asset.endsWith(".png"))
+            return;
+
+        try (
+                InputStream is = Channels.newInputStream(input);
+                OutputStream os = Channels.newOutputStream(output);
+        ) {
+            BufferedImage originalImage = ImageIO.read(is);
+            int largerDimension = originalImage.getWidth() > originalImage.getHeight() ? originalImage.getWidth() : originalImage.getHeight();
+            BufferedImage correctedImage = new BufferedImage(largerDimension, largerDimension, originalImage.getType());
+            Graphics correctedImageGraphics = correctedImage.createGraphics();
+
+            correctedImageGraphics.drawImage(originalImage, 0, 0, null);
+            ImageIO.write(correctedImage, "PNG", os);
+        }
     }
 
     private void generateEmptyTexture(Path resourcePackDirectory) {
