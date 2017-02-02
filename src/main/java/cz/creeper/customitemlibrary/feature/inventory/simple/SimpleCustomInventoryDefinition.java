@@ -9,6 +9,7 @@ import cz.creeper.customitemlibrary.feature.inventory.AbstractCustomInventoryDef
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.ToString;
 import org.spongepowered.api.data.DataHolder;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.event.item.inventory.InteractInventoryEvent;
@@ -28,6 +29,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@ToString
 @EqualsAndHashCode(callSuper = true)
 @Getter
 public class SimpleCustomInventoryDefinition extends AbstractCustomInventoryDefinition<SimpleCustomInventory> {

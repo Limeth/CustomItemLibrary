@@ -14,9 +14,11 @@ import cz.creeper.customitemlibrary.data.ImmutableRepresentedCustomItemSnapshotD
 import cz.creeper.customitemlibrary.data.RepresentedCustomItemSnapshotData;
 import cz.creeper.customitemlibrary.data.RepresentedCustomItemSnapshotManipulatorBuilder;
 import cz.creeper.customitemlibrary.feature.CustomFeatureDefinition;
+import cz.creeper.customitemlibrary.feature.TextureId;
 import cz.creeper.customitemlibrary.feature.block.CustomBlock;
 import cz.creeper.customitemlibrary.feature.block.CustomBlockDefinition;
 import cz.creeper.customitemlibrary.feature.inventory.CustomInventoryDefinition;
+import cz.creeper.customitemlibrary.feature.inventory.simple.GUIBackground;
 import cz.creeper.customitemlibrary.feature.inventory.simple.GUIFeature;
 import cz.creeper.customitemlibrary.feature.inventory.simple.GUIModel;
 import cz.creeper.customitemlibrary.feature.item.CustomItem;
@@ -129,26 +131,54 @@ public class CustomItemLibrary {
                     .id("stage_" + stage)
                     .model(GUIModel.builder()
                             .plugin(this)
-                            .textureName("furnace_indicator_fuel")
-                            .textureSize(Vector2d.from(13, 13))
+                            .textureId(TextureId.builder()
+                                    .directory("gui/container")
+                                    .fileName("furnace")
+                                    .build())
+                            .textureSize(Vector2d.from(256, 256))
                             .textureOffset(Vector3d.from(44, 37 + stage, 0))
-                            .uvRegion(Vector4d.from(0, stage, 13, 13))
+                            .uvRegion(Vector4d.from(176, stage, 190, 14))
                             .build())
                     .build();
         }
 
+        GUIFeature defaultFeature = GUIFeature.builder()
+                .id("stage_test")
+                .model(GUIModel.builder()
+                        .plugin(this)
+                        .textureId(TextureId.builder()
+                                .plugin(this)
+                                .fileName("furnace_indicator_fuel")
+                                .build())
+                        .textureSize(Vector2d.from(13, 13))
+                        .textureOffset(Vector3d.from(0, 0, 0))
+                        .uvRegion(Vector4d.from(0, 7, 13, 13))
+                        .build())
+                .build();
+        GUIFeature[] additionalFeatures = features;
+
+        /*
         GUIFeature defaultFeature = features[0];
         GUIFeature[] additionalFeatures = new GUIFeature[features.length - 1];
 
         System.arraycopy(features, 1, additionalFeatures, 0, additionalFeatures.length);
+        */
 
         service.register(CID = CustomFeatureDefinition.simpleInventoryBuilder()
                 .plugin(this)
                 .typeId("CID")
                 .height(3)
-                .background("background", "alloy_furnace")
+                .background("background", GUIBackground.builder()
+                        .textureId(TextureId.builder()
+                                .directory("gui/container")
+                                .fileName("furnace")
+                                .build())
+                        .textureSize(Vector2d.from(256, 256))
+                        .build())
                 .feature("indicator_fuel", defaultFeature, additionalFeatures)
                 .build());
+
+        System.out.println(CID);
     }
 
     @Listener

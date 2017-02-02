@@ -287,7 +287,7 @@ public class DurabilityRegistry {
     }
 
     public static String getFileIdentifier(String pluginId, String directory, String file) {
-        return (pluginId != null ? pluginId : "minecraft") + ":" + directory + "/" + file;
+        return (pluginId != null ? pluginId : "minecraft") + ":" + (directory != null && !directory.isEmpty() ? directory + '/' : "") + file;
     }
 
     public static String getFileIdentifier(PluginContainer pluginContainer, String directory, String file) {

@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.util.Objects;
+import java.util.function.Function;
 
 @AllArgsConstructor
 @Getter
@@ -13,6 +14,20 @@ public class Identifier {
     private final String value;
 
     public static Identifier parse(String string) {
+        return new Identifier(getNamespaceFromIdString(string), getValueFromIdString(string));
+    }
+
+    public static Identifier parseOrGetNamespace(String string, Function<String, String> getNamespace) {
+        if(string.indexOf(ID_SEPARATOR) == -1)
+            return new Identifier(getNamespace.apply(string), string);
+
+        return new Identifier(getNamespaceFromIdString(string), getValueFromIdString(string));
+    }
+
+    public static Identifier parseOrDefaultNamespace(String string, String defaultNamespace) {
+        if(string.indexOf(ID_SEPARATOR) == -1)
+            return new Identifier(defaultNamespace, string);
+
         return new Identifier(getNamespaceFromIdString(string), getValueFromIdString(string));
     }
 

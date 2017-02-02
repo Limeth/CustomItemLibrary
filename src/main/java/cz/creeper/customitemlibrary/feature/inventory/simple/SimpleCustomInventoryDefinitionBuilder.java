@@ -1,13 +1,20 @@
 package cz.creeper.customitemlibrary.feature.inventory.simple;
 
-import static cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinition.*;
+import static cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinition.INVENTORY_SLOTS_WIDTH;
+import static cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinition.INVENTORY_TEXTURE_PADDING_LEFT;
+import static cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinition.INVENTORY_TEXTURE_PADDING_TOP;
+import static cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinition.INVENTORY_TEXTURE_SLOT_GAP;
+import static cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinition.INVENTORY_TEXTURE_SLOT_SIZE;
+import static cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinition.getInventoryTextureHeight;
+import static cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinition.getInventoryTextureWidth;
 
-import com.flowpowered.math.vector.Vector2d;
 import com.flowpowered.math.vector.Vector2i;
 import com.flowpowered.math.vector.Vector3d;
+import com.flowpowered.math.vector.Vector4d;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import cz.creeper.customitemlibrary.feature.TextureId;
 import lombok.NonNull;
 import lombok.Value;
 import org.spongepowered.api.Sponge;
@@ -52,15 +59,15 @@ public class SimpleCustomInventoryDefinitionBuilder {
         return this;
     }
 
-    public SimpleCustomInventoryDefinitionBuilder background(@NonNull String slotId, @NonNull String defaultTexture, String... additionalTextures) {
+    public SimpleCustomInventoryDefinitionBuilder background(@NonNull String slotId, @NonNull GUIBackground defaultBackground, GUIBackground... additionalBackgrounds) {
         Preconditions.checkNotNull(pluginContainer, "The plugin must already be set.");
         Preconditions.checkNotNull(highPrioritySlots, "The height must already be set.");
 
-        if(additionalTextures == null)
-            additionalTextures = new String[0];
+        if(additionalBackgrounds == null)
+            additionalBackgrounds = new GUIBackground[0];
 
-        GUIFeature defaultFeature = getBackgroundFeature(defaultTexture);
-        List<GUIFeature> additionalFeatureList = Arrays.stream(additionalTextures)
+        GUIFeature defaultFeature = getBackgroundFeature(defaultBackground);
+        List<GUIFeature> additionalFeatureList = Arrays.stream(additionalBackgrounds)
                 .map(this::getBackgroundFeature)
                 .collect(Collectors.toList());
         GUIFeature[] additionalFeatures = additionalFeatureList.toArray(new GUIFeature[additionalFeatureList.size()]);
@@ -68,15 +75,18 @@ public class SimpleCustomInventoryDefinitionBuilder {
         return feature(slotId, defaultFeature, additionalFeatures);
     }
 
-    private GUIFeature getBackgroundFeature(String texture) {
+    private GUIFeature getBackgroundFeature(GUIBackground background) {
+        TextureId id = background.getTextureId();
+
         return GUIFeature.builder()
-                .id(texture)
+                .id(id.toString())
                 .model(GUIModel.builder()
                         .plugin(pluginContainer.getInstance()
                                 .orElseThrow(() -> new IllegalStateException("Could not access the plugin instance.")))
-                        .textureName(texture)
-                        .textureSize(Vector2d.from(getInventoryTextureWidth(), getInventoryTextureHeight(highPrioritySlots.length)))
+                        .textureId(id)
+                        .textureSize(background.getTextureSize())
                         .textureOffset(Vector3d.from(0, 0, -100))
+                        .uvRegion(Vector4d.from(0, 0, getInventoryTextureWidth(), getInventoryTextureHeight(highPrioritySlots.length)))
                         .build())
                 .build();
     }

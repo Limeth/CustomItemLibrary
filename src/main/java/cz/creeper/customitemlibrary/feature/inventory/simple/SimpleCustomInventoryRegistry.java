@@ -106,7 +106,7 @@ public class SimpleCustomInventoryRegistry implements CustomFeatureRegistry<Simp
 
         try (
                 InputStream is = Channels.newInputStream(input);
-                OutputStream os = Channels.newOutputStream(output);
+                OutputStream os = Channels.newOutputStream(output)
         ) {
             BufferedImage originalImage = ImageIO.read(is);
             int largerDimension = originalImage.getWidth() > originalImage.getHeight() ? originalImage.getWidth() : originalImage.getHeight();
@@ -119,15 +119,14 @@ public class SimpleCustomInventoryRegistry implements CustomFeatureRegistry<Simp
     }
 
     private void generateEmptyTexture(Path resourcePackDirectory) {
-        Path guiDirectory = resourcePackDirectory.resolve("assets")
+        Path texturePath = resourcePackDirectory.resolve("assets")
                 .resolve(CustomItemLibrary.getInstance().getPluginContainer().getId())
-                .resolve("textures").resolve(MODEL_DIRECTORY_NAME);
-        Path texturePath = guiDirectory.resolve(GUIModel.EMPTY.getTextureName() + ".png");
+                .resolve(GUIModel.EMPTY.getTextureId().getPath());
 
         BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
 
         try {
-            Files.createDirectories(guiDirectory);
+            Files.createDirectories(texturePath.getParent());
             Files.deleteIfExists(texturePath);
             Files.createFile(texturePath);
             ImageIO.write(image, "PNG", texturePath.toFile());
