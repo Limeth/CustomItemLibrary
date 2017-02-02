@@ -10,12 +10,16 @@ import lombok.Value;
 
 @ToString
 @EqualsAndHashCode
-@Builder
 @Value
 public class GUIBackground {
-    @NonNull
     TextureId textureId;
-
-    @NonNull
     Vector2d textureSize;
+    Vector2d uvTopLeft;
+
+    @Builder
+    private GUIBackground(@NonNull TextureId textureId, @NonNull Vector2d textureSize, Vector2d uvTopLeft) {
+        this.textureId = textureId;
+        this.textureSize = textureSize;
+        this.uvTopLeft = uvTopLeft != null ? uvTopLeft : Vector2d.ZERO;
+    }
 }

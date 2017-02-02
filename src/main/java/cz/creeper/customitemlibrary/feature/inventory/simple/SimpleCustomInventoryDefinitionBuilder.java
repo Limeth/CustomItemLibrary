@@ -86,7 +86,12 @@ public class SimpleCustomInventoryDefinitionBuilder {
                         .textureId(id)
                         .textureSize(background.getTextureSize())
                         .textureOffset(Vector3d.from(0, 0, -100))
-                        .uvRegion(Vector4d.from(0, 0, getInventoryTextureWidth(), getInventoryTextureHeight(highPrioritySlots.length)))
+                        .uvRegion(Vector4d.from(
+                                background.getUvTopLeft().getX(),
+                                background.getUvTopLeft().getY(),
+                                background.getUvTopLeft().getX() + getInventoryTextureWidth(),
+                                background.getUvTopLeft().getY() + getInventoryTextureHeight(highPrioritySlots.length)
+                        ))
                         .build())
                 .build();
     }

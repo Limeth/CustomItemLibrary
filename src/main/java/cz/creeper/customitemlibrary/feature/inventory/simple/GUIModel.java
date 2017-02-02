@@ -195,82 +195,42 @@ public class GUIModel {
     }
 
     public Vector4d getModelUV() {
-        return uvRegion.div(textureSize.getX(), textureSize.getY(), textureSize.getX(), textureSize.getY())
+        Vector2d textureRegion = textureSize.div(Math.max(textureSize.getX(), textureSize.getY()));
+
+        return uvRegion
+                .mul(textureRegion.getX(), textureRegion.getY(), textureRegion.getX(), textureRegion.getY())
+                .div(textureSize.getX(), textureSize.getY(), textureSize.getX(), textureSize.getY())
                 .mul(INVENTORY_TEXTURE_SLOT_SIZE);
     }
 
     public Vector2d getModelScale() {
-        return getModelScaleRatio()
-                // Magic number
-                .mul(3.6666666666666666666666);
-    }
-
-    public Vector2d getModelScaleRatio() {
         double largerDimension = textureSize.getX() > textureSize.getY() ? textureSize.getX() : textureSize.getY();
-        double inventoryTextureWidth = getInventoryTextureWidth();
+        Vector2d textureRegion = Vector2d.from(Math.max(textureSize.getX(), textureSize.getY()));
 
         return Vector2d.from(largerDimension)
-                .div(inventoryTextureWidth)
+                .div(getInventoryTextureWidth())
+                // Magic number
+                .mul(3.6666666666666666666666)
                 // Align UV
                 .mul(getUvRegionSize())
-                .div(textureSize);
+                .div(textureRegion);
     }
 
     public Vector3d getModelTranslation() {
         // The texture must have a 1;1 aspect ratio, so it is expanded
-        double largerDimension = Math.max(textureSize.getX(), textureSize.getY());
-        Vector3d result = Vector3d.ZERO;
-
-        // First, align with the upper left corner of the inventory slot
-        result = result.add(
-                Vector3d.from(
-                        largerDimension - INVENTORY_TEXTURE_SLOT_SIZE - uvRegion.getX(),
-                        largerDimension - INVENTORY_TEXTURE_SLOT_SIZE - uvRegion.getY(),
-                        0
-                ).div(2)
-        );
-
-        // Then, move it to the upper left corner of the inventory texture
-        result = result.sub(
-                Vector3d.from(
-                        INVENTORY_TEXTURE_PADDING_LEFT,
-                        INVENTORY_TEXTURE_PADDING_TOP,
-                        0
-                )
-        );
-
-        result = result.add(this.textureOffset);
-
-        // Finally, flip the Y coordinate, because it's inverse in minecraft
-        result = result.mul(1, -1, 1);
-
-        return result;
-    }
-
-    public Vector3d getModelTranslationTODO() {
-        // The texture must have a 1;1 aspect ratio, so it is expanded
         Vector2d uvRegionSize = getUvRegionSize();
-        double largerDimension = Math.max(textureSize.getX(), textureSize.getY());
         Vector2d result2d = Vector2d.ZERO;
 
         // First, align with the upper left corner of the inventory slot
-        //result2d = result2d.add(uvRegionSize);
-        result2d = result2d.add(Vector2d.from(largerDimension));
-        result2d = result2d.sub(uvRegion.getX(), uvRegion.getY());
+        result2d = result2d.add(uvRegionSize);
         result2d = result2d.sub(Vector2d.from(INVENTORY_TEXTURE_SLOT_SIZE));
         result2d = result2d.div(2);
 
         // Then, move it to the upper left corner of the inventory texture
         result2d = result2d.sub(INVENTORY_TEXTURE_PADDING_LEFT, INVENTORY_TEXTURE_PADDING_TOP);
 
-        // TODO
-        //result2d = result2d.sub(Vector2d.from(Math.max(uvRegionSize.getX(), uvRegionSize.getY())).sub(uvRegionSize));
-
         // Apply custom offset
         Vector3d result3d = result2d.toVector3().add(this.textureOffset);
-
-        // The translation is affected by scale, so we have to revert it
-        //result3d = result3d.div(getModelScaleRatio().toVector3(1));
 
         // Finally, flip the Y coordinate, because it's inverse in minecraft
         result3d = result3d.mul(1, -1, 1);

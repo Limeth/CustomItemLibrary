@@ -142,27 +142,10 @@ public class CustomItemLibrary {
                     .build();
         }
 
-        GUIFeature defaultFeature = GUIFeature.builder()
-                .id("stage_test")
-                .model(GUIModel.builder()
-                        .plugin(this)
-                        .textureId(TextureId.builder()
-                                .plugin(this)
-                                .fileName("furnace_indicator_fuel")
-                                .build())
-                        .textureSize(Vector2d.from(13, 13))
-                        .textureOffset(Vector3d.from(0, 0, 0))
-                        .uvRegion(Vector4d.from(0, 7, 13, 13))
-                        .build())
-                .build();
-        GUIFeature[] additionalFeatures = features;
-
-        /*
         GUIFeature defaultFeature = features[0];
         GUIFeature[] additionalFeatures = new GUIFeature[features.length - 1];
 
         System.arraycopy(features, 1, additionalFeatures, 0, additionalFeatures.length);
-        */
 
         service.register(CID = CustomFeatureDefinition.simpleInventoryBuilder()
                 .plugin(this)
@@ -170,10 +153,10 @@ public class CustomItemLibrary {
                 .height(3)
                 .background("background", GUIBackground.builder()
                         .textureId(TextureId.builder()
-                                .directory("gui/container")
-                                .fileName("furnace")
+                                .plugin(this)
+                                .fileName("alloy_furnace")
                                 .build())
-                        .textureSize(Vector2d.from(256, 256))
+                        .textureSize(Vector2d.from(176, 71))
                         .build())
                 .feature("indicator_fuel", defaultFeature, additionalFeatures)
                 .build());
