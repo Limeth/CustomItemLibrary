@@ -46,6 +46,7 @@ public class GUIFeature {
         return itemStack -> {
             itemStack.offer(Keys.DISPLAY_NAME, Text.EMPTY);
             itemStack.offer(Keys.HIDE_ATTRIBUTES, true);
+            itemStack.offer(Keys.HIDE_UNBREAKABLE, true);
         };
     }
 }

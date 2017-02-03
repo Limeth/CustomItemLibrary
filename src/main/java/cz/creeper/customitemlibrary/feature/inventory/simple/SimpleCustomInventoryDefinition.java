@@ -11,19 +11,15 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.ToString;
 import org.spongepowered.api.data.DataHolder;
-import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.event.item.inventory.InteractInventoryEvent;
 import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.InventoryArchetype;
 import org.spongepowered.api.item.inventory.InventoryArchetypes;
 import org.spongepowered.api.item.inventory.ItemStack;
-import org.spongepowered.api.item.inventory.Slot;
 import org.spongepowered.api.item.inventory.property.InventoryDimension;
 import org.spongepowered.api.plugin.PluginContainer;
-import org.spongepowered.api.text.Text;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -40,10 +36,10 @@ public class SimpleCustomInventoryDefinition extends AbstractCustomInventoryDefi
     public static final int INVENTORY_TEXTURE_PADDING_LEFT = 8;
     public static final int INVENTORY_TEXTURE_SLOT_SIZE = 16;
     public static final int INVENTORY_TEXTURE_SLOT_GAP = 2;
-    private final CustomSlot[][] slots;
+    private final CustomSlotDefinition[][] slots;
     private final BiMap<String, Vector2i> slotIdToPosition;
 
-    public SimpleCustomInventoryDefinition(PluginContainer pluginContainer, String typeId, @NonNull CustomSlot[][] slots) {
+    public SimpleCustomInventoryDefinition(PluginContainer pluginContainer, String typeId, @NonNull CustomSlotDefinition[][] slots) {
         super(pluginContainer, typeId);
         Preconditions.checkArgument(slots.length > 0, "The slots array have a positive height.");
 
@@ -54,7 +50,7 @@ public class SimpleCustomInventoryDefinition extends AbstractCustomInventoryDefi
             Preconditions.checkArgument(slots[y].length == INVENTORY_SLOTS_WIDTH, "The slots array must be " + INVENTORY_SLOTS_WIDTH + " items wide.");
 
             for(int x = 0; x < slots[y].length; x++) {
-                CustomSlot slot = slots[y][x];
+                CustomSlotDefinition slot = slots[y][x];
                 Vector2i position = slot.getPosition();
 
                 Preconditions.checkNotNull(slot, "The slots array must not contain null values.");
@@ -85,41 +81,30 @@ public class SimpleCustomInventoryDefinition extends AbstractCustomInventoryDefi
                 .build(CustomItemLibrary.getInstance());
 
         result.setInventory(inventory);
-        populate(inventory);
+        populate(result);
 
         return result;
     }
 
     @Override
-    public void populate(Inventory inventory) {
-        Iterator<Slot> slotIterator = inventory.<Slot>slots().iterator();
+    public void populate(SimpleCustomInventory inventory) {
+        inventory.customSlots().forEach(customSlot -> {
+            ItemStack itemStack = customSlot.getDefinition().createDefaultItemStack();
 
-        for(int index = 0; index < getSize(); index++) {
-            final Vector2i location = getSlotLocation(index);
-
-            if(!slotIterator.hasNext())
-                throw new IllegalStateException("Could not access GridInventory slot at [" + location.getX() + "; " + location.getY() + "].");
-
-            Slot slot = slotIterator.next();
-            CustomSlot customSlot = getCustomSlot(location);
-            ItemStack itemStack = customSlot.createDefaultItemStack();
-
-            itemStack.offer(Keys.DISPLAY_NAME, Text.of(customSlot.getDefaultFeatureId()));
-
-            slot.set(itemStack);
-        }
+            customSlot.setItemStack(itemStack);
+        });
     }
 
-    public CustomSlot getCustomSlot(int x, int y) {
+    public CustomSlotDefinition getCustomSlotDefinition(int x, int y) {
         return slots[y][x];
     }
 
-    public CustomSlot getCustomSlot(Vector2i position) {
-        return getCustomSlot(position.getX(), position.getY());
+    public CustomSlotDefinition getCustomSlotDefinition(Vector2i position) {
+        return getCustomSlotDefinition(position.getX(), position.getY());
     }
 
-    public Optional<CustomSlot> getCustomSlot(String slotId) {
-        return getCustomSlotPosition(slotId).map(this::getCustomSlot);
+    public Optional<CustomSlotDefinition> getCustomSlotDefinition(String slotId) {
+        return getCustomSlotPosition(slotId).map(this::getCustomSlotDefinition);
     }
 
     public Optional<Vector2i> getCustomSlotPosition(String slotId) {
@@ -136,8 +121,8 @@ public class SimpleCustomInventoryDefinition extends AbstractCustomInventoryDefi
         return INVENTORY_SLOTS_WIDTH * getHeight();
     }
 
-    public CustomSlot[][] getSlots() {
-        CustomSlot[][] result = new CustomSlot[getHeight()][INVENTORY_SLOTS_WIDTH];
+    public CustomSlotDefinition[][] getSlots() {
+        CustomSlotDefinition[][] result = new CustomSlotDefinition[getHeight()][INVENTORY_SLOTS_WIDTH];
 
         for(int y = 0; y < getHeight(); y++) {
             System.arraycopy(slots[y], 0, result[y], 0, INVENTORY_SLOTS_WIDTH);
@@ -146,7 +131,7 @@ public class SimpleCustomInventoryDefinition extends AbstractCustomInventoryDefi
         return result;
     }
 
-    public Stream<CustomSlot> getSlotStream() {
+    public Stream<CustomSlotDefinition> getSlotStream() {
         return Arrays.stream(slots).flatMap(Arrays::stream);
     }
 

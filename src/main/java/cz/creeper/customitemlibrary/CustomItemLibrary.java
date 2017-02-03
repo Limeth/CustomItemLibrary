@@ -1,18 +1,11 @@
 package cz.creeper.customitemlibrary;
 
 import com.flowpowered.math.vector.Vector2d;
+import com.flowpowered.math.vector.Vector2i;
 import com.flowpowered.math.vector.Vector3d;
 import com.flowpowered.math.vector.Vector4d;
 import com.google.inject.Inject;
-import cz.creeper.customitemlibrary.data.CustomBlockData;
-import cz.creeper.customitemlibrary.data.CustomBlockManipulatorBuilder;
-import cz.creeper.customitemlibrary.data.CustomFeatureData;
-import cz.creeper.customitemlibrary.data.CustomFeatureManipulatorBuilder;
-import cz.creeper.customitemlibrary.data.ImmutableCustomBlockData;
-import cz.creeper.customitemlibrary.data.ImmutableCustomFeatureData;
-import cz.creeper.customitemlibrary.data.ImmutableRepresentedCustomItemSnapshotData;
-import cz.creeper.customitemlibrary.data.RepresentedCustomItemSnapshotData;
-import cz.creeper.customitemlibrary.data.RepresentedCustomItemSnapshotManipulatorBuilder;
+import cz.creeper.customitemlibrary.data.*;
 import cz.creeper.customitemlibrary.feature.CustomFeatureDefinition;
 import cz.creeper.customitemlibrary.feature.TextureId;
 import cz.creeper.customitemlibrary.feature.block.CustomBlock;
@@ -41,6 +34,7 @@ import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.args.GenericArguments;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.config.DefaultConfig;
+import org.spongepowered.api.data.DataManager;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.Order;
@@ -103,9 +97,14 @@ public class CustomItemLibrary {
 
     @Listener
     public void onGamePreInitialization(GamePreInitializationEvent event) {
-        Sponge.getDataManager().register(CustomFeatureData.class, ImmutableCustomFeatureData.class, new CustomFeatureManipulatorBuilder());
-        Sponge.getDataManager().register(CustomBlockData.class, ImmutableCustomBlockData.class, new CustomBlockManipulatorBuilder());
-        Sponge.getDataManager().register(RepresentedCustomItemSnapshotData.class, ImmutableRepresentedCustomItemSnapshotData.class, new RepresentedCustomItemSnapshotManipulatorBuilder());
+        DataManager dataManager = Sponge.getDataManager();
+
+        dataManager.register(CustomFeatureData.class, ImmutableCustomFeatureData.class, new CustomFeatureManipulatorBuilder());
+        dataManager.register(CustomBlockData.class, ImmutableCustomBlockData.class, new CustomBlockManipulatorBuilder());
+        dataManager.register(RepresentedCustomItemSnapshotData.class, ImmutableRepresentedCustomItemSnapshotData.class, new RepresentedCustomItemSnapshotManipulatorBuilder());
+        dataManager.register(CustomInventoriesData.class, ImmutableCustomInventoriesData.class, new CustomInventoriesManipulatorBuilder());
+
+        dataManager.registerBuilder(CustomInventoryData.class, new CustomInventoryDataBuilder());
     }
 
     @Listener(order = Order.AFTER_PRE)
@@ -135,7 +134,7 @@ public class CustomItemLibrary {
                                     .fileName("furnace")
                                     .build())
                             .textureSize(Vector2d.from(256, 256))
-                            .textureOffset(Vector3d.from(0, 1 + stage, 0))
+                            .textureOffset(Vector3d.from(44, 37 + stage, 0))
                             .uvRegion(Vector4d.from(176, stage, 190, 14))
                             .build())
                     .build();
@@ -147,17 +146,41 @@ public class CustomItemLibrary {
                 .plugin(this)
                 .typeId("CID")
                 .height(3)
-                .background("background", GUIBackground.builder()
-                        .textureId(TextureId.builder()
-                                .plugin(this)
-                                .fileName("alloy_furnace")
+                .backgroundBuilder()
+                        .slotId("background")
+                        .defaultBackground(GUIBackground.builder()
+                                .textureId(TextureId.builder()
+                                        .plugin(this)
+                                        .fileName("alloy_furnace")
+                                        .build())
                                 .build())
-                        .build())
-                .slot("indicator_fuel", 2, 1, (inventory, customSlot, affectCustomSlotEvent, slotTransaction) -> {
-                    System.out.println(slotTransaction);
-                    counter.setValue((counter.getValue() + 1) % features.length);
-                    inventory.setFeature(customSlot.getId().get(), "stage_" + counter.getValue());
-                }, features)
+                        .build()
+                .feature("indicator_fuel", false, features)
+                .emptySlotBuilder()
+                        .slotId("input_0")
+                        .position(Vector2i.from(1, 0))
+                        .persistent(true)
+                        .build()
+                .emptySlotBuilder()
+                        .slotId("input_1")
+                        .position(Vector2i.from(2, 0))
+                        .persistent(true)
+                        .build()
+                .emptySlotBuilder()
+                        .slotId("input_2")
+                        .position(Vector2i.from(3, 0))
+                        .persistent(true)
+                        .build()
+                .emptySlotBuilder()
+                        .slotId("fuel")
+                        .position(Vector2i.from(2, 2))
+                        .persistent(true)
+                        .build()
+                .emptySlotBuilder()
+                        .slotId("output")
+                        .position(Vector2i.from(6, 1))
+                        .persistent(true)
+                        .build()
                 .build());
 
         System.out.println(CID);

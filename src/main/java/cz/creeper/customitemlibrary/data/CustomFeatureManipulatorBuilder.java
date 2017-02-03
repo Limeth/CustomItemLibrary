@@ -7,8 +7,9 @@ import org.spongepowered.api.data.manipulator.DataManipulatorBuilder;
 import org.spongepowered.api.data.persistence.AbstractDataBuilder;
 import org.spongepowered.api.data.persistence.InvalidDataException;
 
-import javax.annotation.Nonnull;
 import java.util.Optional;
+
+import javax.annotation.Nonnull;
 
 @ToString
 public class CustomFeatureManipulatorBuilder extends AbstractDataBuilder<CustomFeatureData>

@@ -1,7 +1,9 @@
 package cz.creeper.customitemlibrary.feature.inventory.simple;
 
 import com.flowpowered.math.vector.Vector2i;
-import com.google.common.collect.Lists;
+import com.google.common.base.Preconditions;
+import cz.creeper.customitemlibrary.data.CustomInventoriesData;
+import cz.creeper.customitemlibrary.data.CustomInventoryData;
 import cz.creeper.customitemlibrary.feature.inventory.AbstractCustomInventory;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -14,9 +16,9 @@ import org.spongepowered.api.item.inventory.Slot;
 
 import java.lang.reflect.Field;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 @EqualsAndHashCode(callSuper = true)
 @Getter
@@ -45,11 +47,11 @@ public class SimpleCustomInventory extends AbstractCustomInventory<SimpleCustomI
         return dataHolder;
     }
 
-    private void setFeature(CustomSlot customSlot, String featureId) {
-        Vector2i position = customSlot.getPosition();
-        GUIFeature feature = customSlot.getFeature(featureId)
-                .orElseThrow(() -> new IllegalArgumentException("No feature found with id '" + featureId + "' in this slot."));
+    private CustomSlot getCustomSlot(CustomSlotDefinition customSlotDefinition) {
+        Vector2i position = customSlotDefinition.getPosition();
         int slotIndex = SimpleCustomInventoryDefinition.getSlotIndex(position.getX(), position.getY());
+
+        // TODO: Improve, once the API is expanded
         Iterator<Slot> slotIterator = inventory.<Slot>slots().iterator();
 
         for(int i = 0; i < slotIndex; i++)
@@ -57,25 +59,38 @@ public class SimpleCustomInventory extends AbstractCustomInventory<SimpleCustomI
 
         Slot slot = slotIterator.next();
 
-        slot.set(feature.createItemStack());
+        return new CustomSlot(this, customSlotDefinition, slot);
     }
 
-    public void setFeature(int x, int y, String featureId) {
-        setFeature(getDefinition().getCustomSlot(x, y), featureId);
+    public CustomSlot getCustomSlot(int x, int y) {
+        return getCustomSlot(getDefinition().getCustomSlotDefinition(x, y));
     }
 
-    public void setFeature(Vector2i position, String featureId) {
-        setFeature(position.getX(), position.getY(), featureId);
+    public CustomSlot getCustomSlot(Vector2i position) {
+        return getCustomSlot(position.getX(), position.getY());
     }
 
-    public void setFeature(String slotId, String featureId) {
-        CustomSlot customSlot = getDefinition().getCustomSlot(slotId)
+    public CustomSlot getCustomSlot(String slotId) {
+        CustomSlotDefinition customSlotDefinition = getDefinition().getCustomSlotDefinition(slotId)
                 .orElseThrow(() -> new IllegalArgumentException("No slot found with id '" + slotId + "'."));
 
-        setFeature(customSlot, featureId);
+        return getCustomSlot(customSlotDefinition);
     }
 
-    static Random random = new Random();
+    public CustomSlot getCustomSlot(Slot slot) {
+        Preconditions.checkArgument(hasChild(slot), "The specified slot isn't a part of this inventory.");
+
+        int slotIndex = temporaryGetSlotIndex(slot);
+        Vector2i slotPosition = SimpleCustomInventoryDefinition.getSlotLocation(slotIndex);
+
+        return getCustomSlot(slotPosition);
+    }
+
+    public Stream<CustomSlot> customSlots() {
+        return StreamSupport.stream(inventory.<Slot>slots().spliterator(), false)
+                .limit(getDefinition().getSize())
+                .map(this::getCustomSlot);
+    }
 
     @Override
     public void accept(InteractInventoryEvent event) {
@@ -88,16 +103,10 @@ public class SimpleCustomInventory extends AbstractCustomInventory<SimpleCustomI
                 if(!hasChild(slot))
                     return;
 
-                int slotIndex = temporaryGetSlotIndex(slot);
-                Vector2i slotPosition = SimpleCustomInventoryDefinition.getSlotLocation(slotIndex);
-                CustomSlot customSlot = getDefinition().getCustomSlot(slotPosition.getX(), slotPosition.getY());
+                CustomSlot customSlot = getCustomSlot(slot);
 
-                customSlot.getAffectCustomSlotListener()
-                        .onAffectCustomSlot(this, customSlot, affectSlotEvent, slotTransaction);
-                List<String> featureIds = Lists.newArrayList(customSlot.getFeatures().keySet());
-                String randomFeature = featureIds.get(random.nextInt(featureIds.size()));
-
-                setFeature(customSlot, randomFeature);
+                customSlot.getDefinition().getAffectCustomSlotListener()
+                        .onAffectCustomSlot(customSlot, slotTransaction, affectSlotEvent);
             });
         }
     }
@@ -126,6 +135,38 @@ public class SimpleCustomInventory extends AbstractCustomInventory<SimpleCustomI
             parent = newParent;
         }
         while(true);
+    }
+
+    public CustomInventoryData getCustomInventoryData() {
+        CustomInventoriesData customInventoriesData = getCustomInventoriesData();
+        String id = getDefinition().getTypeId();
+
+        return customInventoriesData.get(id)
+                .orElseGet(() -> {
+                    CustomInventoryData result = CustomInventoryData.of(this);
+
+                    customInventoriesData.put(id, result);
+
+                    return result;
+                });
+    }
+
+    public void setCustomInventoryData(CustomInventoryData data) {
+        CustomInventoriesData customInventoriesData = getCustomInventoriesData();
+        String id = getDefinition().getTypeId();
+
+        customInventoriesData.put(id, data);
+    }
+
+    private CustomInventoriesData getCustomInventoriesData() {
+        return dataHolder.get(CustomInventoriesData.class)
+                .orElseGet(() -> {
+                        CustomInventoriesData result = new CustomInventoriesData();
+
+                        dataHolder.offer(result);
+
+                        return result;
+                });
     }
 
     @SuppressWarnings("DeprecatedIsStillUsed")

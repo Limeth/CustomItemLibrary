@@ -28,24 +28,14 @@ public class CustomBlockManipulatorBuilder extends AbstractDataBuilder<CustomBlo
     @Override
     @Nonnull
     public Optional<CustomBlockData> createFrom(@Nonnull DataHolder dataHolder) {
-        Optional<UUID> damageIndicatorArmorStandId = dataHolder.get(CustomItemLibraryKeys.CUSTOM_BLOCK_DAMAGE_INDICATOR_ARMOR_STAND_ID);
-
-        if(damageIndicatorArmorStandId.isPresent()) {
-            return Optional.of(new CustomBlockData(damageIndicatorArmorStandId.get()));
-        } else {
-            return Optional.empty();
-        }
+        return dataHolder.get(CustomItemLibraryKeys.CUSTOM_BLOCK_DAMAGE_INDICATOR_ARMOR_STAND_ID)
+                .map(CustomBlockData::new);
     }
 
     @Override
     @Nonnull
     protected Optional<CustomBlockData> buildContent(@Nonnull DataView container) throws InvalidDataException {
-        Optional<UUID> damageIndicatorArmorStandId = container.getObject(CustomItemLibraryKeys.CUSTOM_BLOCK_DAMAGE_INDICATOR_ARMOR_STAND_ID.getQuery(), UUID.class);
-
-        if(damageIndicatorArmorStandId.isPresent()) {
-            return Optional.of(new CustomBlockData(damageIndicatorArmorStandId.get()));
-        } else {
-            return Optional.empty();
-        }
+        return container.getObject(CustomItemLibraryKeys.CUSTOM_BLOCK_DAMAGE_INDICATOR_ARMOR_STAND_ID.getQuery(), UUID.class)
+                .map(CustomBlockData::new);
     }
 }

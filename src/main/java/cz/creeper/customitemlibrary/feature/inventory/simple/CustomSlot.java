@@ -1,73 +1,49 @@
 package cz.creeper.customitemlibrary.feature.inventory.simple;
 
-import com.flowpowered.math.vector.Vector2i;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.ImmutableBiMap;
-import cz.creeper.customitemlibrary.util.Util;
-import lombok.NonNull;
+import cz.creeper.customitemlibrary.data.CustomInventoryData;
 import lombok.Value;
 import org.spongepowered.api.item.inventory.ItemStack;
-
-import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import org.spongepowered.api.item.inventory.ItemStackSnapshot;
+import org.spongepowered.api.item.inventory.Slot;
 
 @Value
 public class CustomSlot {
-    private Vector2i position;
-    private String id;
-    private String defaultFeatureId;
-    private BiMap<String, GUIFeature> features;
-    private AffectCustomSlotListener affectCustomSlotListener;
+    SimpleCustomInventory customInventory;
+    CustomSlotDefinition definition;
+    Slot slot;
 
-    public CustomSlot(@NonNull Vector2i position, String id, @NonNull GUIFeature defaultFeature, Iterable<GUIFeature> additionalFeatures, AffectCustomSlotListener affectCustomSlotListener) {
-        this.position = position;
-        this.id = id;
-        defaultFeatureId = defaultFeature.getId();
-        features = ImmutableBiMap.<String, GUIFeature>builder()
-                .put(defaultFeature.getId(), defaultFeature)
-                .putAll(Util.removeNull(additionalFeatures)
-                        .collect(Collectors.toMap(
-                                GUIFeature::getId,
-                                Function.identity(),
-                                (first, second) -> {
-                                    throw new IllegalArgumentException("A CustomSlot cannot contain two GUIFeatures with the same ID.");
-                                }
-                        )))
-                .build();
-        this.affectCustomSlotListener = affectCustomSlotListener != null ? affectCustomSlotListener
-                : (inventory, customSlot, event, slotTransaction) -> event.setCancelled(true);
+    public void setFeature(String featureId) {
+        GUIFeature feature = definition.getFeature(featureId)
+                .orElseThrow(() -> new IllegalArgumentException("No feature found with id '" + featureId + "' in this slot."));
+
+        if(definition.isPersistent()) {
+            CustomInventoryData data = customInventory.getCustomInventoryData();
+
+            data.getSlotIdToFeatureId().put(definition.getId().get(), featureId);
+            customInventory.setCustomInventoryData(data);
+        }
+
+        setItemStack(feature.createItemStack());
     }
 
-    private CustomSlot(Vector2i position) {
-        this(position, null, GUIFeature.EMPTY, null, null);
-    }
+    // TODO: Call me from AffectSlotEvents
+    public void setItemStack(ItemStack itemStack) {
+        CustomInventoryData data = customInventory.getCustomInventoryData();
 
-    public static CustomSlot unusedSlot(Vector2i position) {
-        return new CustomSlot(position);
-    }
+        if(itemStack != null) {
+            if(definition.isPersistent()) {
+                data.getSlotIdToItemStack().put(definition.getId().get(), itemStack.createSnapshot());
+                customInventory.setCustomInventoryData(data);
+            }
 
-    public Optional<String> getId() {
-        return Optional.ofNullable(id);
-    }
+            slot.set(itemStack);
+        } else {
+            if(definition.isPersistent()) {
+                data.getSlotIdToItemStack().put(definition.getId().get(), ItemStackSnapshot.NONE);
+                customInventory.setCustomInventoryData(data);
+            }
 
-    public GUIFeature getDefaultFeature() {
-        return features.get(defaultFeatureId);
-    }
-
-    public String getDefaultFeatureId() {
-        return defaultFeatureId;
-    }
-
-    public Optional<GUIFeature> getFeature(String featureId) {
-        return Optional.ofNullable(features.get(featureId));
-    }
-
-    public boolean isUnused() {
-        return getDefaultFeature() == GUIFeature.EMPTY && features.size() == 1;
-    }
-
-    public ItemStack createDefaultItemStack() {
-        return getDefaultFeature().createItemStack();
+            slot.clear();
+        }
     }
 }
