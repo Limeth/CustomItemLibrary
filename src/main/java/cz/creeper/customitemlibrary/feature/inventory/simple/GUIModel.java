@@ -226,9 +226,6 @@ public class GUIModel {
         result2d = result2d.sub(Vector2d.from(INVENTORY_TEXTURE_SLOT_SIZE));
         result2d = result2d.div(2);
 
-        // Then, move it to the upper left corner of the inventory texture
-        result2d = result2d.sub(INVENTORY_TEXTURE_PADDING_LEFT, INVENTORY_TEXTURE_PADDING_TOP);
-
         // Apply custom offset
         Vector3d result3d = result2d.toVector3().add(this.textureOffset);
 

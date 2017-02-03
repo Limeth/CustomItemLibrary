@@ -27,6 +27,7 @@ import cz.creeper.customitemlibrary.managers.MiningManager;
 import cz.creeper.customitemlibrary.util.Block;
 import cz.creeper.customitemlibrary.util.Identifier;
 import cz.creeper.customitemlibrary.util.Util;
+import cz.creeper.customitemlibrary.util.Wrapper;
 import lombok.Getter;
 import lombok.val;
 import ninja.leaping.configurate.ConfigurationOptions;
@@ -51,8 +52,6 @@ import org.spongepowered.api.event.game.state.GameLoadCompleteEvent;
 import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.event.game.state.GameStoppedEvent;
-import org.spongepowered.api.event.item.inventory.AffectSlotEvent;
-import org.spongepowered.api.event.item.inventory.ClickInventoryEvent;
 import org.spongepowered.api.event.item.inventory.InteractItemEvent;
 import org.spongepowered.api.plugin.Dependency;
 import org.spongepowered.api.plugin.Plugin;
@@ -136,16 +135,13 @@ public class CustomItemLibrary {
                                     .fileName("furnace")
                                     .build())
                             .textureSize(Vector2d.from(256, 256))
-                            .textureOffset(Vector3d.from(44, 37 + stage, 0))
+                            .textureOffset(Vector3d.from(0, 1 + stage, 0))
                             .uvRegion(Vector4d.from(176, stage, 190, 14))
                             .build())
                     .build();
         }
 
-        GUIFeature defaultFeature = features[0];
-        GUIFeature[] additionalFeatures = new GUIFeature[features.length - 1];
-
-        System.arraycopy(features, 1, additionalFeatures, 0, additionalFeatures.length);
+        Wrapper<Integer> counter = Wrapper.of(0);
 
         service.register(CID = CustomFeatureDefinition.simpleInventoryBuilder()
                 .plugin(this)
@@ -157,7 +153,11 @@ public class CustomItemLibrary {
                                 .fileName("alloy_furnace")
                                 .build())
                         .build())
-                .feature("indicator_fuel", defaultFeature, additionalFeatures)
+                .slot("indicator_fuel", 2, 1, (inventory, customSlot, affectCustomSlotEvent, slotTransaction) -> {
+                    System.out.println(slotTransaction);
+                    counter.setValue((counter.getValue() + 1) % features.length);
+                    inventory.setFeature(customSlot.getId().get(), "stage_" + counter.getValue());
+                }, features)
                 .build());
 
         System.out.println(CID);
@@ -166,18 +166,6 @@ public class CustomItemLibrary {
     @Listener
     public void onInteractItem(InteractItemEvent event, @First Player player) {
         CID.open(player, player, event.getCause());
-    }
-
-    @Listener
-    public void onAffectSlot(AffectSlotEvent event) {
-        if(!(event instanceof ClickInventoryEvent)) {
-            //event.setCancelled(true);
-            return;
-        }
-
-        ClickInventoryEvent clickEvent = (ClickInventoryEvent) event;
-
-        System.out.println(event);
     }
 
     @Listener

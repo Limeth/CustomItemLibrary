@@ -1,12 +1,6 @@
 package cz.creeper.customitemlibrary.feature.inventory.simple;
 
-import static cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinition.INVENTORY_SLOTS_WIDTH;
-import static cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinition.INVENTORY_TEXTURE_PADDING_LEFT;
-import static cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinition.INVENTORY_TEXTURE_PADDING_TOP;
-import static cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinition.INVENTORY_TEXTURE_SLOT_GAP;
-import static cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinition.INVENTORY_TEXTURE_SLOT_SIZE;
-import static cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinition.getInventoryTextureHeight;
-import static cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinition.getInventoryTextureWidth;
+import static cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinition.*;
 
 import com.flowpowered.math.vector.Vector2d;
 import com.flowpowered.math.vector.Vector2i;
@@ -76,6 +70,15 @@ public class SimpleCustomInventoryDefinitionBuilder {
         return feature(slotId, defaultFeature, additionalFeatures);
     }
 
+    public SimpleCustomInventoryDefinitionBuilder background(@NonNull String slotId, @NonNull GUIBackground[] backgrounds) {
+        GUIBackground defaultBackground = backgrounds[0];
+        GUIBackground[] additionalBackground = new GUIBackground[backgrounds.length - 1];
+
+        System.arraycopy(backgrounds, 1, additionalBackground, 0, additionalBackground.length);
+
+        return background(slotId, defaultBackground, additionalBackground);
+    }
+
     private GUIFeature getBackgroundFeature(GUIBackground background) {
         TextureId id = background.getTextureId();
 
@@ -121,11 +124,16 @@ public class SimpleCustomInventoryDefinitionBuilder {
         return this;
     }
 
-    public SimpleCustomInventoryDefinitionBuilder slot(String slotId, int x, int y, @NonNull GUIFeature defaultFeature, GUIFeature... additionalFeatures) {
-        return slot(slotId, Vector2i.from(x, y), defaultFeature, additionalFeatures);
+    public SimpleCustomInventoryDefinitionBuilder feature(@NonNull String slotId, @NonNull GUIFeature[] features) {
+        GUIFeature defaultFeature = features[0];
+        GUIFeature[] additionalFeatures = new GUIFeature[features.length - 1];
+
+        System.arraycopy(features, 1, additionalFeatures, 0, additionalFeatures.length);
+
+        return feature(slotId, defaultFeature, additionalFeatures);
     }
 
-    public SimpleCustomInventoryDefinitionBuilder slot(String slotId, Vector2i position, @NonNull GUIFeature defaultFeature, GUIFeature... additionalFeatures) {
+    public SimpleCustomInventoryDefinitionBuilder slot(String slotId, Vector2i position, AffectCustomSlotListener affectCustomSlotListener, @NonNull GUIFeature defaultFeature, GUIFeature... additionalFeatures) {
         Preconditions.checkNotNull(highPrioritySlots, "The height must be set first.");
 
         if(pluginContainer == null) {
@@ -143,9 +151,26 @@ public class SimpleCustomInventoryDefinitionBuilder {
         }
 
         highPrioritySlots[position.getY()][position.getX()] =
-                new CustomSlot(position, slotId, defaultFeature, Arrays.asList(additionalFeatures));
+                new CustomSlot(position, slotId, defaultFeature, Arrays.asList(additionalFeatures), affectCustomSlotListener);
 
         return this;
+    }
+
+    public SimpleCustomInventoryDefinitionBuilder slot(String slotId, Vector2i position, AffectCustomSlotListener affectCustomSlotListener, @NonNull GUIFeature[] features) {
+        GUIFeature defaultFeature = features[0];
+        GUIFeature[] additionalFeatures = new GUIFeature[features.length - 1];
+
+        System.arraycopy(features, 1, additionalFeatures, 0, additionalFeatures.length);
+
+        return slot(slotId, position, affectCustomSlotListener, defaultFeature, additionalFeatures);
+    }
+
+    public SimpleCustomInventoryDefinitionBuilder slot(String slotId, int x, int y, AffectCustomSlotListener affectCustomSlotListener, @NonNull GUIFeature defaultFeature, GUIFeature... additionalFeatures) {
+        return slot(slotId, Vector2i.from(x, y), affectCustomSlotListener, defaultFeature, additionalFeatures);
+    }
+
+    public SimpleCustomInventoryDefinitionBuilder slot(String slotId, int x, int y, AffectCustomSlotListener affectCustomSlotListener, @NonNull GUIFeature[] features) {
+        return slot(slotId, Vector2i.from(x, y), affectCustomSlotListener, features);
     }
 
     public SimpleCustomInventoryDefinition build() {
@@ -165,20 +190,20 @@ public class SimpleCustomInventoryDefinitionBuilder {
                     GUIFeature defaultFeature = features.defaultFeature.toBuilder()
                             .model(features.defaultFeature.getModel().toBuilder(pluginContainer.getInstance()
                                             .orElseThrow(() -> new IllegalStateException("Could not access the plugin instance.")))
-                                    .textureOffset(features.defaultFeature.getModel().getTextureOffset().add(slotOffset))
+                                    .textureOffset(features.defaultFeature.getModel().getTextureOffset().add(slotOffset).sub(INVENTORY_TEXTURE_PADDING_LEFT, INVENTORY_TEXTURE_PADDING_TOP, 0))
                                     .build())
                             .build();
                     Iterable<GUIFeature> additionalFeatures = features.additionalFeatures.stream()
                             .map(additionalFeature -> additionalFeature.toBuilder()
                                     .model(additionalFeature.getModel().toBuilder(pluginContainer.getInstance()
                                                     .orElseThrow(() -> new IllegalStateException("Could not access the plugin instance.")))
-                                            .textureOffset(additionalFeature.getModel().getTextureOffset().add(slotOffset))
+                                            .textureOffset(additionalFeature.getModel().getTextureOffset().add(slotOffset).sub(INVENTORY_TEXTURE_PADDING_LEFT, INVENTORY_TEXTURE_PADDING_TOP, 0))
                                             .build())
                                     .build())
                             .collect(Collectors.toList());
 
                     Vector2i position = Vector2i.from(x, y);
-                    slot = new CustomSlot(position, features.slotId, defaultFeature, additionalFeatures);
+                    slot = new CustomSlot(position, features.slotId, defaultFeature, additionalFeatures, null);
                 }
 
                 slots[y][x] = slot;

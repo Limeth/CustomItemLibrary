@@ -18,8 +18,9 @@ public class CustomSlot {
     private String id;
     private String defaultFeatureId;
     private BiMap<String, GUIFeature> features;
+    private AffectCustomSlotListener affectCustomSlotListener;
 
-    public CustomSlot(@NonNull Vector2i position, String id, @NonNull GUIFeature defaultFeature, Iterable<GUIFeature> additionalFeatures) {
+    public CustomSlot(@NonNull Vector2i position, String id, @NonNull GUIFeature defaultFeature, Iterable<GUIFeature> additionalFeatures, AffectCustomSlotListener affectCustomSlotListener) {
         this.position = position;
         this.id = id;
         defaultFeatureId = defaultFeature.getId();
@@ -34,10 +35,12 @@ public class CustomSlot {
                                 }
                         )))
                 .build();
+        this.affectCustomSlotListener = affectCustomSlotListener != null ? affectCustomSlotListener
+                : (inventory, customSlot, event, slotTransaction) -> event.setCancelled(true);
     }
 
     private CustomSlot(Vector2i position) {
-        this(position, null, GUIFeature.EMPTY, null);
+        this(position, null, GUIFeature.EMPTY, null, null);
     }
 
     public static CustomSlot unusedSlot(Vector2i position) {

@@ -84,15 +84,48 @@ public class SimpleCustomInventory extends AbstractCustomInventory<SimpleCustomI
 
             affectSlotEvent.getTransactions().forEach(slotTransaction -> {
                 Slot slot = slotTransaction.getSlot();
+
+                if(!hasChild(slot))
+                    return;
+
                 int slotIndex = temporaryGetSlotIndex(slot);
                 Vector2i slotPosition = SimpleCustomInventoryDefinition.getSlotLocation(slotIndex);
                 CustomSlot customSlot = getDefinition().getCustomSlot(slotPosition.getX(), slotPosition.getY());
+
+                customSlot.getAffectCustomSlotListener()
+                        .onAffectCustomSlot(this, customSlot, affectSlotEvent, slotTransaction);
                 List<String> featureIds = Lists.newArrayList(customSlot.getFeatures().keySet());
                 String randomFeature = featureIds.get(random.nextInt(featureIds.size()));
 
                 setFeature(customSlot, randomFeature);
             });
         }
+    }
+
+    public boolean hasChild(Inventory child) {
+        return hasChild(inventory, child);
+    }
+
+    public boolean hasParent(Inventory parent) {
+        return hasChild(parent, inventory);
+    }
+
+    private static boolean hasChild(Inventory supposedParent, Inventory supposedChild) {
+        Inventory parent = supposedChild;
+
+        do
+        {
+            Inventory newParent = parent.parent();
+
+            if(newParent == supposedParent)
+                return true;
+
+            if(newParent == parent)
+                return false;
+
+            parent = newParent;
+        }
+        while(true);
     }
 
     @SuppressWarnings("DeprecatedIsStillUsed")
