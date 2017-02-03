@@ -156,7 +156,6 @@ public class CustomItemLibrary {
                                 .plugin(this)
                                 .fileName("alloy_furnace")
                                 .build())
-                        .textureSize(Vector2d.from(176, 71))
                         .build())
                 .feature("indicator_fuel", defaultFeature, additionalFeatures)
                 .build());

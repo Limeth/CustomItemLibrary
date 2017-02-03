@@ -8,6 +8,7 @@ import static cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustom
 import static cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinition.getInventoryTextureHeight;
 import static cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinition.getInventoryTextureWidth;
 
+import com.flowpowered.math.vector.Vector2d;
 import com.flowpowered.math.vector.Vector2i;
 import com.flowpowered.math.vector.Vector3d;
 import com.flowpowered.math.vector.Vector4d;
@@ -84,7 +85,7 @@ public class SimpleCustomInventoryDefinitionBuilder {
                         .plugin(pluginContainer.getInstance()
                                 .orElseThrow(() -> new IllegalStateException("Could not access the plugin instance.")))
                         .textureId(id)
-                        .textureSize(background.getTextureSize())
+                        .textureSize(Vector2d.from(getInventoryTextureWidth(), getInventoryTextureHeight(highPrioritySlots.length)))
                         .textureOffset(Vector3d.from(0, 0, -100))
                         .uvRegion(Vector4d.from(
                                 background.getUvTopLeft().getX(),
