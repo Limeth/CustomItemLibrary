@@ -1,5 +1,8 @@
-package cz.creeper.customitemlibrary.data;
+package cz.creeper.customitemlibrary.data.builder;
 
+import cz.creeper.customitemlibrary.data.CustomItemLibraryKeys;
+import cz.creeper.customitemlibrary.data.immutable.ImmutableRepresentedCustomItemSnapshotData;
+import cz.creeper.customitemlibrary.data.mutable.RepresentedCustomItemSnapshotData;
 import lombok.ToString;
 import org.spongepowered.api.data.DataHolder;
 import org.spongepowered.api.data.DataView;
@@ -8,8 +11,9 @@ import org.spongepowered.api.data.persistence.AbstractDataBuilder;
 import org.spongepowered.api.data.persistence.InvalidDataException;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 
-import javax.annotation.Nonnull;
 import java.util.Optional;
+
+import javax.annotation.Nonnull;
 
 @ToString
 public class RepresentedCustomItemSnapshotManipulatorBuilder extends AbstractDataBuilder<RepresentedCustomItemSnapshotData>

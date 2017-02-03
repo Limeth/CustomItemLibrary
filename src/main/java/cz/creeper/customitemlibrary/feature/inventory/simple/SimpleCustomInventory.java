@@ -2,8 +2,8 @@ package cz.creeper.customitemlibrary.feature.inventory.simple;
 
 import com.flowpowered.math.vector.Vector2i;
 import com.google.common.base.Preconditions;
-import cz.creeper.customitemlibrary.data.CustomInventoriesData;
-import cz.creeper.customitemlibrary.data.CustomInventoryData;
+import cz.creeper.customitemlibrary.data.mutable.CustomInventoriesData;
+import cz.creeper.customitemlibrary.data.mutable.CustomInventoryData;
 import cz.creeper.customitemlibrary.feature.inventory.AbstractCustomInventory;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

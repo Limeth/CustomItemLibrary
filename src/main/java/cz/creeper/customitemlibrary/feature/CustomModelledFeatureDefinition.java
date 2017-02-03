@@ -1,6 +1,6 @@
 package cz.creeper.customitemlibrary.feature;
 
-import cz.creeper.customitemlibrary.data.CustomFeatureData;
+import cz.creeper.customitemlibrary.data.mutable.CustomFeatureData;
 import org.spongepowered.api.data.DataHolder;
 
 public interface CustomModelledFeatureDefinition<T extends CustomModelledFeature<? extends CustomModelledFeatureDefinition<T>>> extends CustomFeatureDefinition<T>, DefinesModels {

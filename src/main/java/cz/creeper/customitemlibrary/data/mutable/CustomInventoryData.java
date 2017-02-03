@@ -1,4 +1,4 @@
-package cz.creeper.customitemlibrary.data;
+package cz.creeper.customitemlibrary.data.mutable;
 
 import static cz.creeper.customitemlibrary.data.CustomItemLibraryKeys.*;
 

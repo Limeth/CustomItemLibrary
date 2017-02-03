@@ -1,7 +1,7 @@
 package cz.creeper.customitemlibrary;
 
 import com.google.common.collect.Sets;
-import cz.creeper.customitemlibrary.data.CustomFeatureData;
+import cz.creeper.customitemlibrary.data.mutable.CustomFeatureData;
 import cz.creeper.customitemlibrary.feature.CustomFeature;
 import cz.creeper.customitemlibrary.feature.CustomFeatureDefinition;
 import cz.creeper.customitemlibrary.feature.block.CustomBlock;

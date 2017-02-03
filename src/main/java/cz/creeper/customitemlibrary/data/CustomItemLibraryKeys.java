@@ -1,6 +1,7 @@
 package cz.creeper.customitemlibrary.data;
 
 import com.google.common.reflect.TypeToken;
+import cz.creeper.customitemlibrary.data.mutable.CustomInventoryData;
 import lombok.experimental.UtilityClass;
 import org.spongepowered.api.data.DataQuery;
 import org.spongepowered.api.data.key.Key;

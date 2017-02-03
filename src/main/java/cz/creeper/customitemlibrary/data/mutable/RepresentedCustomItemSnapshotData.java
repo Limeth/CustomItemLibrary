@@ -1,5 +1,7 @@
-package cz.creeper.customitemlibrary.data;
+package cz.creeper.customitemlibrary.data.mutable;
 
+import cz.creeper.customitemlibrary.data.CustomItemLibraryKeys;
+import cz.creeper.customitemlibrary.data.immutable.ImmutableRepresentedCustomItemSnapshotData;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
@@ -13,8 +15,9 @@ import org.spongepowered.api.data.merge.MergeFunction;
 import org.spongepowered.api.data.value.mutable.Value;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 
-import javax.annotation.Nonnull;
 import java.util.Optional;
+
+import javax.annotation.Nonnull;
 
 @ToString
 public class RepresentedCustomItemSnapshotData extends AbstractData<RepresentedCustomItemSnapshotData, ImmutableRepresentedCustomItemSnapshotData> {

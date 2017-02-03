@@ -1,5 +1,9 @@
-package cz.creeper.customitemlibrary.data;
+package cz.creeper.customitemlibrary.data.builder;
 
+import cz.creeper.customitemlibrary.data.CustomItemLibraryKeys;
+import cz.creeper.customitemlibrary.data.immutable.ImmutableCustomInventoriesData;
+import cz.creeper.customitemlibrary.data.mutable.CustomInventoriesData;
+import cz.creeper.customitemlibrary.data.mutable.CustomInventoryData;
 import org.spongepowered.api.data.DataHolder;
 import org.spongepowered.api.data.DataView;
 import org.spongepowered.api.data.manipulator.DataManipulatorBuilder;

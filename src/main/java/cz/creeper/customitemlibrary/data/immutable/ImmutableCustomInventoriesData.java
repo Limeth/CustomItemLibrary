@@ -1,5 +1,8 @@
-package cz.creeper.customitemlibrary.data;
+package cz.creeper.customitemlibrary.data.immutable;
 
+import cz.creeper.customitemlibrary.data.mutable.CustomInventoriesData;
+import cz.creeper.customitemlibrary.data.mutable.CustomInventoryData;
+import cz.creeper.customitemlibrary.data.CustomItemLibraryKeys;
 import org.spongepowered.api.data.manipulator.immutable.common.AbstractImmutableMappedData;
 
 import java.util.Map;

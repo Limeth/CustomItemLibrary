@@ -1,6 +1,8 @@
-package cz.creeper.customitemlibrary.data;
+package cz.creeper.customitemlibrary.data.mutable;
 
 import com.google.common.collect.Maps;
+import cz.creeper.customitemlibrary.data.CustomItemLibraryKeys;
+import cz.creeper.customitemlibrary.data.immutable.ImmutableCustomInventoriesData;
 import lombok.ToString;
 import org.spongepowered.api.data.DataContainer;
 import org.spongepowered.api.data.DataHolder;

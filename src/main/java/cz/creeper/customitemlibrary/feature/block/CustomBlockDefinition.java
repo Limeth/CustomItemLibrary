@@ -2,7 +2,7 @@ package cz.creeper.customitemlibrary.feature.block;
 
 import com.flowpowered.math.vector.Vector3d;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
-import cz.creeper.customitemlibrary.data.CustomBlockData;
+import cz.creeper.customitemlibrary.data.mutable.CustomBlockData;
 import cz.creeper.customitemlibrary.feature.CustomModelledFeatureDefinition;
 import cz.creeper.customitemlibrary.feature.item.CustomItem;
 import cz.creeper.customitemlibrary.feature.DefinesDurabilityModels;

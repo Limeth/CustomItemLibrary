@@ -1,8 +1,8 @@
 package cz.creeper.customitemlibrary.feature.item;
 
-import cz.creeper.customitemlibrary.data.CustomFeatureData;
+import cz.creeper.customitemlibrary.data.mutable.CustomFeatureData;
 import cz.creeper.customitemlibrary.data.CustomItemLibraryKeys;
-import cz.creeper.customitemlibrary.data.RepresentedCustomItemSnapshotData;
+import cz.creeper.customitemlibrary.data.mutable.RepresentedCustomItemSnapshotData;
 import cz.creeper.customitemlibrary.feature.CustomModelledFeature;
 import org.spongepowered.api.item.inventory.ItemStack;
 

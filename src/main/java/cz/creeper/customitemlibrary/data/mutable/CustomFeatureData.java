@@ -1,5 +1,7 @@
-package cz.creeper.customitemlibrary.data;
+package cz.creeper.customitemlibrary.data.mutable;
 
+import cz.creeper.customitemlibrary.data.CustomItemLibraryKeys;
+import cz.creeper.customitemlibrary.data.immutable.ImmutableCustomFeatureData;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;

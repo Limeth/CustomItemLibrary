@@ -9,7 +9,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
-import cz.creeper.customitemlibrary.data.CustomBlockData;
+import cz.creeper.customitemlibrary.data.mutable.CustomBlockData;
 import cz.creeper.customitemlibrary.data.CustomItemLibraryKeys;
 import cz.creeper.customitemlibrary.event.CustomBlockBreakEvent;
 import cz.creeper.customitemlibrary.event.CustomBlockBreakItemDropEvent;

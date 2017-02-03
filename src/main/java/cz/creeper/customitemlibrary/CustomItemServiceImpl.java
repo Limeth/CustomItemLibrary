@@ -3,7 +3,7 @@ package cz.creeper.customitemlibrary;
 import com.flowpowered.math.vector.Vector3i;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
-import cz.creeper.customitemlibrary.data.CustomFeatureData;
+import cz.creeper.customitemlibrary.data.mutable.CustomFeatureData;
 import cz.creeper.customitemlibrary.data.CustomItemLibraryKeys;
 import cz.creeper.customitemlibrary.feature.CustomFeature;
 import cz.creeper.customitemlibrary.feature.CustomFeatureDefinition;

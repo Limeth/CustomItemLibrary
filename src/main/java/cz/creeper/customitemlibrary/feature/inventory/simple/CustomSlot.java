@@ -1,6 +1,6 @@
 package cz.creeper.customitemlibrary.feature.inventory.simple;
 
-import cz.creeper.customitemlibrary.data.CustomInventoryData;
+import cz.creeper.customitemlibrary.data.mutable.CustomInventoryData;
 import lombok.Value;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;

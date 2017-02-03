@@ -1,5 +1,8 @@
-package cz.creeper.customitemlibrary.data;
+package cz.creeper.customitemlibrary.data.builder;
 
+import cz.creeper.customitemlibrary.data.CustomItemLibraryKeys;
+import cz.creeper.customitemlibrary.data.immutable.ImmutableCustomFeatureData;
+import cz.creeper.customitemlibrary.data.mutable.CustomFeatureData;
 import lombok.ToString;
 import org.spongepowered.api.data.DataHolder;
 import org.spongepowered.api.data.DataView;
