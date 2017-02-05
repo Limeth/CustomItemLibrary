@@ -90,8 +90,7 @@ public class SimpleCustomInventoryDefinition extends AbstractCustomInventoryDefi
         return result;
     }
 
-    @Override
-    public void populate(SimpleCustomInventory inventory) {
+    private void populate(SimpleCustomInventory inventory) {
         CustomInventoryData data = inventory.getCustomInventoryData();
         val slotIdToItemStack = data.getSlotIdToItemStack();
 

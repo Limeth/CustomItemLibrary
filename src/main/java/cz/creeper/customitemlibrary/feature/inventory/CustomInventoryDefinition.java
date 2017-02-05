@@ -8,7 +8,6 @@ import org.spongepowered.api.event.cause.Cause;
 public interface CustomInventoryDefinition<T extends CustomInventory<? extends CustomInventoryDefinition<T>>> extends CustomFeatureDefinition<T> {
     int getHeight();
     int getSize();
-    void populate(T inventory);
     T create(DataHolder dataHolder);
 
     default T open(DataHolder dataHolder, Player player, Cause cause) {

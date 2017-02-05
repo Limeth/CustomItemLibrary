@@ -7,7 +7,6 @@ import cz.creeper.customitemlibrary.data.mutable.CustomInventoryData;
 import cz.creeper.customitemlibrary.feature.inventory.AbstractCustomInventory;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NonNull;
 import org.spongepowered.api.data.DataHolder;
 import org.spongepowered.api.event.item.inventory.AffectSlotEvent;
 import org.spongepowered.api.event.item.inventory.InteractInventoryEvent;
@@ -27,28 +26,8 @@ import java.util.stream.StreamSupport;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 public class SimpleCustomInventory extends AbstractCustomInventory<SimpleCustomInventoryDefinition> implements Consumer<InteractInventoryEvent> {
-    private final DataHolder dataHolder;
-    // Initialized after construction
-    private Inventory inventory;
-
-    public SimpleCustomInventory(SimpleCustomInventoryDefinition definition, @NonNull DataHolder dataHolder) {
-        super(definition);
-
-        this.dataHolder = dataHolder;
-    }
-
-    void setInventory(@NonNull Inventory inventory) {
-        this.inventory = inventory;
-    }
-
-    @Override
-    public Inventory getInventory() {
-        return inventory;
-    }
-
-    @Override
-    public DataHolder getDataHolder() {
-        return dataHolder;
+    public SimpleCustomInventory(SimpleCustomInventoryDefinition definition, DataHolder dataHolder) {
+        super(definition, dataHolder);
     }
 
     private CustomSlot getCustomSlot(CustomSlotDefinition customSlotDefinition) {
@@ -56,7 +35,7 @@ public class SimpleCustomInventory extends AbstractCustomInventory<SimpleCustomI
         int slotIndex = SimpleCustomInventoryDefinition.getSlotIndex(position.getX(), position.getY());
 
         // TODO: Improve, once the API is expanded
-        Iterator<Slot> slotIterator = inventory.<Slot>slots().iterator();
+        Iterator<Slot> slotIterator = getInventory().<Slot>slots().iterator();
 
         for(int i = 0; i < slotIndex; i++)
             slotIterator.next();
@@ -88,7 +67,7 @@ public class SimpleCustomInventory extends AbstractCustomInventory<SimpleCustomI
     }
 
     public Stream<CustomSlot> customSlots() {
-        return StreamSupport.stream(inventory.<Slot>slots().spliterator(), false)
+        return StreamSupport.stream(getInventory().<Slot>slots().spliterator(), false)
                 .limit(getDefinition().getSize())
                 .map(this::getCustomSlot);
     }
@@ -119,11 +98,11 @@ public class SimpleCustomInventory extends AbstractCustomInventory<SimpleCustomI
     }
 
     public boolean hasChild(Inventory child) {
-        return hasChild(inventory, child);
+        return hasChild(getInventory(), child);
     }
 
     public boolean hasParent(Inventory parent) {
-        return hasChild(parent, inventory);
+        return hasChild(parent, getInventory());
     }
 
     private static boolean hasChild(Inventory supposedParent, Inventory supposedChild) {
@@ -163,15 +142,15 @@ public class SimpleCustomInventory extends AbstractCustomInventory<SimpleCustomI
         String id = getDefinition().getTypeId();
 
         customInventoriesData.put(id, data);
-        dataHolder.offer(customInventoriesData);
+        getDataHolder().offer(customInventoriesData);
     }
 
     private CustomInventoriesData getCustomInventoriesData() {
-        return dataHolder.get(CustomInventoriesData.class)
+        return getDataHolder().get(CustomInventoriesData.class)
                 .orElseGet(() -> {
                         CustomInventoriesData result = new CustomInventoriesData();
 
-                        dataHolder.offer(result);
+                        getDataHolder().offer(result);
 
                         return result;
                 });
