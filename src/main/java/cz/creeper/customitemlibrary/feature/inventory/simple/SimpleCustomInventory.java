@@ -13,10 +13,14 @@ import org.spongepowered.api.event.item.inventory.AffectSlotEvent;
 import org.spongepowered.api.event.item.inventory.InteractInventoryEvent;
 import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.Slot;
+import org.spongepowered.api.item.inventory.transaction.SlotTransaction;
 
 import java.lang.reflect.Field;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -70,11 +74,8 @@ public class SimpleCustomInventory extends AbstractCustomInventory<SimpleCustomI
         return getCustomSlot(position.getX(), position.getY());
     }
 
-    public CustomSlot getCustomSlot(String slotId) {
-        CustomSlotDefinition customSlotDefinition = getDefinition().getCustomSlotDefinition(slotId)
-                .orElseThrow(() -> new IllegalArgumentException("No slot found with id '" + slotId + "'."));
-
-        return getCustomSlot(customSlotDefinition);
+    public Optional<CustomSlot> getCustomSlot(String slotId) {
+        return getDefinition().getCustomSlotDefinition(slotId).map(this::getCustomSlot);
     }
 
     public CustomSlot getCustomSlot(Slot slot) {
@@ -96,18 +97,24 @@ public class SimpleCustomInventory extends AbstractCustomInventory<SimpleCustomI
     public void accept(InteractInventoryEvent event) {
         if(event instanceof AffectSlotEvent) {
             AffectSlotEvent affectSlotEvent = (AffectSlotEvent) event;
+            List<SlotTransaction> ownedTransactions = affectSlotEvent.getTransactions().stream()
+                    .filter(slotTransaction -> hasChild(slotTransaction.getSlot()))
+                    .collect(Collectors.toList());
 
-            affectSlotEvent.getTransactions().forEach(slotTransaction -> {
-                Slot slot = slotTransaction.getSlot();
-
-                if(!hasChild(slot))
-                    return;
-
-                CustomSlot customSlot = getCustomSlot(slot);
+            ownedTransactions.forEach(slotTransaction -> {
+                CustomSlot customSlot = getCustomSlot(slotTransaction.getSlot());
 
                 customSlot.getDefinition().getAffectCustomSlotListener()
                         .onAffectCustomSlot(customSlot, slotTransaction, affectSlotEvent);
             });
+
+            if(!event.isCancelled()) {
+                ownedTransactions.forEach(slotTransaction -> {
+                    CustomSlot customSlot = getCustomSlot(slotTransaction.getSlot());
+
+                    customSlot.setItemStack(slotTransaction.getFinal().createStack());
+                });
+            }
         }
     }
 
@@ -145,7 +152,7 @@ public class SimpleCustomInventory extends AbstractCustomInventory<SimpleCustomI
                 .orElseGet(() -> {
                     CustomInventoryData result = CustomInventoryData.of(this);
 
-                    customInventoriesData.put(id, result);
+                    setCustomInventoryData(result);
 
                     return result;
                 });
@@ -156,6 +163,7 @@ public class SimpleCustomInventory extends AbstractCustomInventory<SimpleCustomI
         String id = getDefinition().getTypeId();
 
         customInventoriesData.put(id, data);
+        dataHolder.offer(customInventoriesData);
     }
 
     private CustomInventoriesData getCustomInventoriesData() {

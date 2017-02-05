@@ -8,7 +8,7 @@ import org.spongepowered.api.data.manipulator.immutable.common.AbstractImmutable
 import java.util.Map;
 
 public class ImmutableCustomInventoriesData extends AbstractImmutableMappedData<String, CustomInventoryData, ImmutableCustomInventoriesData, CustomInventoriesData> {
-    protected ImmutableCustomInventoriesData(Map<String, CustomInventoryData> value) {
+    public ImmutableCustomInventoriesData(Map<String, CustomInventoryData> value) {
         super(value, CustomItemLibraryKeys.CUSTOM_INVENTORIES);
     }
 

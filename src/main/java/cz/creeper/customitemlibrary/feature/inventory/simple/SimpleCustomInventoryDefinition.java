@@ -5,17 +5,21 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
-import cz.creeper.customitemlibrary.feature.inventory.AbstractCustomInventoryDefinition;
+import cz.creeper.customitemlibrary.data.mutable.CustomInventoryData;
+import cz.creeper.customitemlibrary.feature.inventory
+        .AbstractCustomInventoryDefinition;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.ToString;
+import lombok.val;
 import org.spongepowered.api.data.DataHolder;
 import org.spongepowered.api.event.item.inventory.InteractInventoryEvent;
 import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.InventoryArchetype;
 import org.spongepowered.api.item.inventory.InventoryArchetypes;
 import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.item.inventory.property.InventoryDimension;
 import org.spongepowered.api.plugin.PluginContainer;
 
@@ -88,11 +92,25 @@ public class SimpleCustomInventoryDefinition extends AbstractCustomInventoryDefi
 
     @Override
     public void populate(SimpleCustomInventory inventory) {
+        CustomInventoryData data = inventory.getCustomInventoryData();
+        val slotIdToItemStack = data.getSlotIdToItemStack();
+
         inventory.customSlots().forEach(customSlot -> {
-            ItemStack itemStack = customSlot.getDefinition().createDefaultItemStack();
+            ItemStack itemStack = customSlot.getDefinition().getId()
+                    .flatMap(slotId -> Optional.ofNullable(slotIdToItemStack.get(slotId)))
+                    .map(ItemStackSnapshot::createStack)
+                    .orElseGet(() -> customSlot.getDefinition().createDefaultItemStack());
 
             customSlot.setItemStack(itemStack);
         });
+
+        val slotIdToFeatureId = data.getSlotIdToFeatureId();
+
+        slotIdToFeatureId.forEach((slotId, featureId) ->
+                inventory.getCustomSlot(slotId).ifPresent(customSlot ->
+                        customSlot.setFeature(featureId)
+                )
+        );
     }
 
     public CustomSlotDefinition getCustomSlotDefinition(int x, int y) {

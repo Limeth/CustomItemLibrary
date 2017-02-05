@@ -2,8 +2,10 @@ package cz.creeper.customitemlibrary.data.mutable;
 
 import com.google.common.collect.Maps;
 import cz.creeper.customitemlibrary.data.CustomItemLibraryKeys;
-import cz.creeper.customitemlibrary.data.immutable.ImmutableCustomInventoriesData;
+import cz.creeper.customitemlibrary.data.immutable
+        .ImmutableCustomInventoriesData;
 import lombok.ToString;
+import lombok.val;
 import org.spongepowered.api.data.DataContainer;
 import org.spongepowered.api.data.DataHolder;
 import org.spongepowered.api.data.manipulator.mutable.common.AbstractMappedData;
@@ -35,19 +37,31 @@ public class CustomInventoriesData extends AbstractMappedData<String, CustomInve
 
     @Override
     public CustomInventoriesData put(String key, CustomInventoryData value) {
-        getValue().put(key, value);
+        val map = getValue();
+
+        map.put(key, value);
+        setValue(map);
+
         return this;
     }
 
     @Override
-    public CustomInventoriesData putAll(Map<? extends String, ? extends CustomInventoryData> map) {
-        getValue().putAll(map);
+    public CustomInventoriesData putAll(Map<? extends String, ? extends CustomInventoryData> otherMap) {
+        val map = getValue();
+
+        map.putAll(otherMap);
+        setValue(map);
+
         return this;
     }
 
     @Override
     public CustomInventoriesData remove(String key) {
-        getValue().remove(key);
+        val map = getValue();
+
+        map.remove(key);
+        setValue(map);
+
         return this;
     }
 

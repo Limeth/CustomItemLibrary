@@ -24,6 +24,8 @@ import cz.creeper.customitemlibrary.feature.TextureId;
 import cz.creeper.customitemlibrary.feature.block.CustomBlock;
 import cz.creeper.customitemlibrary.feature.block.CustomBlockDefinition;
 import cz.creeper.customitemlibrary.feature.inventory.CustomInventoryDefinition;
+import cz.creeper.customitemlibrary.feature.inventory.simple
+        .AffectCustomSlotListener;
 import cz.creeper.customitemlibrary.feature.inventory.simple.GUIBackground;
 import cz.creeper.customitemlibrary.feature.inventory.simple.GUIFeature;
 import cz.creeper.customitemlibrary.feature.inventory.simple.GUIModel;
@@ -188,11 +190,13 @@ public class CustomItemLibrary {
                         .slotId("fuel")
                         .position(Vector2i.from(2, 2))
                         .persistent(true)
+                        .affectCustomSlotListener(AffectCustomSlotListener.fuelOnly())
                         .build()
                 .emptySlotBuilder()
                         .slotId("output")
                         .position(Vector2i.from(6, 1))
                         .persistent(true)
+                        .affectCustomSlotListener(AffectCustomSlotListener.output())
                         .build()
                 .build());
 
