@@ -246,21 +246,6 @@ public class SimpleCustomInventoryDefinitionBuilder {
         return new SimpleCustomInventoryDefinition(pluginContainer, typeId, slots);
     }
 
-    /**
-     * Translates the {@link GUIModel} to the first, upper left slot
-     */
-    private GUIModel translateAbsolute(GUIModel model, int x, int y) {
-        return model.toBuilder(pluginContainer.getInstance()
-                        .orElseThrow(() -> new IllegalStateException("Could not access the plugin instance.")))
-                .textureOffset(
-                        model.getTextureOffset()
-                        .sub(INVENTORY_TEXTURE_PADDING_LEFT, 0, INVENTORY_TEXTURE_PADDING_TOP)
-                        .add((INVENTORY_TEXTURE_SLOT_SIZE + INVENTORY_TEXTURE_SLOT_GAP) * x, 0,
-                                (INVENTORY_TEXTURE_SLOT_SIZE + INVENTORY_TEXTURE_SLOT_GAP) * y)
-                )
-                .build();
-    }
-
     @Value
     private static class GUIFeatures {
         String slotId;
