@@ -24,11 +24,11 @@ import cz.creeper.customitemlibrary.feature.TextureId;
 import cz.creeper.customitemlibrary.feature.block.CustomBlock;
 import cz.creeper.customitemlibrary.feature.block.CustomBlockDefinition;
 import cz.creeper.customitemlibrary.feature.inventory.CustomInventoryDefinition;
-import cz.creeper.customitemlibrary.feature.inventory.simple
-        .AffectCustomSlotListener;
+import cz.creeper.customitemlibrary.feature.inventory.simple.AffectCustomSlotListener;
 import cz.creeper.customitemlibrary.feature.inventory.simple.GUIBackground;
 import cz.creeper.customitemlibrary.feature.inventory.simple.GUIFeature;
 import cz.creeper.customitemlibrary.feature.inventory.simple.GUIModel;
+import cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinitionBuilder;
 import cz.creeper.customitemlibrary.feature.item.CustomItem;
 import cz.creeper.customitemlibrary.feature.item.CustomItemDefinition;
 import cz.creeper.customitemlibrary.managers.MiningManager;
@@ -156,8 +156,7 @@ public class CustomItemLibrary {
         }
 
         Wrapper<Integer> counter = Wrapper.of(0);
-
-        service.register(CID = CustomFeatureDefinition.simpleInventoryBuilder()
+        SimpleCustomInventoryDefinitionBuilder builder = CustomFeatureDefinition.simpleInventoryBuilder()
                 .plugin(this)
                 .typeId("CID")
                 .height(3)
@@ -166,39 +165,26 @@ public class CustomItemLibrary {
                         .defaultBackground(GUIBackground.builder()
                                 .textureId(TextureId.builder()
                                         .plugin(this)
-                                        .fileName("alloy_furnace")
+                                        .fileName("mining_drill_inventory")
                                         .build())
                                 .build())
                         .build()
-                .feature("indicator_fuel", false, features)
-                .emptySlotBuilder()
-                        .slotId("input_0")
-                        .position(Vector2i.from(1, 0))
-                        .persistent(true)
-                        .build()
-                .emptySlotBuilder()
-                        .slotId("input_1")
-                        .position(Vector2i.from(2, 0))
-                        .persistent(true)
-                        .build()
-                .emptySlotBuilder()
-                        .slotId("input_2")
-                        .position(Vector2i.from(3, 0))
-                        .persistent(true)
-                        .build()
-                .emptySlotBuilder()
-                        .slotId("fuel")
-                        .position(Vector2i.from(2, 2))
-                        .persistent(true)
-                        .affectCustomSlotListener(AffectCustomSlotListener.fuelOnly())
-                        .build()
                 .emptySlotBuilder()
                         .slotId("output")
-                        .position(Vector2i.from(6, 1))
-                        .persistent(true)
+                        .position(Vector2i.from(3, 0))
                         .affectCustomSlotListener(AffectCustomSlotListener.output())
-                        .build()
-                .build());
+                        .persistent(true)
+                        .build();
+
+        for(int i = 0; i < 9; i++) {
+            builder = builder.emptySlotBuilder()
+                    .slotId("mining_source_" + i)
+                    .position(Vector2i.from(i, 2))
+                    .affectCustomSlotListener(AffectCustomSlotListener.cancelAll())
+                    .build();
+        }
+
+        service.register(CID = builder.build());
 
         System.out.println(CID);
     }

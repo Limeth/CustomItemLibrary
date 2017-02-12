@@ -207,9 +207,24 @@ public class CustomItemServiceImpl implements CustomItemService {
         blockToArmorStand.put(block, Optional.of(armorStand.getUniqueId()));
     }
 
+    public Optional<? extends CustomBlock<? extends CustomBlockDefinition>> getBlock(ArmorStand armorStand) {
+        return getBlockDefinition(armorStand).flatMap(definition -> {
+            Block block = Block.of(armorStand.getLocation());
+
+            blockToArmorStand.put(block, Optional.of(armorStand.getUniqueId()));
+
+            return definition.wrapIfPossible(block);
+        });
+    }
+
+    public Optional<CustomBlockDefinition<? extends CustomBlock>> getBlockDefinition(ArmorStand armorStand) {
+        return armorStand.get(CustomFeatureData.class).flatMap(data ->
+                getBlockDefinition(data.customFeaturePluginId().get(), data.customFeatureTypeId().get()));
+    }
+
     public Optional<ArmorStand> getArmorStandAt(Block block) {
         return blockToArmorStand.computeIfAbsent(block, k -> findArmorStandAt(k).map(Identifiable::getUniqueId))
-                .flatMap(id -> block.getExtent().flatMap(extent -> extent.getEntity(id)).map(ArmorStand.class::cast));
+                .flatMap(id -> block.getWorld().flatMap(extent -> extent.getEntity(id)).map(ArmorStand.class::cast));
     }
 
     public Optional<ArmorStand> findArmorStandAt(Block block) {

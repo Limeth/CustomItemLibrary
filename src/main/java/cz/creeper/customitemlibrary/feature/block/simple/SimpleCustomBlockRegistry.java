@@ -1,6 +1,7 @@
 package cz.creeper.customitemlibrary.feature.block.simple;
 
 import com.flowpowered.math.vector.Vector3d;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -9,8 +10,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
-import cz.creeper.customitemlibrary.data.mutable.CustomBlockData;
+import cz.creeper.customitemlibrary.CustomItemServiceImpl;
 import cz.creeper.customitemlibrary.data.CustomItemLibraryKeys;
+import cz.creeper.customitemlibrary.data.mutable.CustomBlockData;
 import cz.creeper.customitemlibrary.event.CustomBlockBreakEvent;
 import cz.creeper.customitemlibrary.event.CustomBlockBreakItemDropEvent;
 import cz.creeper.customitemlibrary.event.MiningProgressEvent;
@@ -19,6 +21,7 @@ import cz.creeper.customitemlibrary.feature.CustomFeatureRegistry;
 import cz.creeper.customitemlibrary.feature.DurabilityRegistry;
 import cz.creeper.customitemlibrary.feature.block.CustomBlockDefinition;
 import cz.creeper.customitemlibrary.managers.MiningManager;
+import cz.creeper.customitemlibrary.util.Block;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.spongepowered.api.Sponge;
@@ -39,11 +42,15 @@ import org.spongepowered.api.event.Order;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.entity.spawn.EntitySpawnCause;
 import org.spongepowered.api.event.cause.entity.spawn.SpawnTypes;
+import org.spongepowered.api.event.world.chunk.LoadChunkEvent;
+import org.spongepowered.api.event.world.chunk.PopulateChunkEvent;
 import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
+import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.world.BlockChangeFlag;
+import org.spongepowered.api.world.Chunk;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 import org.spongepowered.api.world.extent.Extent;
@@ -58,11 +65,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCustomBlock, SimpleCustomBlockDefinition> {
     public static final ItemType DAMAGE_INDICATOR_ITEM_TYPE = ItemTypes.DIAMOND_CHESTPLATE;
@@ -77,10 +86,17 @@ public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCu
 
     @Getter(value = AccessLevel.PRIVATE, lazy = true)
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private Task updateTask;
+    private Map<Block, SimpleCustomBlockDefinition> definitionMap = Maps.newHashMap();
 
     @Override
     public void prepare() {
-        // Register the default cubic damage indicator models
+        registerDefaultCubicDamageIndicatorModels();
+        registerLoadedBlocks();
+        submitUpdateTask();
+    }
+
+    private void registerDefaultCubicDamageIndicatorModels() {
         for(int stage = 0; stage < 10; stage++) {
             String model = getDamageIndicatorModel(null, stage);
 
@@ -91,6 +107,55 @@ public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCu
                     CustomBlockDefinition.MODEL_DIRECTORY_NAME
             );
         }
+    }
+
+    private void registerLoadedBlocks() {
+        Sponge.getServer().getWorlds().stream()
+                .flatMap(world -> StreamSupport.stream(world.getLoadedChunks().spliterator(), false))
+                .forEach(this::registerBlocksInChunk);
+    }
+
+    private void registerBlocksInChunk(Chunk chunk) {
+        CustomItemServiceImpl service = CustomItemLibrary.getInstance().getService();
+
+        chunk.getEntities().stream()
+                .filter(ArmorStand.class::isInstance)
+                .map(ArmorStand.class::cast)
+                .map(service::getBlock)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .filter(SimpleCustomBlock.class::isInstance)
+                .map(SimpleCustomBlock.class::cast)
+                .forEach(customBlock -> definitionMap.put(customBlock.getBlock(), customBlock.getDefinition()));
+    }
+
+    @Listener
+    public void onLoadChunk(LoadChunkEvent event) {
+        registerBlocksInChunk(event.getTargetChunk());
+    }
+
+    @Listener
+    public void onPostPopulateChunk(PopulateChunkEvent.Post event) {
+        registerBlocksInChunk(event.getTargetChunk());
+    }
+
+    private void submitUpdateTask() {
+        if(updateTask != null)
+            updateTask.cancel();
+
+        updateTask = Sponge.getScheduler().createTaskBuilder()
+                .name("Custom block update task")
+                .intervalTicks(1)
+                .execute(this::update)
+                .submit(CustomItemLibrary.getInstance());
+    }
+
+    private void update() {
+        definitionMap.entrySet().stream()
+                .map(entry -> entry.getValue().wrapIfPossible(entry.getKey()))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .forEach(customBlock -> customBlock.getDefinition().update(customBlock));
     }
 
     @Override

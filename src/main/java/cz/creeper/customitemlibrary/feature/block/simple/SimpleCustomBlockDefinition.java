@@ -35,6 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @EqualsAndHashCode(callSuper = true)
@@ -68,8 +69,8 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
                                         @NonNull BlockState effectState, @NonNull DropProvider dropProvider,
                                         String defaultModel, Iterable<String> additionalModels,
                                         Iterable<String> additionalAssets, boolean rotateHorizontally,
-                                        boolean generateDamageIndicatorModels) {
-        super(pluginContainer, typeId, defaultModel, additionalModels, effectState, rotateHorizontally, generateDamageIndicatorModels);
+                                        boolean generateDamageIndicatorModels, Consumer<SimpleCustomBlock> onUpdate) {
+        super(pluginContainer, typeId, defaultModel, additionalModels, effectState, rotateHorizontally, generateDamageIndicatorModels, onUpdate);
 
         this.assets = ImmutableSet.<String>builder()
                 .addAll(getModels().stream()
@@ -91,7 +92,8 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
                                                      @Singular Iterable<String> additionalModels,
                                                      @Singular Iterable<String> additionalAssets,
                                                      boolean rotateHorizontally,
-                                                     Boolean generateDamageIndicatorModels) {
+                                                     Boolean generateDamageIndicatorModels,
+                                                     Consumer<SimpleCustomBlock> onUpdate) {
         PluginContainer pluginContainer = Sponge.getPluginManager().fromInstance(plugin)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid plugin instance."));
         if(effectState == null)
@@ -119,7 +121,7 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
         if(generateDamageIndicatorModels == null)
             generateDamageIndicatorModels = false;
 
-        return new SimpleCustomBlockDefinition(pluginContainer, typeId, correctToolPredicate, hardness, effectState, dropProvider, defaultModel, additionalModels, additionalAssets, rotateHorizontally, generateDamageIndicatorModels);
+        return new SimpleCustomBlockDefinition(pluginContainer, typeId, correctToolPredicate, hardness, effectState, dropProvider, defaultModel, additionalModels, additionalAssets, rotateHorizontally, generateDamageIndicatorModels, onUpdate);
     }
 
     @Override

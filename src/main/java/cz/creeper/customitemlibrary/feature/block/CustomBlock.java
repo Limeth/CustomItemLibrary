@@ -40,7 +40,7 @@ public interface CustomBlock<T extends CustomBlockDefinition<? extends CustomBlo
     }
 
     default Extent getExtent() {
-        return getBlock().getExtent()
+        return getBlock().getWorld()
                 .orElseThrow(() -> new IllegalStateException("Could not access the extent."));
     }
 }

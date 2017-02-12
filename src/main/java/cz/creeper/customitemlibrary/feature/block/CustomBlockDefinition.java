@@ -60,6 +60,8 @@ public interface CustomBlockDefinition<T extends CustomBlock<? extends CustomBlo
      */
     boolean isGenerateDamageIndicatorModels();
 
+    void update(T block);
+
     /**
      * Constructs a custom block and places it in the world.
      *
@@ -108,7 +110,7 @@ public interface CustomBlockDefinition<T extends CustomBlock<? extends CustomBlo
     }
 
     static ArmorStand createDummyArmorStand(Block block) {
-        World world = block.getExtent()
+        World world = block.getWorld()
                 .orElseThrow(() -> new IllegalStateException("Could not access the world this block resides in."));
         Vector3d armorStandPosition = block.getPosition().toDouble().add(Vector3d.ONE.mul(0.5));
         ArmorStand armorStand = (ArmorStand) world.createEntity(EntityTypes.ARMOR_STAND, armorStandPosition);

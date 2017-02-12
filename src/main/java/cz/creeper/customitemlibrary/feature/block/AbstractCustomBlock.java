@@ -21,7 +21,7 @@ public abstract class AbstractCustomBlock<T extends CustomBlockDefinition<? exte
 
     public AbstractCustomBlock(T definition, Block block, UUID armorStandId) {
         super(definition);
-        Preconditions.checkArgument(block.getExtent().isPresent(), "Invalid extent.");
+        Preconditions.checkArgument(block.getWorld().isPresent(), "Invalid extent.");
 
         this.block = block;
 

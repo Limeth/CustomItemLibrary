@@ -14,6 +14,10 @@ import java.util.function.Predicate;
 public interface AffectCustomSlotListener {
     void onAffectCustomSlot(CustomSlot customSlot, SlotTransaction slotTransaction, AffectSlotEvent affectSlotEvent);
 
+    static AffectCustomSlotListener cancelAll() {
+        return (customSlot, slotTransaction, affectSlotEvent) -> affectSlotEvent.setCancelled(true);
+    }
+
     static AffectCustomSlotListener whitelist(Predicate<ItemStackSnapshot> isAllowed) {
         return (customSlot, slotTransaction, affectSlotEvent) -> {
             if(slotTransaction.getFinal() == ItemStackSnapshot.NONE)

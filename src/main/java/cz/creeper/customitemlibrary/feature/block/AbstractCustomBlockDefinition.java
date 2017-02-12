@@ -10,6 +10,7 @@ import org.spongepowered.api.plugin.PluginContainer;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @EqualsAndHashCode(callSuper = true)
@@ -22,15 +23,23 @@ public abstract class AbstractCustomBlockDefinition<T extends CustomBlock<? exte
 
     private final boolean generateDamageIndicatorModels;
 
-    public AbstractCustomBlockDefinition(PluginContainer pluginContainer, String typeId, String defaultModel, Iterable<String> additionalModels, BlockState effectState, boolean rotateHorizontally, boolean generateDamageIndicatorModels) {
+    private final Consumer<T> onUpdate;
+
+    public AbstractCustomBlockDefinition(PluginContainer pluginContainer, String typeId, String defaultModel, Iterable<String> additionalModels, BlockState effectState, boolean rotateHorizontally, boolean generateDamageIndicatorModels, Consumer<T> onUpdate) {
         super(pluginContainer, typeId, defaultModel, additionalModels);
 
         this.effectState = effectState;
         this.rotateHorizontally = rotateHorizontally;
         this.generateDamageIndicatorModels = generateDamageIndicatorModels;
+        this.onUpdate = onUpdate != null ? onUpdate : block -> {};
     }
 
     protected abstract Optional<T> wrapBarrierIfPossible(Block block);
+
+    @Override
+    public void update(T block) {
+        this.onUpdate.accept(block);
+    }
 
     @Override
     public Optional<T> wrapIfPossible(Block block) {
