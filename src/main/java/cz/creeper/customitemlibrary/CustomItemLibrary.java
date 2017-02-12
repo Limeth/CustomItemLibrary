@@ -1,9 +1,5 @@
 package cz.creeper.customitemlibrary;
 
-import com.flowpowered.math.vector.Vector2d;
-import com.flowpowered.math.vector.Vector2i;
-import com.flowpowered.math.vector.Vector3d;
-import com.flowpowered.math.vector.Vector4d;
 import com.google.inject.Inject;
 import cz.creeper.customitemlibrary.data.builder.CustomBlockManipulatorBuilder;
 import cz.creeper.customitemlibrary.data.builder.CustomFeatureManipulatorBuilder;
@@ -19,23 +15,14 @@ import cz.creeper.customitemlibrary.data.mutable.CustomFeatureData;
 import cz.creeper.customitemlibrary.data.mutable.CustomInventoriesData;
 import cz.creeper.customitemlibrary.data.mutable.CustomInventoryData;
 import cz.creeper.customitemlibrary.data.mutable.RepresentedCustomItemSnapshotData;
-import cz.creeper.customitemlibrary.feature.CustomFeatureDefinition;
-import cz.creeper.customitemlibrary.feature.TextureId;
 import cz.creeper.customitemlibrary.feature.block.CustomBlock;
 import cz.creeper.customitemlibrary.feature.block.CustomBlockDefinition;
-import cz.creeper.customitemlibrary.feature.inventory.CustomInventoryDefinition;
-import cz.creeper.customitemlibrary.feature.inventory.simple.AffectCustomSlotListener;
-import cz.creeper.customitemlibrary.feature.inventory.simple.GUIBackground;
-import cz.creeper.customitemlibrary.feature.inventory.simple.GUIFeature;
-import cz.creeper.customitemlibrary.feature.inventory.simple.GUIModel;
-import cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinitionBuilder;
 import cz.creeper.customitemlibrary.feature.item.CustomItem;
 import cz.creeper.customitemlibrary.feature.item.CustomItemDefinition;
 import cz.creeper.customitemlibrary.managers.MiningManager;
 import cz.creeper.customitemlibrary.util.Block;
 import cz.creeper.customitemlibrary.util.Identifier;
 import cz.creeper.customitemlibrary.util.Util;
-import cz.creeper.customitemlibrary.util.Wrapper;
 import lombok.Getter;
 import lombok.val;
 import ninja.leaping.configurate.ConfigurationOptions;
@@ -55,13 +42,11 @@ import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.Order;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.NamedCause;
-import org.spongepowered.api.event.filter.cause.First;
 import org.spongepowered.api.event.game.state.GameConstructionEvent;
 import org.spongepowered.api.event.game.state.GameLoadCompleteEvent;
 import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.event.game.state.GameStoppedEvent;
-import org.spongepowered.api.event.item.inventory.InteractItemEvent;
 import org.spongepowered.api.plugin.Dependency;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
@@ -131,67 +116,9 @@ public class CustomItemLibrary {
         logger.info("CustomItemLibrary loaded.");
     }
 
-    private static CustomInventoryDefinition CID;
-
     @Listener
     public void onGamePostInitializationDefault(GamePostInitializationEvent event) {
         // During this phase, plugins using this library should register their custom item definitions.
-
-        GUIFeature[] features = new GUIFeature[13];
-
-        for(int stage = 0; stage < features.length; stage++) {
-            features[stage] = GUIFeature.builder()
-                    .id("stage_" + stage)
-                    .model(GUIModel.builder()
-                            .plugin(this)
-                            .textureId(TextureId.builder()
-                                    .directory("gui/container")
-                                    .fileName("furnace")
-                                    .build())
-                            .textureSize(Vector2d.from(256, 256))
-                            .textureOffset(Vector3d.from(44, 37 + stage, 0))
-                            .uvRegion(Vector4d.from(176, stage, 190, 14))
-                            .build())
-                    .build();
-        }
-
-        Wrapper<Integer> counter = Wrapper.of(0);
-        SimpleCustomInventoryDefinitionBuilder builder = CustomFeatureDefinition.simpleInventoryBuilder()
-                .plugin(this)
-                .typeId("CID")
-                .height(3)
-                .backgroundBuilder()
-                        .slotId("background")
-                        .defaultBackground(GUIBackground.builder()
-                                .textureId(TextureId.builder()
-                                        .plugin(this)
-                                        .fileName("mining_drill_inventory")
-                                        .build())
-                                .build())
-                        .build()
-                .emptySlotBuilder()
-                        .slotId("output")
-                        .position(Vector2i.from(3, 0))
-                        .affectCustomSlotListener(AffectCustomSlotListener.output())
-                        .persistent(true)
-                        .build();
-
-        for(int i = 0; i < 9; i++) {
-            builder = builder.emptySlotBuilder()
-                    .slotId("mining_source_" + i)
-                    .position(Vector2i.from(i, 2))
-                    .affectCustomSlotListener(AffectCustomSlotListener.cancelAll())
-                    .build();
-        }
-
-        service.register(CID = builder.build());
-
-        System.out.println(CID);
-    }
-
-    @Listener
-    public void onInteractItem(InteractItemEvent event, @First Player player) {
-        CID.open(player, player, event.getCause());
     }
 
     @Listener
