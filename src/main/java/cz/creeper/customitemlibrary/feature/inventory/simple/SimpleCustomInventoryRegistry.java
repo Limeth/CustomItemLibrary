@@ -23,9 +23,7 @@ import java.nio.channels.WritableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 
@@ -41,11 +39,6 @@ public class SimpleCustomInventoryRegistry implements CustomFeatureRegistry<Simp
     public void register(SimpleCustomInventoryDefinition definition) {
         Preconditions.checkNotNull(definition, "definition");
         Preconditions.checkArgument(!definitions.contains(definition), "This definiton has already been registered.");
-        List<GUIModel> models = definition.getSlotStream()
-                .flatMap(def -> def.getFeatures().values().stream())
-                .map(GUIFeature::getModel)
-                .distinct()
-                .collect(Collectors.toList());
         definition.getSlotStream()
                 .flatMap(def -> def.getFeatures().values().stream())
                 .map(GUIFeature::getModel)
@@ -65,24 +58,24 @@ public class SimpleCustomInventoryRegistry implements CustomFeatureRegistry<Simp
 
     @Override
     public void generateResourcePackFiles(Path resourcePackDirectory) {
-        Path guiDirectory = resourcePackDirectory.resolve("assets")
-                .resolve(CustomItemLibrary.getInstance().getPluginContainer().getId())
-                .resolve("models").resolve(MODEL_DIRECTORY_NAME);
-
-        if(!Files.isDirectory(guiDirectory)) {
-            try {
-                Files.createDirectories(guiDirectory);
-            } catch (IOException e) {
-                CustomItemLibrary.getInstance().getLogger().error("Could not create the blocks directory.", e);
-            }
-        }
-
         definitions.stream()
                 .flatMap(SimpleCustomInventoryDefinition::getSlotStream)
                 .flatMap(slot -> slot.getFeatures().values().stream())
                 .map(GUIFeature::getModel)
                 .distinct()
                 .forEach(guiModel -> {
+                    Path guiDirectory = resourcePackDirectory.resolve("assets")
+                            .resolve(guiModel.getPluginContainer().getId())
+                            .resolve("models").resolve(MODEL_DIRECTORY_NAME);
+
+                    if(!Files.isDirectory(guiDirectory)) {
+                        try {
+                            Files.createDirectories(guiDirectory);
+                        } catch (IOException e) {
+                            CustomItemLibrary.getInstance().getLogger().error("Could not create the blocks directory.", e);
+                        }
+                    }
+
                     Path modelFile = guiDirectory.resolve(guiModel.getModelName() + ".json");
                     JsonObject root = guiModel.createModelJson();
 
