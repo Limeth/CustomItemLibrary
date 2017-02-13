@@ -20,7 +20,7 @@ repositories {
 dependencies {
     compile 'org.spongepowered:spongeapi:6.0.0-20161209.225459-28'
     compile 'com.github.Limeth:MineskinSponge:v1.3.0'
-    compileOnly 'org.projectlombok:lombok:1.16.12'
+    compileOnly 'org.projectlombok:lombok:1.16.14'
 }
 
 sponge.plugin.id = pluginId

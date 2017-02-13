@@ -2,7 +2,6 @@ package cz.creeper.customitemlibrary.feature.inventory.simple;
 
 import com.flowpowered.math.vector.Vector2i;
 import com.google.common.base.Preconditions;
-import cz.creeper.customitemlibrary.data.mutable.CustomInventoriesData;
 import cz.creeper.customitemlibrary.data.mutable.CustomInventoryData;
 import cz.creeper.customitemlibrary.feature.inventory.AbstractCustomInventory;
 import lombok.EqualsAndHashCode;
@@ -124,36 +123,11 @@ public class SimpleCustomInventory extends AbstractCustomInventory<SimpleCustomI
     }
 
     public CustomInventoryData getCustomInventoryData() {
-        CustomInventoriesData customInventoriesData = getCustomInventoriesData();
-        String id = getDefinition().getTypeId();
-
-        return customInventoriesData.get(id)
-                .orElseGet(() -> {
-                    CustomInventoryData result = CustomInventoryData.of(this);
-
-                    setCustomInventoryData(result);
-
-                    return result;
-                });
+        return getDefinition().getCustomInventoryData(getDataHolder(), dataHolder -> CustomInventoryData.of(this));
     }
 
     public void setCustomInventoryData(CustomInventoryData data) {
-        CustomInventoriesData customInventoriesData = getCustomInventoriesData();
-        String id = getDefinition().getTypeId();
-
-        customInventoriesData.put(id, data);
-        getDataHolder().offer(customInventoriesData);
-    }
-
-    private CustomInventoriesData getCustomInventoriesData() {
-        return getDataHolder().get(CustomInventoriesData.class)
-                .orElseGet(() -> {
-                        CustomInventoriesData result = new CustomInventoriesData();
-
-                        getDataHolder().offer(result);
-
-                        return result;
-                });
+        getDefinition().setCustomInventoryData(getDataHolder(), data);
     }
 
     @SuppressWarnings("DeprecatedIsStillUsed")

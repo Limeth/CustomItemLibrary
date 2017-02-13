@@ -5,6 +5,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
+import cz.creeper.customitemlibrary.data.mutable.CustomInventoriesData;
 import cz.creeper.customitemlibrary.data.mutable.CustomInventoryData;
 import cz.creeper.customitemlibrary.feature.inventory
         .AbstractCustomInventoryDefinition;
@@ -26,6 +27,7 @@ import org.spongepowered.api.plugin.PluginContainer;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -161,6 +163,43 @@ public class SimpleCustomInventoryDefinition extends AbstractCustomInventoryDefi
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toSet());
+    }
+
+    public CustomInventoryData getCustomInventoryData(DataHolder dataHolder, Function<DataHolder, CustomInventoryData> putIfAbsent) {
+        CustomInventoriesData customInventoriesData = getCustomInventoriesData(dataHolder);
+        String id = getTypeId();
+
+        return customInventoriesData.get(id)
+                .orElseGet(() -> {
+                    CustomInventoryData result = putIfAbsent.apply(dataHolder);
+
+                    setCustomInventoryData(dataHolder, result);
+
+                    return result;
+                });
+    }
+
+    public CustomInventoryData getCustomInventoryData(DataHolder dataHolder) {
+        return getCustomInventoryData(dataHolder, _dataHolder -> CustomInventoryData.empty(this));
+    }
+
+    public void setCustomInventoryData(DataHolder dataHolder, CustomInventoryData data) {
+        CustomInventoriesData customInventoriesData = getCustomInventoriesData(dataHolder);
+        String id = getTypeId();
+
+        customInventoriesData.put(id, data);
+        dataHolder.offer(customInventoriesData);
+    }
+
+    public CustomInventoriesData getCustomInventoriesData(DataHolder dataHolder) {
+        return dataHolder.get(CustomInventoriesData.class)
+                .orElseGet(() -> {
+                    CustomInventoriesData result = new CustomInventoriesData();
+
+                    dataHolder.offer(result);
+
+                    return result;
+                });
     }
 
     public static int getSlotIndex(int x, int y) {

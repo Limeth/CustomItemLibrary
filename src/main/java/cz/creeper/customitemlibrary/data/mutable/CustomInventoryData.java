@@ -1,9 +1,12 @@
 package cz.creeper.customitemlibrary.data.mutable;
 
-import static cz.creeper.customitemlibrary.data.CustomItemLibraryKeys.*;
+import static cz.creeper.customitemlibrary.data.CustomItemLibraryKeys.CUSTOM_INVENTORY_ID;
+import static cz.creeper.customitemlibrary.data.CustomItemLibraryKeys.CUSTOM_INVENTORY_SLOT_ID_TO_FEATURE_ID;
+import static cz.creeper.customitemlibrary.data.CustomItemLibraryKeys.CUSTOM_INVENTORY_SLOT_ID_TO_ITEMSTACK;
 
 import com.google.common.collect.Maps;
 import cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventory;
+import cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinition;
 import lombok.Value;
 import org.spongepowered.api.data.DataContainer;
 import org.spongepowered.api.data.DataSerializable;
@@ -32,6 +35,10 @@ public class CustomInventoryData implements DataSerializable {
 
         if(slotIdToFeatureId != null)
             this.slotIdToFeatureId.putAll(slotIdToFeatureId);
+    }
+
+    public static CustomInventoryData empty(SimpleCustomInventoryDefinition definition) {
+        return new CustomInventoryData(definition.getTypeId(), null, null);
     }
 
     public static CustomInventoryData of(SimpleCustomInventory customInventory) {
