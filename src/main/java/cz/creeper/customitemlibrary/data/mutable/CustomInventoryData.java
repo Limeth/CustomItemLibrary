@@ -1,8 +1,7 @@
 package cz.creeper.customitemlibrary.data.mutable;
 
-import static cz.creeper.customitemlibrary.data.CustomItemLibraryKeys.CUSTOM_INVENTORY_ID;
-import static cz.creeper.customitemlibrary.data.CustomItemLibraryKeys.CUSTOM_INVENTORY_SLOT_ID_TO_FEATURE_ID;
-import static cz.creeper.customitemlibrary.data.CustomItemLibraryKeys.CUSTOM_INVENTORY_SLOT_ID_TO_ITEMSTACK;
+// Don't let this expand to individual static imports, as it breaks Lombok for some reason
+import static cz.creeper.customitemlibrary.data.CustomItemLibraryKeys.*;
 
 import com.google.common.collect.Maps;
 import cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventory;
