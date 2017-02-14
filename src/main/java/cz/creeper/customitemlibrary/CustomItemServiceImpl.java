@@ -393,10 +393,10 @@ public class CustomItemServiceImpl implements CustomItemService {
     }
 
     private void update() {
-        val iterator = loadedBlocks.values().iterator();
+        Iterator<CustomBlock<? extends CustomBlockDefinition>> iterator = loadedBlocks.values().iterator();
 
         while(iterator.hasNext()) {
-            val customBlock = iterator.next();
+            CustomBlock<? extends CustomBlockDefinition> customBlock = iterator.next();
 
             if(customBlock.isAccessible()) {
                 customBlock.update();

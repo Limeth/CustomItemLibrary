@@ -26,7 +26,6 @@ public class CustomSlot {
         setItemStack(feature.createItemStack());
     }
 
-    // TODO: Call me from AffectSlotEvents
     public void setItemStack(ItemStack itemStack) {
         CustomInventoryData data = customInventory.getCustomInventoryData();
 
