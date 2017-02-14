@@ -1,6 +1,7 @@
 package cz.creeper.customitemlibrary.feature.block;
 
 import com.google.common.base.Preconditions;
+import cz.creeper.customitemlibrary.CustomItemServiceImpl;
 import cz.creeper.customitemlibrary.feature.AbstractCustomModelledFeature;
 import cz.creeper.customitemlibrary.util.Block;
 import lombok.EqualsAndHashCode;
@@ -33,5 +34,13 @@ public abstract class AbstractCustomBlock<T extends CustomBlockDefinition<? exte
 
     public AbstractCustomBlock(T definition, Block block, ArmorStand armorStand) {
         this(definition, block, armorStand.getUniqueId());
+    }
+
+    @Override
+    public boolean isAccessible() {
+        return block.getLocation().map(location ->
+                location.getExtent().getEntity(armorStandId)
+                        .map(CustomItemServiceImpl::isCustomBlockArmorStand).orElse(false))
+                .orElse(false);
     }
 }

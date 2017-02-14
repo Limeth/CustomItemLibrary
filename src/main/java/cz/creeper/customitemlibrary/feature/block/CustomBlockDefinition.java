@@ -69,7 +69,7 @@ public interface CustomBlockDefinition<T extends CustomBlock<? extends CustomBlo
      * @param cause The cause
      * @return The wrapped block
      */
-    default T placeBlock(Block block, Cause cause) {
+    default T placeBlock(Block block, BlockChangeFlag flag, Cause cause) {
         Location<World> location = block.getLocation()
                 .orElseThrow(() -> new IllegalStateException("Could not access the location of the provided block."));
         World world = location.getExtent();
@@ -77,7 +77,7 @@ public interface CustomBlockDefinition<T extends CustomBlock<? extends CustomBlo
         // Remove the previous custom block
         CustomItemLibrary.getInstance().getService().removeArmorStandsAt(block);
 
-        location.setBlockType(CustomBlock.BLOCK_TYPE_CUSTOM, BlockChangeFlag.ALL, cause);
+        location.setBlockType(CustomBlock.BLOCK_TYPE_CUSTOM, flag, cause);
 
         ArmorStand armorStand = createDummyArmorStand(block);
         Vector3d rotation = Vector3d.ZERO;
@@ -105,8 +105,20 @@ public interface CustomBlockDefinition<T extends CustomBlock<? extends CustomBlo
         T result = customizeBlock(block, armorStand, cause);
 
         result.setModel(getDefaultModel());
+        CustomItemLibrary.getInstance().getService().registerBlockAsLoaded(result);
 
         return result;
+    }
+
+    /**
+     * Constructs a custom block and places it in the world.
+     *
+     * @param block The block location
+     * @param cause The cause
+     * @return The wrapped block
+     */
+    default T placeBlock(Block block, Cause cause) {
+        return placeBlock(block, BlockChangeFlag.ALL, cause);
     }
 
     static ArmorStand createDummyArmorStand(Block block) {

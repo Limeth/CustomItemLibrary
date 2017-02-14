@@ -3,8 +3,8 @@ package cz.creeper.customitemlibrary;
 import com.flowpowered.math.vector.Vector3i;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
-import cz.creeper.customitemlibrary.data.mutable.CustomFeatureData;
 import cz.creeper.customitemlibrary.data.CustomItemLibraryKeys;
+import cz.creeper.customitemlibrary.data.mutable.CustomFeatureData;
 import cz.creeper.customitemlibrary.feature.CustomFeature;
 import cz.creeper.customitemlibrary.feature.CustomFeatureDefinition;
 import cz.creeper.customitemlibrary.feature.CustomFeatureRegistry;
@@ -12,16 +12,23 @@ import cz.creeper.customitemlibrary.feature.CustomFeatureRegistryMap;
 import cz.creeper.customitemlibrary.feature.DurabilityRegistry;
 import cz.creeper.customitemlibrary.feature.block.CustomBlock;
 import cz.creeper.customitemlibrary.feature.block.CustomBlockDefinition;
-import cz.creeper.customitemlibrary.feature.block.simple.SimpleCustomBlockDefinition;
-import cz.creeper.customitemlibrary.feature.block.simple.SimpleCustomBlockRegistry;
+import cz.creeper.customitemlibrary.feature.block.simple.SimpleCustomBlock;
+import cz.creeper.customitemlibrary.feature.block.simple
+        .SimpleCustomBlockDefinition;
+import cz.creeper.customitemlibrary.feature.block.simple
+        .SimpleCustomBlockRegistry;
 import cz.creeper.customitemlibrary.feature.inventory.CustomInventory;
 import cz.creeper.customitemlibrary.feature.inventory.CustomInventoryDefinition;
-import cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinition;
-import cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryRegistry;
+import cz.creeper.customitemlibrary.feature.inventory.simple
+        .SimpleCustomInventoryDefinition;
+import cz.creeper.customitemlibrary.feature.inventory.simple
+        .SimpleCustomInventoryRegistry;
 import cz.creeper.customitemlibrary.feature.item.CustomItem;
 import cz.creeper.customitemlibrary.feature.item.CustomItemDefinition;
-import cz.creeper.customitemlibrary.feature.item.material.CustomMaterialDefinition;
-import cz.creeper.customitemlibrary.feature.item.material.CustomMaterialRegistry;
+import cz.creeper.customitemlibrary.feature.item.material
+        .CustomMaterialDefinition;
+import cz.creeper.customitemlibrary.feature.item.material
+        .CustomMaterialRegistry;
 import cz.creeper.customitemlibrary.feature.item.tool.CustomToolDefinition;
 import cz.creeper.customitemlibrary.feature.item.tool.CustomToolRegistry;
 import cz.creeper.customitemlibrary.util.Block;
@@ -36,7 +43,10 @@ import org.spongepowered.api.entity.living.ArmorStand;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.Order;
 import org.spongepowered.api.event.block.ChangeBlockEvent;
+import org.spongepowered.api.event.world.chunk.LoadChunkEvent;
+import org.spongepowered.api.event.world.chunk.PopulateChunkEvent;
 import org.spongepowered.api.plugin.PluginContainer;
+import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.util.AABB;
 import org.spongepowered.api.util.Identifiable;
 import org.spongepowered.api.world.Chunk;
@@ -64,6 +74,8 @@ public class CustomItemServiceImpl implements CustomItemService {
     private final Map<String, Map<String, CustomBlockDefinition<? extends CustomBlock>>> pluginIdsToTypeIdsToBlockDefinitions = Maps.newHashMap();
     private final Map<String, Map<String, CustomInventoryDefinition<? extends CustomInventory>>> pluginIdsToTypeIdsToInventoryDefinitions = Maps.newHashMap();
     private final Map<Block, Optional<UUID>> blockToArmorStand = Maps.newHashMap();
+    private final Map<Block, CustomBlock<? extends CustomBlockDefinition>> loadedBlocks = Maps.newHashMap();
+    private Task customBlockUpdateTask;
 
     public CustomItemServiceImpl() {
         registryMap.put(CustomToolDefinition.class, CustomToolRegistry.getInstance());
@@ -133,6 +145,8 @@ public class CustomItemServiceImpl implements CustomItemService {
     }
 
     public void prepare() {
+        registerLoadedBlocks();
+        submitUpdateTask();
         // It doesn't work with a method reference
         //noinspection Convert2MethodRef
         registryMap.values().forEach(registry -> registry.prepare());
@@ -248,13 +262,16 @@ public class CustomItemServiceImpl implements CustomItemService {
                 .orElseThrow(() -> new IllegalStateException("Could not access the chunk of this block."));
         Vector3i blockPosition = block.getPosition();
         AABB aabb = new AABB(blockPosition, blockPosition.add(Vector3i.ONE));
-        Set<Entity> entities = chunk.getIntersectingEntities(aabb, entity ->
-                entity instanceof ArmorStand && entity.get(CustomFeatureData.class).isPresent());
+        Set<Entity> entities = chunk.getIntersectingEntities(aabb, CustomItemServiceImpl::isCustomBlockArmorStand);
         Iterator<Entity> entityIterator = entities.iterator();
 
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(entityIterator, Spliterator.ORDERED), false)
                 .map(ArmorStand.class::cast)
                 .collect(Collectors.toSet());
+    }
+
+    public static boolean isCustomBlockArmorStand(Entity entity) {
+        return entity instanceof ArmorStand && entity.get(CustomFeatureData.class).isPresent();
     }
 
     public boolean removeArmorStandsAt(Block block) {
@@ -328,6 +345,69 @@ public class CustomItemServiceImpl implements CustomItemService {
             BlockSnapshot original = blockSnapshotTransaction.getOriginal();
             original.getLocation().map(Block::of).ifPresent(this::removeArmorStandsAt);
         });
+    }
+
+    private void registerLoadedBlocks() {
+        Sponge.getServer().getWorlds().stream()
+                .flatMap(world -> StreamSupport.stream(world.getLoadedChunks().spliterator(), false))
+                .forEach(this::registerBlocksInChunk);
+    }
+
+    private void registerBlocksInChunk(Chunk chunk) {
+        CustomItemServiceImpl service = CustomItemLibrary.getInstance().getService();
+
+        chunk.getEntities().stream()
+                .filter(ArmorStand.class::isInstance)
+                .map(ArmorStand.class::cast)
+                .map(service::getBlock)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .filter(SimpleCustomBlock.class::isInstance)
+                .map(SimpleCustomBlock.class::cast)
+                .forEach(customBlock -> loadedBlocks.put(customBlock.getBlock(), customBlock));
+    }
+
+    public Optional<CustomBlock<? extends CustomBlockDefinition>> registerBlockAsLoaded(CustomBlock<? extends CustomBlockDefinition> block) {
+        return Optional.ofNullable(loadedBlocks.put(block.getBlock(), block));
+    }
+
+    @Listener
+    public void onLoadChunk(LoadChunkEvent event) {
+        registerBlocksInChunk(event.getTargetChunk());
+    }
+
+    @Listener
+    public void onPostPopulateChunk(PopulateChunkEvent.Post event) {
+        registerBlocksInChunk(event.getTargetChunk());
+    }
+
+    private void submitUpdateTask() {
+        if(customBlockUpdateTask != null)
+            customBlockUpdateTask.cancel();
+
+        customBlockUpdateTask = Sponge.getScheduler().createTaskBuilder()
+                .name("Custom block update task")
+                .intervalTicks(1)
+                .execute(this::update)
+                .submit(CustomItemLibrary.getInstance());
+    }
+
+    private void update() {
+        val iterator = loadedBlocks.values().iterator();
+
+        while(iterator.hasNext()) {
+            val customBlock = iterator.next();
+
+            if(customBlock.isAccessible()) {
+                customBlock.update();
+            } else {
+                iterator.remove();
+            }
+        }
+    }
+
+    public Optional<CustomBlock<? extends CustomBlockDefinition>> unregisterBlockAsLoaded(Block block) {
+        return Optional.ofNullable(loadedBlocks.remove(block));
     }
 
     public static Path getDirectoryRegistries() {

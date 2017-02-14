@@ -47,4 +47,9 @@ public class SimpleCustomBlock extends AbstractCustomBlock<SimpleCustomBlockDefi
 
         armorStand.setHelmet(itemStack);
     }
+
+    @Override
+    public void update() {
+        getDefinition().update(this);
+    }
 }
