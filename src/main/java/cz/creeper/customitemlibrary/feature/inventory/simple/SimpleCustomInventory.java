@@ -14,7 +14,6 @@ import org.spongepowered.api.item.inventory.Slot;
 import org.spongepowered.api.item.inventory.transaction.SlotTransaction;
 
 import java.lang.reflect.Field;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -32,14 +31,6 @@ public class SimpleCustomInventory extends AbstractCustomInventory<SimpleCustomI
     private CustomSlot getCustomSlot(CustomSlotDefinition customSlotDefinition) {
         Vector2i position = customSlotDefinition.getPosition();
         int slotIndex = SimpleCustomInventoryDefinition.getSlotIndex(position.getX(), position.getY());
-
-        // TODO: Improve, once the API is expanded
-        Iterator<Slot> slotIterator = getInventory().<Slot>slots().iterator();
-
-        for(int i = 0; i < slotIndex; i++)
-            slotIterator.next();
-
-        Slot slot = slotIterator.next();
 
         return new CustomSlot(this, customSlotDefinition, slotIndex);
     }
@@ -60,12 +51,12 @@ public class SimpleCustomInventory extends AbstractCustomInventory<SimpleCustomI
         Preconditions.checkArgument(hasChild(slot), "The specified slot isn't a part of this inventory.");
 
         int slotIndex = temporaryGetSlotIndex(slot);
-        Vector2i slotPosition = SimpleCustomInventoryDefinition.getSlotLocation(slotIndex);
+        Vector2i slotPosition = SimpleCustomInventoryDefinition.getSlotPosition(slotIndex);
 
         return getCustomSlot(slotPosition);
     }
 
-    public Stream<CustomSlot> customSlots() {
+    public Stream<CustomSlot> getCustomSlots() {
         return StreamSupport.stream(getInventory().<Slot>slots().spliterator(), false)
                 .limit(getDefinition().getSize())
                 .map(this::getCustomSlot);

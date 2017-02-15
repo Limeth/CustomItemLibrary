@@ -44,7 +44,7 @@ public class CustomInventoryData implements DataSerializable {
     }
 
     public static CustomInventoryData of(SimpleCustomInventory customInventory) {
-        Map<String, ItemStackSnapshot> slotIdToItemStack = customInventory.customSlots()
+        Map<String, ItemStackSnapshot> slotIdToItemStack = customInventory.getCustomSlots()
                 .filter(customSlot -> customSlot.getDefinition().isPersistent())
                 .collect(Collectors.toMap(
                         customSlot -> customSlot.getDefinition().getId().get(),

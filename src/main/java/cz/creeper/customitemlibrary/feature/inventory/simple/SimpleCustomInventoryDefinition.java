@@ -29,6 +29,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 @ToString
@@ -96,7 +97,7 @@ public class SimpleCustomInventoryDefinition extends AbstractCustomInventoryDefi
         CustomInventoryData data = inventory.getCustomInventoryData();
         val slotIdToItemStack = data.getSlotIdToItemStack();
 
-        inventory.customSlots().forEach(customSlot -> {
+        inventory.getCustomSlots().forEach(customSlot -> {
             ItemStack itemStack = customSlot.getDefinition().getId()
                     .flatMap(slotId -> Optional.ofNullable(slotIdToItemStack.get(slotId)))
                     .map(ItemStackSnapshot::createStack)
@@ -140,7 +141,7 @@ public class SimpleCustomInventoryDefinition extends AbstractCustomInventoryDefi
         return INVENTORY_SLOTS_WIDTH * getHeight();
     }
 
-    public CustomSlotDefinition[][] getSlots() {
+    public CustomSlotDefinition[][] getCustomSlotDefinitions() {
         CustomSlotDefinition[][] result = new CustomSlotDefinition[getHeight()][INVENTORY_SLOTS_WIDTH];
 
         for(int y = 0; y < getHeight(); y++) {
@@ -152,6 +153,35 @@ public class SimpleCustomInventoryDefinition extends AbstractCustomInventoryDefi
 
     public Stream<CustomSlotDefinition> getSlotStream() {
         return Arrays.stream(slots).flatMap(Arrays::stream);
+    }
+
+    private CustomSlot getCustomSlot(DataHolder dataHolder, CustomSlotDefinition customSlotDefinition) {
+        Vector2i position = customSlotDefinition.getPosition();
+        int slotIndex = SimpleCustomInventoryDefinition.getSlotIndex(position.getX(), position.getY());
+
+        return new CustomSlot(this, dataHolder, customSlotDefinition, slotIndex);
+    }
+
+    public CustomSlot getCustomSlot(DataHolder dataHolder, int x, int y) {
+        return getCustomSlot(dataHolder, getCustomSlotDefinition(x, y));
+    }
+
+    public CustomSlot getCustomSlot(DataHolder dataHolder, Vector2i position) {
+        return getCustomSlot(dataHolder, position.getX(), position.getY());
+    }
+
+    public Optional<CustomSlot> getCustomSlot(DataHolder dataHolder, String slotId) {
+        return getCustomSlotDefinition(slotId)
+                .map(customSlotDefinition -> getCustomSlot(dataHolder, customSlotDefinition));
+    }
+
+    public Stream<CustomSlot> getCustomSlots(DataHolder dataHolder) {
+        return IntStream.range(0, getSize()).boxed()
+                .map(slotIndex -> {
+                    Vector2i slotPosition = getSlotPosition(slotIndex);
+
+                    return getCustomSlot(dataHolder, slotPosition);
+                });
     }
 
     @Override
@@ -206,7 +236,7 @@ public class SimpleCustomInventoryDefinition extends AbstractCustomInventoryDefi
         return x + y * INVENTORY_SLOTS_WIDTH;
     }
 
-    public static Vector2i getSlotLocation(int index) {
+    public static Vector2i getSlotPosition(int index) {
         return Vector2i.from(index % INVENTORY_SLOTS_WIDTH, index / INVENTORY_SLOTS_WIDTH);
     }
 

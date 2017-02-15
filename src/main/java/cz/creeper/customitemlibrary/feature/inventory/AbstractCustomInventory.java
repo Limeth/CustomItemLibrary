@@ -33,7 +33,11 @@ public abstract class AbstractCustomInventory<T extends CustomInventoryDefinitio
         this.inventory = inventory;
     }
 
-    protected Inventory getInventory() {
+    /**
+     * @deprecated Do not call {@link Player#openInventory(Inventory, Cause)} with this
+     */
+    @Deprecated
+    public Inventory getInventory() {
         return inventory;
     }
 
