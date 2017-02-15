@@ -41,7 +41,7 @@ public class SimpleCustomInventory extends AbstractCustomInventory<SimpleCustomI
 
         Slot slot = slotIterator.next();
 
-        return new CustomSlot(this, customSlotDefinition, slot);
+        return new CustomSlot(this, customSlotDefinition, slotIndex);
     }
 
     public CustomSlot getCustomSlot(int x, int y) {

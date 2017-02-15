@@ -4,14 +4,17 @@ package cz.creeper.customitemlibrary.data.mutable;
 import static cz.creeper.customitemlibrary.data.CustomItemLibraryKeys.*;
 
 import com.google.common.collect.Maps;
-import cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventory;
-import cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinition;
+import cz.creeper.customitemlibrary.feature.inventory.simple
+        .SimpleCustomInventory;
+import cz.creeper.customitemlibrary.feature.inventory.simple
+        .SimpleCustomInventoryDefinition;
 import lombok.Value;
 import org.spongepowered.api.data.DataContainer;
 import org.spongepowered.api.data.DataSerializable;
 import org.spongepowered.api.data.MemoryDataContainer;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
+import org.spongepowered.api.item.inventory.Slot;
 
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -45,7 +48,8 @@ public class CustomInventoryData implements DataSerializable {
                 .filter(customSlot -> customSlot.getDefinition().isPersistent())
                 .collect(Collectors.toMap(
                         customSlot -> customSlot.getDefinition().getId().get(),
-                        customSlot -> customSlot.getSlot().peek()
+                        customSlot -> customSlot.getSlot()
+                                .flatMap(Slot::peek)
                                 .map(ItemStack::createSnapshot)
                                 .orElse(ItemStackSnapshot.NONE)
                 ));
