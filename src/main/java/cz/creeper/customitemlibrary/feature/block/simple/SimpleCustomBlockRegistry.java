@@ -15,6 +15,7 @@ import cz.creeper.customitemlibrary.event.CustomBlockBreakEvent;
 import cz.creeper.customitemlibrary.event.CustomBlockBreakItemDropEvent;
 import cz.creeper.customitemlibrary.event.MiningProgressEvent;
 import cz.creeper.customitemlibrary.event.MiningStopEvent;
+import cz.creeper.customitemlibrary.feature.AssetId;
 import cz.creeper.customitemlibrary.feature.CustomFeatureRegistry;
 import cz.creeper.customitemlibrary.feature.DurabilityRegistry;
 import cz.creeper.customitemlibrary.feature.block.CustomBlockDefinition;
@@ -177,10 +178,10 @@ public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCu
     }
 
     @Override
-    public void writeAsset(SimpleCustomBlockDefinition definition, String asset,
+    public void writeAsset(SimpleCustomBlockDefinition definition, AssetId assetId,
             ReadableByteChannel input, WritableByteChannel output,
             Path outputFile) throws IOException {
-        if(definition.getModelAssets().contains(asset)) {
+        if(definition.getModelAssets().contains(assetId.getValue())) {
             try (
                     Reader reader = Channels.newReader(input, "UTF-8");
                     Writer writer = Channels.newWriter(output, "UTF-8")
@@ -192,7 +193,7 @@ public class SimpleCustomBlockRegistry implements CustomFeatureRegistry<SimpleCu
                 getGson().toJson(root, writer);
             }
         } else {
-            CustomFeatureRegistry.super.writeAsset(definition, asset, input, output,
+            CustomFeatureRegistry.super.writeAsset(definition, assetId, input, output,
                     outputFile);
         }
     }

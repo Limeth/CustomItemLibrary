@@ -9,6 +9,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
+import cz.creeper.customitemlibrary.feature.AssetId;
 import cz.creeper.customitemlibrary.feature.CustomFeatureRegistry;
 import cz.creeper.customitemlibrary.feature.block.AbstractCustomBlockDefinition;
 import cz.creeper.customitemlibrary.feature.item.CustomItem;
@@ -35,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -160,6 +162,13 @@ public class SimpleCustomBlockDefinition extends AbstractCustomBlockDefinition<S
                 }
             });
         }
+    }
+
+    @Override
+    public Set<AssetId> getAssets() {
+        return assets.stream()
+                .map(assetPath -> new AssetId(getPluginContainer(), assetPath))
+                .collect(Collectors.toSet());
     }
 
     public static void createDamageIndicatorFile(Path inputFile, Path outputFile, int stage) throws IOException {

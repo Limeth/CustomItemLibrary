@@ -44,7 +44,7 @@ public interface CustomFeatureDefinition<T extends CustomFeature<? extends Custo
     /**
      * @return A {@link Set} of all assets copied over to the generated resource pack.
      */
-    default Set<String> getAssets() {
+    default Set<AssetId> getAssets() {
         return ImmutableSet.of();
     }
 

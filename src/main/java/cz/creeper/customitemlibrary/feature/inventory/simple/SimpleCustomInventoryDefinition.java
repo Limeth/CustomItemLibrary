@@ -7,6 +7,8 @@ import com.google.common.collect.ImmutableBiMap;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
 import cz.creeper.customitemlibrary.data.mutable.CustomInventoriesData;
 import cz.creeper.customitemlibrary.data.mutable.CustomInventoryData;
+import cz.creeper.customitemlibrary.feature.AssetId;
+import cz.creeper.customitemlibrary.feature.TextureId;
 import cz.creeper.customitemlibrary.feature.inventory
         .AbstractCustomInventoryDefinition;
 import lombok.EqualsAndHashCode;
@@ -185,11 +187,13 @@ public class SimpleCustomInventoryDefinition extends AbstractCustomInventoryDefi
     }
 
     @Override
-    public Set<String> getAssets() {
+    public Set<AssetId> getAssets() {
         return getSlotStream()
                 .flatMap(customSlot -> customSlot.getFeatures().values().stream())
                 .map(GUIFeature::getModel)
-                .map(GUIModel::getTextureAssetPath)
+                .map(GUIModel::getTextureId)
+                .filter(textureId -> !textureId.equals(GUIModel.EMPTY.getTextureId()))
+                .map(TextureId::getAsset)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toSet());

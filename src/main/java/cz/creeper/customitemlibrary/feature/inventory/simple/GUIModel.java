@@ -1,6 +1,7 @@
 package cz.creeper.customitemlibrary.feature.inventory.simple;
 
-import static cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinition.*;
+import static cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinition.INVENTORY_TEXTURE_SLOT_SIZE;
+import static cz.creeper.customitemlibrary.feature.inventory.simple.SimpleCustomInventoryDefinition.getInventoryTextureWidth;
 
 import com.flowpowered.math.vector.Vector2d;
 import com.flowpowered.math.vector.Vector3d;
@@ -22,8 +23,6 @@ import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.PluginContainer;
-
-import java.util.Optional;
 
 /**
  * Consists of data necessary to create a model file.
@@ -72,13 +71,6 @@ public class GUIModel {
         return DurabilityRegistry.getFileIdentifier(pluginContainer,
                 textureId.getDirectory().orElseThrow(() -> new IllegalStateException("The texture directory should have already been set.")),
                 getModelName());
-    }
-
-    public Optional<String> getTextureAssetPath() {
-        if(textureId.isVanilla())
-            return Optional.empty();
-
-        return Optional.of(textureId.getPath());
     }
 
     public GUIModelBuilder toBuilder(@NonNull Object plugin) {

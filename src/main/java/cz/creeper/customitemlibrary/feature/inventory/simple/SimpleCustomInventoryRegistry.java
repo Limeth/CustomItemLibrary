@@ -6,12 +6,13 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import cz.creeper.customitemlibrary.CustomItemLibrary;
+import cz.creeper.customitemlibrary.feature.AssetId;
 import cz.creeper.customitemlibrary.feature.CustomFeatureRegistry;
 import cz.creeper.customitemlibrary.feature.DurabilityRegistry;
 import lombok.AccessLevel;
 import lombok.Getter;
 
-import java.awt.*;
+import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -93,8 +94,8 @@ public class SimpleCustomInventoryRegistry implements CustomFeatureRegistry<Simp
      * Keep the aspect ratio of textures
      */
     @Override
-    public void writeAsset(SimpleCustomInventoryDefinition definition, String asset, ReadableByteChannel input, WritableByteChannel output, Path outputFile) throws IOException {
-        if(!asset.endsWith(".png"))
+    public void writeAsset(SimpleCustomInventoryDefinition definition, AssetId assetId, ReadableByteChannel input, WritableByteChannel output, Path outputFile) throws IOException {
+        if(!assetId.getValue().endsWith(".png"))
             return;
 
         try (

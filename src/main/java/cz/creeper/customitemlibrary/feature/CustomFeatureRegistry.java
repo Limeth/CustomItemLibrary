@@ -46,7 +46,7 @@ public interface CustomFeatureRegistry<I extends CustomFeature<T>, T extends Cus
      * @param output Where to write the data to
      * @param outputFile The file to write the data to
      */
-    default void writeAsset(T definition, String asset,
+    default void writeAsset(T definition, AssetId assetId,
             ReadableByteChannel input, WritableByteChannel output,
             Path outputFile) throws IOException {
         ByteBuffer buffer = ByteBuffer.allocateDirect(2048);
@@ -58,11 +58,10 @@ public interface CustomFeatureRegistry<I extends CustomFeature<T>, T extends Cus
         }
     }
 
-    static void copyAsset(CustomFeatureDefinition definition, String assetPath, Path resourcePackDirectory) {
-        PluginContainer plugin = definition.getPluginContainer();
-        String filePath = getFilePath(plugin, assetPath);
-        Optional<Asset> optionalAsset = Sponge
-                .getAssetManager().getAsset(plugin, assetPath);
+    static void copyAsset(CustomFeatureDefinition definition, AssetId assetId, Path resourcePackDirectory) {
+        PluginContainer plugin = assetId.getPluginContainer();
+        String filePath = getFilePath(plugin, assetId.getValue());
+        Optional<Asset> optionalAsset = assetId.getAsset();
 
         if (!optionalAsset.isPresent()) {
             CustomItemLibrary.getInstance().getLogger()
@@ -93,7 +92,7 @@ public interface CustomFeatureRegistry<I extends CustomFeature<T>, T extends Cus
                             (outputFile, StandardOpenOption.WRITE)
             ) {
                 //noinspection unchecked
-                registry.writeAsset(definition, assetPath, input, output, outputFile);
+                registry.writeAsset(definition, assetId, input, output, outputFile);
             }
         } catch (IOException e) {
             e.printStackTrace();

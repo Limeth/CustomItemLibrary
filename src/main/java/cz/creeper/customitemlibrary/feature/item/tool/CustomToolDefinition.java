@@ -3,9 +3,10 @@ package cz.creeper.customitemlibrary.feature.item.tool;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import cz.creeper.customitemlibrary.event.CustomItemCreationEvent;
+import cz.creeper.customitemlibrary.feature.AssetId;
+import cz.creeper.customitemlibrary.feature.DefinesDurabilityModels;
 import cz.creeper.customitemlibrary.feature.DurabilityRegistry;
 import cz.creeper.customitemlibrary.feature.item.AbstractCustomItemDefinition;
-import cz.creeper.customitemlibrary.feature.DefinesDurabilityModels;
 import cz.creeper.customitemlibrary.util.Util;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -25,6 +26,7 @@ import org.spongepowered.api.plugin.PluginContainer;
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -49,7 +51,6 @@ public final class CustomToolDefinition extends AbstractCustomItemDefinition<Cus
      * A list of assets to be copied to the resourcepack.
      * Should be located at `assets/<pluginId>/<asset>` in the JAR.
      */
-    @Getter
     @NonNull
     private final ImmutableSet<String> assets;
 
@@ -137,6 +138,13 @@ public final class CustomToolDefinition extends AbstractCustomItemDefinition<Cus
     @Override
     public String getModelDirectoryName() {
         return MODEL_DIRECTORY_NAME;
+    }
+
+    @Override
+    public Set<AssetId> getAssets() {
+        return assets.stream()
+                .map(assetPath -> new AssetId(getPluginContainer(), assetPath))
+                .collect(Collectors.toSet());
     }
 
     public static String getModelPath(String model) {

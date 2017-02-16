@@ -73,6 +73,13 @@ public class TextureId extends Identifier {
         return "textures/" + (directory != null && !directory.isEmpty() ? directory + '/'  : "") + fileName + ".png";
     }
 
+    public Optional<AssetId> getAsset() {
+        if(isVanilla())
+            return Optional.empty();
+
+        return Optional.of(new AssetId(pluginContainer, getPath()));
+    }
+
     public boolean isVanilla() {
         return pluginContainer == null;
     }
