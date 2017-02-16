@@ -110,20 +110,6 @@ public class SimpleCustomInventoryDefinitionBuilder {
             builderClassName = "SimpleCustomInventoryDefinitionBuilderFeatureBuilder"
     )
     public SimpleCustomInventoryDefinitionBuilder feature(@NonNull String slotId, boolean persistent, @NonNull GUIFeature defaultFeature, GUIFeature... additionalFeatures) {
-        if(pluginContainer == null) {
-            pluginContainer = defaultFeature.getModel().getPluginContainer();
-        } else {
-            Preconditions.checkArgument(defaultFeature.getModel().getPluginContainer() == pluginContainer,
-                    "The plugin in the GUIModel is different from the plugin in this builder.");
-        }
-
-        if(additionalFeatures != null) {
-            for(GUIFeature additionalFeature : additionalFeatures) {
-                Preconditions.checkArgument(additionalFeature.getModel().getPluginContainer() == pluginContainer,
-                        "The plugin in the GUIModel is different from the plugin in this builder.");
-            }
-        }
-
         lowerPrioritySlots.add(new GUIFeatures(
                 slotId,
                 persistent,
@@ -149,20 +135,6 @@ public class SimpleCustomInventoryDefinitionBuilder {
     )
     public SimpleCustomInventoryDefinitionBuilder slot(String slotId, Vector2i position, boolean persistent, AffectCustomSlotListener affectCustomSlotListener, @NonNull GUIFeature defaultFeature, GUIFeature... additionalFeatures) {
         Preconditions.checkNotNull(highPrioritySlots, "The height must be set first.");
-
-        if(pluginContainer == null) {
-            pluginContainer = defaultFeature.getModel().getPluginContainer();
-        } else {
-            Preconditions.checkArgument(defaultFeature.getModel().getPluginContainer() == pluginContainer,
-                    "The plugin in the GUIModel is different from the plugin in this builder.");
-        }
-
-        if(additionalFeatures != null) {
-            for(GUIFeature additionalFeature : additionalFeatures) {
-                Preconditions.checkArgument(additionalFeature.getModel().getPluginContainer() == pluginContainer,
-                        "The plugin in the GUIModel is different from the plugin in this builder.");
-            }
-        }
 
         highPrioritySlots[position.getY()][position.getX()] =
                 CustomSlotDefinition.create(position, slotId, persistent, affectCustomSlotListener, defaultFeature, Arrays.asList(additionalFeatures));

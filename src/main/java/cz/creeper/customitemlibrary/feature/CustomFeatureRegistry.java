@@ -2,7 +2,6 @@ package cz.creeper.customitemlibrary.feature;
 
 import cz.creeper.customitemlibrary.CustomItemLibrary;
 import cz.creeper.customitemlibrary.feature.item.tool.CustomToolDefinition;
-import org.spongepowered.api.Sponge;
 import org.spongepowered.api.asset.Asset;
 import org.spongepowered.api.plugin.PluginContainer;
 
@@ -41,7 +40,7 @@ public interface CustomFeatureRegistry<I extends CustomFeature<T>, T extends Cus
     default void generateResourcePackFiles(Path resourcePackDirectory) {}
 
     /**
-     * @param asset The asset to modify
+     * @param assetId The asset to modify
      * @param input The data that would be written to the file
      * @param output Where to write the data to
      * @param outputFile The file to write the data to
